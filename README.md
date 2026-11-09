@@ -28,7 +28,9 @@ npm run preview
 - Hospedagem, anotações, reservas com links e checklist.
 - Fotos locais ou arquivos privados no Supabase.
 - Despesas opcionais, com totais separados por moeda.
-- Exportação de backup JSON e impressão do dia selecionado.
+- Exportação/importação de backup JSON sem sobrescrever viagens.
+- Download HTML offline com todos os dias, hospedagem, reservas e checklist.
+- PWA com cache da interface em produção; dados locais acessíveis sem rede após a primeira visita.
 - Pesquisa e trajetos com links para Google Maps.
 - Login e cadastro com Supabase quando configurado.
 
@@ -47,10 +49,14 @@ A tabela `trips` guarda um documento JSON por viagem com proprietário validado 
 
 ## Limites atuais
 
-As integrações de descoberta por cartões, IA, mapa geográfico interno, colaboração em grupo, arquivos de reservas e sincronização offline ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Supabase não foi validado contra um projeto remoto até o fornecimento da configuração.
+As integrações de descoberta por cartões, IA, mapa geográfico interno, colaboração em grupo, arquivos de reservas e sincronização offline de contas ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Supabase não foi validado contra um projeto remoto até o fornecimento da configuração.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 
 ## Publicação
 
 O build estático é gerado em `dist/` e pode ser hospedado em um serviço de frontend. Configure as mesmas variáveis públicas no build e as URLs de Auth no Supabase. O banco e os arquivos ficam no Supabase; o frontend precisa de hospedagem própria. Não há publicação automática configurada.
+
+## Verificação
+
+Build de produção e 7 testes automatizados aprovados. Verificados no navegador: criação sem campos preenchidos, inclusão de atividade, mudança de dia, marcação de visita, checklist e persistência após recarregar. Layout verificado em 1440px e 390px, sem overflow horizontal no roteiro mobile. O download offline é uma cópia estática; mapas externos e autenticação exigem internet. O cache PWA só funciona em produção, em HTTPS ou localhost.
