@@ -1,6 +1,6 @@
-# Atlas — Organizador de viagens
+# Gomes pelo Mundo — Organizador de viagens
 
-Aplicativo responsivo em React e TypeScript para organizar viagens sem formulários obrigatórios. Backend preparado em Supabase (Auth, PostgreSQL com RLS e Storage privado). Nome Atlas provisório.
+Aplicativo responsivo em React e TypeScript para organizar viagens sem formulários obrigatórios. Backend preparado em Supabase (Auth, PostgreSQL com RLS e Storage privado). Identidade inspirada na família Gomes.
 
 ## Executar
 
@@ -31,6 +31,8 @@ npm run preview
 - Exportação/importação de backup JSON sem sobrescrever viagens.
 - Download HTML offline com todos os dias, hospedagem, reservas e checklist.
 - PWA com cache da interface em produção; dados locais acessíveis sem rede após a primeira visita.
+- Mapa interativo OpenStreetMap com marcação manual de destinos por viagem.
+- Aba Viagens nacionais, com filtros de status e categoria opcional Nacional/Internacional.
 - Pesquisa e trajetos com links para Google Maps.
 - Login e cadastro com Supabase quando configurado.
 
@@ -49,7 +51,7 @@ A tabela `trips` guarda um documento JSON por viagem com proprietário validado 
 
 ## Limites atuais
 
-As integrações de descoberta por cartões, IA, mapa geográfico interno, colaboração em grupo, arquivos de reservas e sincronização offline de contas ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Supabase não foi validado contra um projeto remoto até o fornecimento da configuração.
+As integrações de descoberta por cartões, IA, colaboração em grupo, arquivos de reservas e sincronização offline de contas ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Supabase não foi validado contra um projeto remoto até o fornecimento da configuração.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 
@@ -59,4 +61,8 @@ O build estático é gerado em `dist/` e pode ser hospedado em um serviço de fr
 
 ## Verificação
 
-Build de produção e 7 testes automatizados aprovados. Verificados no navegador: criação sem campos preenchidos, inclusão de atividade, mudança de dia, marcação de visita, checklist e persistência após recarregar. Layout verificado em 1440px e 390px, sem overflow horizontal no roteiro mobile. O download offline é uma cópia estática; mapas externos e autenticação exigem internet. O cache PWA só funciona em produção, em HTTPS ou localhost.
+Build de produção e 8 testes automatizados aprovados. Verificados no navegador: criação sem campos preenchidos, inclusão de atividade, mudança de dia, marcação de visita, checklist e persistência após recarregar. Layout verificado em 1440px e 390px, sem overflow horizontal no roteiro mobile. O download offline é uma cópia estática; mapas externos e autenticação exigem internet. O cache PWA só funciona em produção, em HTTPS ou localhost.
+
+## Mapas
+
+Mapas interativos usam Leaflet e tiles OpenStreetMap, com atribuição visível e cache HTTP padrão. Não há download/prefetch de mapas offline. Consulte a política https://operations.osmfoundation.org/policies/tiles/ antes de escalar o produto. Marcação de destino é manual; não há geocodificação automática.
