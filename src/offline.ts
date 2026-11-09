@@ -1,4 +1,4 @@
-import { newTrip, type Trip, dateLabel } from "./model";
+import { newTrip, type Trip, dateLabel, pictures } from "./model";
 export function escapeHtml(text: string) {
   return text.replace(
     /[&<>"']/g,
@@ -66,7 +66,7 @@ export function parseBackup(raw: string): Trip[] {
       )
         ? (v.status as Trip["status"])
         : "planning",
-      cover: ["coast", "city", "mountain"].includes(text(v.cover))
+      cover: Object.hasOwn(pictures, text(v.cover))
         ? text(v.cover)
         : "coast",
       notes: text(v.notes),

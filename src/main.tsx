@@ -41,6 +41,7 @@ import {
   moveActivity,
   newTrip,
   pictures,
+  coverLabels,
   statusLabels,
   uid,
 } from "./model";
@@ -1888,7 +1889,7 @@ function App() {
                         value={k}
                         defaultChecked={i === 0}
                       />
-                      <span>{["Lago", "Cidade", "Montanhas"][i]}</span>
+                      <span>{coverLabels[k as keyof typeof pictures]}</span>
                     </label>
                   ))}
                 </fieldset>
