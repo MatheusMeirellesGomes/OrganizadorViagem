@@ -13,7 +13,7 @@ export function offlineDocument(trip: Trip) {
   const days = [...new Set(trip.activities.map((a) => a.day))].sort(
     (a, b) => a - b,
   );
-  return `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(trip.title)} — Gomes pelo Mundo offline</title><style>body{font:16px system-ui;color:#244f43;background:#f6f8f1;max-width:760px;margin:auto;padding:28px}h1{font-size:34px}small{color:#718067}section{background:white;border:1px solid #e0e7d8;border-radius:12px;padding:22px;margin:20px 0}article{padding:15px 0;border-bottom:1px solid #eee}h3{margin:5px 0}p{line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}button{padding:12px;border:0;border-radius:8px;background:#244f43;color:white}@media print{button{display:none}}</style><small>GOMES PELO MUNDO · CÓPIA OFFLINE</small><h1>${e(trip.title)}</h1><p>${e(trip.destination)} · ${e(dateLabel(trip))}</p><small>Exportado em ${e(new Date().toLocaleString("pt-BR"))}. Esta cópia não recebe alterações automaticamente.</small>${trip.hotel ? `<section><h2>Hospedagem</h2><p>${e(trip.hotel)}</p></section>` : ""}${days
+  return `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(trip.title)} — Gomes pelo Mundo offline</title><style>body{font:16px system-ui;color:#244f43;background:#f6f8f1;max-width:760px;margin:auto;padding:28px}h1{font-size:34px}small{color:#718067}section{background:white;border:1px solid #e0e7d8;border-radius:12px;padding:22px;margin:20px 0}article{padding:15px 0;border-bottom:1px solid #eee}h3{margin:5px 0}p{line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}button{padding:12px;border:0;border-radius:8px;background:#244f43;color:white}@media print{button{display:none}}</style><small>GOMES PELO MUNDO · CÓPIA OFFLINE</small><h1>${e(trip.title)}</h1><p>${e(trip.destination)} · ${e(dateLabel(trip))}</p><small>Exportado em ${e(new Date().toLocaleString("pt-BR"))}. Esta cópia não recebe alterações automaticamente.</small>${trip.hotel ? `<section><h2>Hospedagem</h2><p>${e(trip.hotel)}</p></section>` : ""}${(trip.stays || []).map((s) => `<section><h2>${e(s.name)}</h2><p>${e([s.address, s.city].filter(Boolean).join(", "))}</p><p>Entrada: ${e(s.start)} ${e(s.checkInTime)} · Saída: ${e(s.end)} ${e(s.checkOutTime)}</p><p>${e(s.confirmation)}</p><p>${e(s.notes)}</p></section>`).join("")}${days
     .map(
       (day) =>
         `<section><h2>Dia ${day}</h2>${trip.activities
@@ -66,15 +66,27 @@ export function parseBackup(raw: string): Trip[] {
       )
         ? (v.status as Trip["status"])
         : "planning",
-      cover: Object.hasOwn(pictures, text(v.cover))
-        ? text(v.cover)
-        : "coast",
+      cover: Object.hasOwn(pictures, text(v.cover)) ? text(v.cover) : "coast",
       notes: text(v.notes),
       hotel: text(v.hotel),
       budgetEnabled: v.budgetEnabled === true,
     });
-    const party=object(v.party);
-    if(v.party) trip.party={adults:typeof party.adults==='number'&&party.adults>=0?Math.floor(party.adults):undefined,children:typeof party.children==='number'&&party.children>=0?Math.floor(party.children):undefined,members:list(party.members).filter((x):x is string=>typeof x==='string'),preferences:text(party.preferences)};
+    const party = object(v.party);
+    if (v.party)
+      trip.party = {
+        adults:
+          typeof party.adults === "number" && party.adults >= 0
+            ? Math.floor(party.adults)
+            : undefined,
+        children:
+          typeof party.children === "number" && party.children >= 0
+            ? Math.floor(party.children)
+            : undefined,
+        members: list(party.members).filter(
+          (x): x is string => typeof x === "string",
+        ),
+        preferences: text(party.preferences),
+      };
     const coords = object(v.coordinates);
     if (
       typeof coords.lat === "number" &&
@@ -83,16 +95,50 @@ export function parseBackup(raw: string): Trip[] {
       Math.abs(coords.lng) <= 180
     )
       trip.coordinates = { lat: coords.lat, lng: coords.lng };
-    trip.activities = list(v.activities).map((value) => {
-      const a = object(value);
+    const activityIds = new Map<string, string>(),
+      stayIds = new Map<string, string>();
+    trip.stays = list(v.stays).map((value) => {
+      const s = object(value),
+        id = crypto.randomUUID();
+      if (text(s.id)) stayIds.set(text(s.id), id);
+      const coords = object(s.coordinates);
       return {
-        id: crypto.randomUUID(),
+        id,
+        name: text(s.name, "Hospedagem"),
+        address: text(s.address),
+        city: text(s.city),
+        start: text(s.start),
+        end: text(s.end),
+        checkInTime: text(s.checkInTime),
+        checkOutTime: text(s.checkOutTime),
+        url: /^https?:\/\//i.test(text(s.url)) ? text(s.url) : "",
+        confirmation: text(s.confirmation),
+        notes: text(s.notes),
+        coordinates:
+          typeof coords.lat === "number" &&
+          typeof coords.lng === "number" &&
+          Math.abs(coords.lat) <= 90 &&
+          Math.abs(coords.lng) <= 180
+            ? { lat: coords.lat, lng: coords.lng }
+            : undefined,
+      };
+    });
+    trip.activities = list(v.activities).map((value) => {
+      const a = object(value),
+        id = crypto.randomUUID();
+      if (text(a.id)) activityIds.set(text(a.id), id);
+      return {
+        id,
         title: text(a.title, "Atividade"),
         day: Math.max(1, Math.min(365, Number(a.day) || 1)),
         time: text(a.time),
         address: text(a.address),
         kind: text(a.kind, "Passeio"),
-        period: (["morning","afternoon","evening","any"].includes(text(a.period))?text(a.period):"any") as import("./calendar").Period,
+        period: (["morning", "afternoon", "evening", "any"].includes(
+          text(a.period),
+        )
+          ? text(a.period)
+          : "any") as import("./calendar").Period,
         done: a.done === true,
       };
     });
@@ -124,6 +170,8 @@ export function parseBackup(raw: string): Trip[] {
         id: crypto.randomUUID(),
         title: text(r.title),
         details: text(r.details),
+        activityId: activityIds.get(text(r.activityId)),
+        stayId: stayIds.get(text(r.stayId)),
         url: /^https?:\/\//i.test(text(r.url)) ? text(r.url) : "",
       }));
     trip.photos = list(v.photos)

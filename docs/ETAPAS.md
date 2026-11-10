@@ -27,3 +27,9 @@ Bloqueios: URL/chave pública e duas contas de teste ainda não fornecidas; Auth
 Aba Calendário com mês navegável, seleção de dias, datas editáveis, dias livres e visão por período. Datas alteradas preservam o número e ordem das atividades. Sem datas, navegação por Dia 1/2/3. Grupo opcional com adultos, crianças, nomes/apelidos e preferências; despesas permanecem desativadas por padrão.
 
 Arquivos: `TripCalendar.tsx`, `calendar.ts`, `calendar.test.ts`, `extensions.css`, integração em `main.tsx`, campos opcionais em `model.ts` e importação em `offline.ts`. **64 testes aprovados**, build aprovado e formulário sem datas verificado no navegador. Backup antigo continua válido. Limites: participantes são registros locais, não convites/contas compartilhadas. Próxima etapa: múltiplas hospedagens e reservas associadas.
+
+## Etapa 3a — múltiplas hospedagens e vínculos de reservas
+
+Hospedagens opcionais com endereço, cidade, datas/horários, link, código de confirmação recolhido, notas e coordenadas. Botão de navegação. Modo Viagem destaca estadias do dia (entrada inclusiva, saída exclusiva), sem presumir hospedagem quando faltam datas. Reservas podem se vincular a atividades e hotéis; excluir hotel exige confirmação e preserva reservas. O campo antigo `hotel` continua visível.
+
+Arquivos: `StaysPanel.tsx`, `stays.ts`, `stays.test.ts`, `model.ts`, `main.tsx`, `offline.ts`, `TravelMode.tsx`, `travel-mode.ts`, `extensions.css`. Importação remapeia IDs; exportação HTML inclui hotéis. **68 testes aprovados**, build aprovado; criação sem datas/endereço validada no navegador. Limites: documentos privados seguem na subetapa 3b; armazenamento remoto ainda depende de configuração real do Supabase. Branch `feature/gomes-etapas`.

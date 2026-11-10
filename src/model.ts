@@ -8,8 +8,28 @@ export type Activity = {
   done: boolean;
   kind: string;
 };
+export type Stay = {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  start: string;
+  end: string;
+  checkInTime: string;
+  checkOutTime: string;
+  url: string;
+  confirmation: string;
+  notes: string;
+  coordinates?: { lat: number; lng: number };
+};
 export type Trip = {
-  party?: {adults?:number;children?:number;members?:string[];preferences?:string};
+  stays?: Stay[];
+  party?: {
+    adults?: number;
+    children?: number;
+    members?: string[];
+    preferences?: string;
+  };
   scope?: "national" | "international" | "undecided";
   coordinates?: { lat: number; lng: number };
   id: string;
@@ -26,7 +46,14 @@ export type Trip = {
   expenses: { id: string; title: string; amount: number; currency: string }[];
   budgetEnabled: boolean;
   photos: { id: string; url: string; name: string }[];
-  reservations: { id: string; title: string; details: string; url: string }[];
+  reservations: {
+    id: string;
+    title: string;
+    details: string;
+    url: string;
+    activityId?: string;
+    stayId?: string;
+  }[];
 };
 export const uid = () => crypto.randomUUID();
 export function newTrip(input: Partial<Trip> = {}): Trip {
@@ -75,9 +102,12 @@ export const pictures = {
   city: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1000&q=85",
   mountain:
     "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=85",
-  beach: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85",
-  countryside: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=85",
-  waterfall: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1000&q=85",
+  beach:
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85",
+  countryside:
+    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=85",
+  waterfall:
+    "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1000&q=85",
 };
 
 export const coverLabels: Record<keyof typeof pictures, string> = {

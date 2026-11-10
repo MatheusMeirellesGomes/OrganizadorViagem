@@ -53,12 +53,7 @@ import {
 import type { ScopeFilter, Trip, TripScope } from "./model";
 const localModeKey = "gomes-modo-local";
 const repository = supabase ? supabaseRepository(supabase) : null;
-import {
-  localKey,
-  readLocal,
-  saveLocal,
-  supabase,
-} from "./store";
+import { localKey, readLocal, saveLocal, supabase } from "./store";
 import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { ConflictError, friendlyError } from "./errors";
@@ -72,6 +67,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
@@ -158,7 +154,9 @@ function App() {
     return () => data.subscription.unsubscribe();
   }, []);
   const applyRows = (rows: RemoteRow[]) => {
-    versions.current = Object.fromEntries(rows.map((r) => [r.id, r.updated_at]));
+    versions.current = Object.fromEntries(
+      rows.map((r) => [r.id, r.updated_at]),
+    );
     setTrips(rows.map((r) => r.data));
   };
   const cacheTrips = (userId: string, list: Trip[]) =>
@@ -166,7 +164,11 @@ function App() {
       userId,
       list
         .filter((t) => versions.current[t.id])
-        .map((t) => ({ id: t.id, data: t, updated_at: versions.current[t.id] })),
+        .map((t) => ({
+          id: t.id,
+          data: t,
+          updated_at: versions.current[t.id],
+        })),
     );
   const loadAccount = useCallback(async (userId: string) => {
     if (!repository) return;
@@ -279,8 +281,7 @@ function App() {
     try {
       const next = trips.filter((x) => x.id !== t.id);
       if (session && repository) {
-        if (accountSource === "cache" || !online)
-          throw new Error("offline");
+        if (accountSource === "cache" || !online) throw new Error("offline");
         await repository.remove(t.id, versions.current[t.id]);
         delete versions.current[t.id];
         cacheTrips(session.user.id, next);
@@ -414,7 +415,7 @@ function App() {
             time: field(f, "time"),
             address: field(f, "address"),
             kind: field(f, "kind"),
-            period: field(f,"period") as import("./calendar").Period,
+            period: field(f, "period") as import("./calendar").Period,
             done: false,
           },
         ],
@@ -629,9 +630,8 @@ function App() {
             <div className="stale-banner" role="status">
               <Cloud size={18} />
               <p>
-                Uma viagem foi alterada em outro aparelho. Nada foi
-                sobrescrito. Recarregue para continuar a partir da versão mais
-                recente.
+                Uma viagem foi alterada em outro aparelho. Nada foi sobrescrito.
+                Recarregue para continuar a partir da versão mais recente.
               </p>
               <button
                 className="secondary small"
@@ -755,6 +755,7 @@ function App() {
                     "Calendário",
                     "Mapa",
                     "Informações",
+                    "Hospedagens",
                     "Reservas",
                     "Checklist",
                     "Fotos",
@@ -769,7 +770,16 @@ function App() {
                     </button>
                   ))}
                 </div>
-                {tab === "Calendário" && <TripCalendar trip={trip} day={day} onDayChange={setDay} onOpenDay={()=>setTab("Roteiro")} onSave={save} busy={busy}/>}
+                {tab === "Calendário" && (
+                  <TripCalendar
+                    trip={trip}
+                    day={day}
+                    onDayChange={setDay}
+                    onOpenDay={() => setTab("Roteiro")}
+                    onSave={save}
+                    busy={busy}
+                  />
+                )}
                 {tab === "Roteiro" && (
                   <div className="planner">
                     <section className="panel itinerary">
@@ -1158,6 +1168,9 @@ function App() {
                     </div>
                   </form>
                 )}
+                {tab === "Hospedagens" && (
+                  <StaysPanel trip={trip} onSave={save} busy={busy} />
+                )}
                 {tab === "Reservas" && (
                   <section className="panel">
                     <div className="section-head">
@@ -1186,6 +1199,12 @@ function App() {
                           <div>
                             <h3>{r.title}</h3>
                             <p className="pre-wrap">{r.details}</p>
+                            <ReservationLinks
+                              trip={trip}
+                              reservationId={r.id}
+                              onSave={save}
+                              busy={busy}
+                            />
                             {r.url && (
                               <a href={r.url} target="_blank" rel="noreferrer">
                                 Abrir reserva <ExternalLink size={12} />
@@ -1196,6 +1215,7 @@ function App() {
                             className="icon-button"
                             aria-label="Excluir reserva"
                             onClick={() =>
+                              confirm("Excluir esta reserva?") &&
                               save({
                                 ...trip,
                                 reservations: trip.reservations.filter(
@@ -1647,11 +1667,11 @@ function App() {
                       {(page === "history"
                         ? [["all", "Todas as anteriores"]]
                         : [
-                              ["all", "Todas"],
-                              ["planning", "Em planejamento"],
-                              ["upcoming", "Próximas"],
-                              ["active", "Em andamento"],
-                            ]
+                            ["all", "Todas"],
+                            ["planning", "Em planejamento"],
+                            ["upcoming", "Próximas"],
+                            ["active", "Em andamento"],
+                          ]
                       ).map(([k, v]) => (
                         <button
                           key={k}
@@ -1686,8 +1706,8 @@ function App() {
                               : scopeFilter === "international"
                                 ? "Nenhuma viagem internacional por aqui"
                                 : page === "history"
-                              ? "Seus caminhos anteriores, organizados"
-                              : "Espaço para o seu próximo destino"
+                                  ? "Seus caminhos anteriores, organizados"
+                                  : "Espaço para o seu próximo destino"
                         }
                         text={
                           search
@@ -1696,8 +1716,8 @@ function App() {
                                 scopeFilter === "international"
                               ? "Cadastre uma nova ou defina o tipo de uma viagem existente na aba Informações."
                               : page === "history"
-                              ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
-                              : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
+                                ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
+                                : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
                         }
                         action={
                           search
@@ -1968,7 +1988,10 @@ function App() {
                           const { error } = await supabase!.auth.signOut();
                           if (error)
                             setNotice(
-                              friendlyError(error, "Não foi possível sair da conta."),
+                              friendlyError(
+                                error,
+                                "Não foi possível sair da conta.",
+                              ),
                             );
                         }}
                       >
@@ -1980,8 +2003,8 @@ function App() {
                         <Cloud size={20} />
                         <div>
                           <p>
-                            Crie uma conta ou entre para acessar suas viagens
-                            em outros aparelhos. Você poderá enviar as viagens
+                            Crie uma conta ou entre para acessar suas viagens em
+                            outros aparelhos. Você poderá enviar as viagens
                             deste navegador para a conta.
                           </p>
                           <button
@@ -2174,7 +2197,12 @@ function App() {
                 </div>
                 <label>
                   Período opcional
-                  <select name="period"><option value="any">Sem período</option><option value="morning">Manhã</option><option value="afternoon">Tarde</option><option value="evening">Noite</option></select>
+                  <select name="period">
+                    <option value="any">Sem período</option>
+                    <option value="morning">Manhã</option>
+                    <option value="afternoon">Tarde</option>
+                    <option value="evening">Noite</option>
+                  </select>
                 </label>
                 <label>
                   Categoria
@@ -2448,7 +2476,11 @@ function Auth({
         {signup ? "Já tenho uma conta" : "Quero criar minha conta"}
       </button>
       <div className="auth-local">
-        <button className="secondary full" type="button" onClick={onContinueLocal}>
+        <button
+          className="secondary full"
+          type="button"
+          onClick={onContinueLocal}
+        >
           <HardDrive size={17} />
           Continuar sem conta
         </button>

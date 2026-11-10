@@ -12,6 +12,8 @@ import {
   Navigation,
   WifiOff,
 } from "lucide-react";
+import { staysOnDate, stayDirections } from "./stays";
+import { calendarDate } from "./travel-mode";
 import type { Activity, Trip } from "./model";
 import {
   dayActivities,
@@ -51,6 +53,11 @@ export function TravelMode({
     progress = dayProgress(trip, day),
     next = nextActivity(trip, day),
     label = dayLabel(trip, day);
+  const startDate = calendarDate(trip.start);
+  const selectedDate = startDate
+    ? new Date(+startDate + (day - 1) * 86400000).toISOString().slice(0, 10)
+    : "";
+  const selectedStays = staysOnDate(trip, selectedDate);
   const saving = busy || pending;
   useEffect(() => {
     heading.current?.focus();
@@ -327,6 +334,40 @@ export function TravelMode({
             <ChevronDown size={21} />
           </summary>
           <div className="tm-information-content">
+            {Boolean(trip.stays?.length) && (
+              <section>
+                <h3>
+                  {selectedStays.length
+                    ? "Hospedagens deste dia"
+                    : "Hospedagens cadastradas"}
+                </h3>
+                {!selectedStays.length && (
+                  <p className="tm-help">
+                    Nenhuma estadia confirmada para este dia pelas datas
+                    cadastradas.
+                  </p>
+                )}
+                {(selectedStays.length ? selectedStays : trip.stays || []).map(
+                  (s) => (
+                    <article className="tm-reservation" key={s.id}>
+                      <h4>{s.name}</h4>
+                      <p>{[s.address, s.city].filter(Boolean).join(", ")}</p>
+                      <p>
+                        {s.start || "Sem data"} → {s.end || "Sem data"}
+                      </p>
+                      {s.confirmation && (
+                        <details>
+                          <summary>Código de confirmação</summary>
+                          <p>{s.confirmation}</p>
+                        </details>
+                      )}
+                      {stayDirections(s) &&
+                        externalLink(stayDirections(s)!, "Como chegar")}
+                    </article>
+                  ),
+                )}
+              </section>
+            )}
             {trip.hotel?.trim() && (
               <section>
                 <h3>Hospedagem</h3>
@@ -347,11 +388,26 @@ export function TravelMode({
               <section>
                 <h3>Reservas da viagem</h3>
                 <p className="tm-help">
-                  Reservas gerais, sem vínculo automático com as atividades.
+                  {trip.reservations.some(r=>r.activityId||r.stayId)?"Vínculos definidos por você no planejamento.":"Reservas gerais, sem vínculo automático com as atividades."}
                 </p>
                 {trip.reservations.map((reservation) => (
                   <article className="tm-reservation" key={reservation.id}>
                     <h4>{reservation.title || "Reserva"}</h4>
+                    {reservation.activityId && (
+                      <p>
+                        Atividade:{" "}
+                        {trip.activities.find(
+                          (a) => a.id === reservation.activityId,
+                        )?.title || "Não disponível"}
+                      </p>
+                    )}
+                    {reservation.stayId && (
+                      <p>
+                        Hospedagem:{" "}
+                        {trip.stays?.find((s) => s.id === reservation.stayId)
+                          ?.name || "Não disponível"}
+                      </p>
+                    )}
                     {reservation.details && (
                       <p className="pre-wrap">{reservation.details}</p>
                     )}

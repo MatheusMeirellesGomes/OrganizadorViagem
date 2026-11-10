@@ -82,6 +82,7 @@ export function safeExternalUrl(value: string): string | undefined {
 }
 export function hasTravelInformation(trip: Trip): boolean {
   return Boolean(
+    trip.stays?.length ||
     trip.hotel?.trim() ||
     trip.notes?.trim() ||
     trip.reservations?.length ||
