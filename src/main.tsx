@@ -72,6 +72,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { MigrationPanel } from "./MigrationPanel";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
@@ -636,6 +637,15 @@ function App() {
                 Recarregar viagens
               </button>
             </div>
+          )}
+          {session && repository && !loadError && accountSource === "live" && (
+            <MigrationPanel
+              key={session.user.id}
+              userId={session.user.id}
+              repo={repository}
+              online={online}
+              onSent={() => loadAccount(session.user.id)}
+            />
           )}
           {loading ? (
             <div className="empty">
