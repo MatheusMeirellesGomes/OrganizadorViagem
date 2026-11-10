@@ -67,6 +67,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { Catalog } from "./Catalog";
 import { portableTrips } from "./backup";
 import { DocumentsPanel } from "./DocumentsPanel";
 import { prepareTripAssets } from "./migration";
@@ -1781,84 +1782,7 @@ function App() {
                   )}
                 </>
               )}
-              {page === "explore" && (
-                <>
-                  <section className="explore-banner">
-                    <Compass size={35} />
-                    <div>
-                      <h2>A curiosidade é um ótimo ponto de partida.</h2>
-                      <p>
-                        Pesquise um destino e descubra lugares no Google Maps.
-                        Adicione seus favoritos no roteiro da viagem.
-                      </p>
-                    </div>
-                  </section>
-                  <form
-                    className="explore-search"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (search.trim())
-                        window.open(
-                          "https://www.google.com/maps/search/" +
-                            encodeURIComponent(search),
-                          "_blank",
-                          "noopener,noreferrer",
-                        );
-                    }}
-                  >
-                    <Search size={22} />
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Experimente: cafés em Lisboa"
-                      aria-label="Pesquisar lugares"
-                    />
-                    <button className="primary">
-                      Explorar <ArrowRight size={16} />
-                    </button>
-                  </form>
-                  <div className="inspiration-grid">
-                    {[
-                      {
-                        name: "Perto da natureza",
-                        query: "parques e trilhas",
-                        img: pictures.mountain,
-                      },
-                      {
-                        name: "Sabores pelo caminho",
-                        query: "restaurantes",
-                        img: pictures.city,
-                      },
-                      {
-                        name: "Uma pausa com vista",
-                        query: "mirantes",
-                        img: pictures.coast,
-                      },
-                    ].map((c) => (
-                      <button
-                        key={c.name}
-                        style={{
-                          backgroundImage: `linear-gradient(0deg,rgba(0,0,0,.65),transparent),url(${c.img})`,
-                        }}
-                        onClick={() => setSearch(c.query + " " + search)}
-                      >
-                        <span>IDEIAS PARA EXPLORAR</span>
-                        <h2>{c.name}</h2>
-                        <ArrowRight />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="tip">
-                    <Sparkles size={20} />
-                    <p>
-                      A busca integrada por cartões e sugestões com IA será
-                      conectada a um provedor de lugares. Nesta versão, a
-                      pesquisa abre o Google Maps; nenhum resultado fictício é
-                      apresentado como recomendação.
-                    </p>
-                  </div>
-                </>
-              )}
+              {page === "explore" && <Catalog trips={trips} />}
               {page === "map" && (
                 <section className="panel world-panel">
                   <div className="section-head">
