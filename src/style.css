@@ -2040,42 +2040,6 @@ dialog .section-head {
 .brand-mark {
   flex-shrink: 0;
 }
-.national-shortcut {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  background: #edf2e5;
-  border: 1px solid #e1e7d5;
-  border-radius: 10px;
-  padding: 17px 20px;
-  margin-top: 24px;
-}
-.national-shortcut > span:nth-child(2) {
-  flex: 1;
-}
-.national-shortcut b {
-  display: block;
-  font-size: 13px;
-}
-.national-shortcut small {
-  display: block;
-  font-size: 11px;
-  margin-top: 5px;
-  color: #7c8c6d;
-}
-.brazil-mark {
-  font-size: 11px;
-  font-weight: 700;
-  background: #f0df9a;
-  color: #576f3c;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-}
 .search input:not([type="checkbox"]):not([type="radio"]) {
   border: 0;
   background: transparent;
@@ -2092,4 +2056,108 @@ dialog .section-head {
 @media (max-width: 480px) {
   .cover-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cover-picker label { height: 76px; }
+}
+
+/* Minhas viagens: national / international organization. */
+.scope-switch {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+.scope-switch button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #273b35;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.scope-switch button:hover {
+  border-color: #cfd9c6;
+}
+.scope-switch button.selected {
+  background: #edf2e5;
+  border-color: #6a8755;
+}
+.scope-mark {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: #e7ede1;
+  color: var(--green);
+}
+.scope-mark.scope-national {
+  background: #f0df9a;
+  color: #576f3c;
+}
+.scope-mark.scope-international {
+  background: #dbe9ec;
+  color: #2f5c66;
+}
+.scope-text {
+  flex: 1;
+  min-width: 0;
+}
+.scope-text b {
+  display: block;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scope-text small {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+  color: #7c8c6d;
+}
+.scope-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5d6e5f;
+  background: #f3f5f0;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.scope-switch button.selected .scope-count {
+  background: #fff;
+}
+@media (max-width: 720px) {
+  .scope-switch {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .scope-switch button {
+    min-height: 56px;
+    padding: 10px;
+    gap: 8px;
+  }
+  .scope-text b {
+    font-size: 12px;
+  }
+  .scope-text small {
+    display: none;
+  }
+  .scope-mark {
+    width: 30px;
+    height: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scope-switch button {
+    transition: none;
+  }
 }

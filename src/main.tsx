@@ -44,8 +44,10 @@ import {
   coverLabels,
   statusLabels,
   uid,
+  countByScope,
+  matchesScope,
 } from "./model";
-import type { Trip } from "./model";
+import type { ScopeFilter, Trip } from "./model";
 import {
   fetchTrips,
   localKey,
@@ -58,19 +60,16 @@ import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
-type Page =
-  "home" | "national" | "trips" | "explore" | "map" | "history" | "profile";
+type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
   { id: "trips", label: "Minhas viagens", icon: Compass },
-  { id: "national", label: "Viagens nacionais", icon: MapPin },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
 ] as const;
 const pageTitles = {
-  national: "O Brasil também é seu próximo destino.",
   home: "Seu próximo caminho começa aqui.",
   trips: "Todos os seus próximos capítulos.",
   explore: "Encontre o que faz a viagem valer.",
@@ -90,6 +89,7 @@ function App() {
     [notice, setNotice] = useState(""),
     [search, setSearch] = useState(""),
     [filter, setFilter] = useState("all"),
+    [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all"),
     [day, setDay] = useState(1),
     [menu, setMenu] = useState(false),
     [session, setSession] = useState<Session | null>(null),
@@ -162,6 +162,7 @@ function App() {
     setMenu(false);
     setSearch("");
     setFilter("all");
+    setScopeFilter("all");
   };
   async function save(t: Trip) {
     setBusy(true);
@@ -239,13 +240,13 @@ function App() {
     a.click();
     URL.revokeObjectURL(url);
   }
-  const visible = trips.filter(
+  const pageTrips = trips.filter((t) =>
+    page === "history" ? t.status === "past" : t.status !== "past",
+  );
+  const scopeCounts = countByScope(pageTrips);
+  const visible = pageTrips.filter(
     (t) =>
-      (page === "national"
-        ? t.scope === "national"
-        : page === "history"
-          ? t.status === "past"
-          : t.status !== "past") &&
+      matchesScope(t, scopeFilter) &&
       (filter === "all" || t.status === filter) &&
       (t.title + " " + t.destination)
         .toLowerCase()
@@ -1429,36 +1430,58 @@ function App() {
                   </div>
                 </>
               )}
-              {(page === "trips" ||
-                page === "history" ||
-                page === "national") && (
+              {(page === "trips" || page === "history") && (
                 <>
-                  {page === "trips" && (
-                    <button
-                      className="national-shortcut"
-                      onClick={() => go("national")}
-                    >
-                      <span className="brazil-mark">BR</span>
-                      <span>
-                        <b>Viagens nacionais</b>
-                        <small>Seus caminhos pelo Brasil</small>
-                      </span>
-                      <ArrowRight size={19} />
-                    </button>
-                  )}
+                  <div
+                    className="scope-switch"
+                    role="group"
+                    aria-label="Tipo de viagem"
+                  >
+                    {(
+                      [
+                        ["all", "Todas", "Nacionais e internacionais"],
+                        ["national", "Nacionais", "Pelo Brasil"],
+                        ["international", "Internacionais", "Pelo mundo"],
+                        ["undecided", "Sem tipo", "Ainda não definido"],
+                      ] as const
+                    )
+                      .filter(
+                        ([k]) =>
+                          k !== "undecided" ||
+                          scopeCounts.undecided > 0 ||
+                          scopeFilter === "undecided",
+                      )
+                      .map(([k, label, hint]) => (
+                        <button
+                          key={k}
+                          aria-pressed={scopeFilter === k}
+                          className={scopeFilter === k ? "selected" : ""}
+                          onClick={() => setScopeFilter(k)}
+                        >
+                          <span className={"scope-mark scope-" + k}>
+                            {k === "national" ? (
+                              "BR"
+                            ) : k === "international" ? (
+                              <Globe2 size={17} />
+                            ) : k === "undecided" ? (
+                              <Compass size={17} />
+                            ) : (
+                              <Plane size={17} />
+                            )}
+                          </span>
+                          <span className="scope-text">
+                            <b>{label}</b>
+                            <small>{hint}</small>
+                          </span>
+                          <span className="scope-count">{scopeCounts[k]}</span>
+                        </button>
+                      ))}
+                  </div>
                   <div className="filter-bar">
                     <div className="tabs">
                       {(page === "history"
                         ? [["all", "Todas as anteriores"]]
-                        : page === "national"
-                          ? [
-                              ["all", "Todas no Brasil"],
-                              ["planning", "Em planejamento"],
-                              ["upcoming", "Próximas"],
-                              ["active", "Em andamento"],
-                              ["past", "Anteriores"],
-                            ]
-                          : [
+                        : [
                               ["all", "Todas"],
                               ["planning", "Em planejamento"],
                               ["upcoming", "Próximas"],
@@ -1493,14 +1516,21 @@ function App() {
                         title={
                           search
                             ? "Nenhuma viagem encontrada"
-                            : page === "history"
+                            : scopeFilter === "national"
+                              ? "Nenhuma viagem nacional por aqui"
+                              : scopeFilter === "international"
+                                ? "Nenhuma viagem internacional por aqui"
+                                : page === "history"
                               ? "Seus caminhos anteriores, organizados"
                               : "Espaço para o seu próximo destino"
                         }
                         text={
                           search
                             ? "Tente outro nome ou destino."
-                            : page === "history"
+                            : scopeFilter === "national" ||
+                                scopeFilter === "international"
+                              ? "Cadastre uma nova ou defina o tipo de uma viagem existente na aba Informações."
+                              : page === "history"
                               ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
                               : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
                         }
@@ -1791,7 +1821,7 @@ function App() {
         </main>
         <nav className="mobile-nav">
           {nav
-            .filter((n) => !["history", "national"].includes(n.id))
+            .filter((n) => n.id !== "history")
             .map((n) => (
               <button
                 key={n.id}
@@ -1899,7 +1929,7 @@ function App() {
                   <select
                     name="scope"
                     defaultValue={
-                      page === "national" ? "national" : "undecided"
+                      scopeFilter === "all" ? "undecided" : scopeFilter
                     }
                   >
                     <option value="undecided">Ainda não defini</option>
