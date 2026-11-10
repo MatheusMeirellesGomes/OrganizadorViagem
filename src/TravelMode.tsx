@@ -12,6 +12,7 @@ import {
   Navigation,
   WifiOff,
 } from "lucide-react";
+import { directionsLink, transportLabels, type Transport } from "./routes";
 import { staysOnDate, stayDirections } from "./stays";
 import { calendarDate } from "./travel-mode";
 import type { Activity, Trip } from "./model";
@@ -20,7 +21,6 @@ import {
   dayLabel,
   dayProgress,
   hasTravelInformation,
-  navigationUrl,
   nextActivity,
   safeExternalUrl,
   toggleVisited,
@@ -45,6 +45,7 @@ export function TravelMode({
   online,
   busy,
 }: Props) {
+  const [transport, setTransport] = useState<Transport>("walking");
   const heading = useRef<HTMLHeadingElement>(null),
     daysRef = useRef<HTMLElement>(null),
     [feedback, setFeedback] = useState(""),
@@ -115,7 +116,7 @@ export function TravelMode({
     );
   }
   function directions(activity: Activity) {
-    const url = navigationUrl(activity);
+    const url = directionsLink(activity, transport);
     return url ? externalLink(url, "Como chegar") : null;
   }
   return (
@@ -181,6 +182,19 @@ export function TravelMode({
           aria-label="Progresso das atividades do dia"
         />
       )}
+      <label className="tm-transport">
+        Como você vai?
+        <select
+          value={transport}
+          onChange={(e) => setTransport(e.target.value as Transport)}
+        >
+          {Object.entries(transportLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
       {next ? (
         <aside className="tm-next">
           <span className="tm-next-icon">
@@ -388,7 +402,9 @@ export function TravelMode({
               <section>
                 <h3>Reservas da viagem</h3>
                 <p className="tm-help">
-                  {trip.reservations.some(r=>r.activityId||r.stayId)?"Vínculos definidos por você no planejamento.":"Reservas gerais, sem vínculo automático com as atividades."}
+                  {trip.reservations.some((r) => r.activityId || r.stayId)
+                    ? "Vínculos definidos por você no planejamento."
+                    : "Reservas gerais, sem vínculo automático com as atividades."}
                 </p>
                 {trip.reservations.map((reservation) => (
                   <article className="tm-reservation" key={reservation.id}>

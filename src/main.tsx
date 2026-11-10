@@ -67,6 +67,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { RoutePlanner } from "./RoutePlanner";
 import { SavedPlaces } from "./SavedPlaces";
 import { Catalog } from "./Catalog";
 import { portableTrips } from "./backup";
@@ -1098,26 +1099,31 @@ function App() {
                   </div>
                 )}
                 {tab === "Mapa" && (
-                  <section className="panel">
-                    <div className="section-head">
-                      <div>
-                        <h2>O destino no mapa</h2>
-                        <p>
-                          Toque para marcar a localização principal desta
-                          viagem.
-                        </p>
+                  <>
+                    <RoutePlanner trip={trip} day={day} onDayChange={setDay} />
+                    <section className="panel">
+                      <div className="section-head">
+                        <div>
+                          <h2>O destino no mapa</h2>
+                          <p>
+                            Toque para marcar a localização principal desta
+                            viagem.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <TravelMap
-                      trips={[trip]}
-                      selectable
-                      onPick={(point) => save({ ...trip, coordinates: point })}
-                    />
-                    <p className="subtle">
-                      Os trajetos por ruas continuam disponíveis no Google Maps,
-                      pelos endereços das atividades.
-                    </p>
-                  </section>
+                      <TravelMap
+                        trips={[trip]}
+                        selectable
+                        onPick={(point) =>
+                          save({ ...trip, coordinates: point })
+                        }
+                      />
+                      <p className="subtle">
+                        Os trajetos por ruas continuam disponíveis no Google
+                        Maps, pelos endereços das atividades.
+                      </p>
+                    </section>
+                  </>
                 )}
                 {tab === "Informações" && (
                   <form

@@ -88,3 +88,36 @@
 .swipe-card {
   touch-action: pan-y;
 }
+
+.route-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #244f43;
+  color: white;
+  border: 3px solid white;
+  border-radius: 50%;
+  font-weight: 700;
+  box-shadow: 0 2px 6px #0004;
+}
+.route-pin.stay {
+  background: #365d88;
+  border-radius: 9px;
+}
+.route-pin.food {
+  background: #a85d3a;
+}
+.route-pin.visited {
+  background: #aa824c;
+}
+.route-pin.group {
+  background: #496b55;
+  border: 3px solid #d7e8d1;
+}
+.route-map {
+  min-height: 360px;
+}
+.tm-transport {
+  max-width: 400px;
+  margin: 20px 0;
+}
