@@ -67,6 +67,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { SavedPlaces } from "./SavedPlaces";
 import { Catalog } from "./Catalog";
 import { portableTrips } from "./backup";
 import { DocumentsPanel } from "./DocumentsPanel";
@@ -794,6 +795,7 @@ function App() {
                   {[
                     "Roteiro",
                     "Calendário",
+                    "Lugares",
                     "Mapa",
                     "Informações",
                     "Hospedagens",
@@ -812,6 +814,9 @@ function App() {
                     </button>
                   ))}
                 </div>
+                {tab === "Lugares" && (
+                  <SavedPlaces trip={trip} onSave={save} busy={busy} />
+                )}
                 {tab === "Calendário" && (
                   <TripCalendar
                     trip={trip}

@@ -1,3 +1,5 @@
+import { ChoiceButtons } from "./ChoiceButtons";
+import { choosePlace } from "./choices";
 import { useState } from "react";
 import { MapPin, Search, Compass } from "lucide-react";
 import { TravelMap } from "./TravelMap";
@@ -442,6 +444,21 @@ export function Catalog({
                   </p>
                 )}
                 <PlaceDetails place={p} />
+                <ChoiceButtons
+                  value={
+                    trips
+                      .find((t) => t.id === targetTrip)
+                      ?.placeChoices?.find((c) => c.place.id === p.id)?.decision
+                  }
+                  disabled={!targetTrip || busy || saving}
+                  onChoose={async (decision) => {
+                    const t = trips.find((t) => t.id === targetTrip);
+                    if (t && (await onSave(choosePlace(t, p, decision))))
+                      setMessage(
+                        "Decisão salva. Veja seus lugares dentro da viagem.",
+                      );
+                  }}
+                />
                 <button
                   className="secondary"
                   disabled={!targetTrip || busy || saving}

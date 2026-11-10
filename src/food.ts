@@ -33,7 +33,11 @@ export function nearestPlaces(places: Place[], point?: Point) {
       )
     : places;
 }
-export function addPlaceToTrip(trip: Trip, place: Place, day: number): Trip {
+export function addPlaceToTrip(
+  trip: Trip,
+  place: import("./choices").SavedPlace,
+  day: number,
+): Trip {
   if (!Number.isInteger(day) || day < 1 || day > 3660)
     throw new Error("Escolha um dia válido.");
   if (trip.activities.some((a) => a.placeId === place.id && a.day === day))

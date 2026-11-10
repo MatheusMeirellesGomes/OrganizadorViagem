@@ -34,6 +34,7 @@ export type TripDocument = {
   reservationId?: string;
 };
 export type Trip = {
+  placeChoices?: import("./choices").PlaceChoice[];
   documents?: TripDocument[];
   stays?: Stay[];
   party?: {

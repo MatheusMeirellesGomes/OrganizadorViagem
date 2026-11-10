@@ -75,3 +75,16 @@
     font-size: 22px;
   }
 }
+
+.choice-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.choice-buttons button {
+  min-height: 44px;
+}
+.swipe-card {
+  touch-action: pan-y;
+}

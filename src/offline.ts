@@ -194,6 +194,49 @@ export function parseBackup(raw: string): Trip[] {
           url: /^https?:\/\//i.test(text(r.url)) ? text(r.url) : "",
         };
       });
+    trip.placeChoices = list(v.placeChoices)
+      .map(object)
+      .filter(
+        (c) =>
+          ["want", "maybe", "skip", "visited"].includes(text(c.decision)) &&
+          text(object(c.place).id) &&
+          text(object(c.place).name),
+      )
+      .map((c) => {
+        const p = object(c.place),
+          co = object(p.coordinates);
+        return {
+          decision: c.decision as import("./choices").Decision,
+          decidedAt: text(c.decidedAt),
+          place: {
+            id: text(p.id),
+            name: text(p.name),
+            address: text(p.address),
+            city: text(p.city),
+            country: text(p.country),
+            category: text(p.category, "other"),
+            source: /^https?:\/\//i.test(text(p.source)) ? text(p.source) : "",
+            website: /^https?:\/\//i.test(text(p.website))
+              ? text(p.website)
+              : undefined,
+            retrievedAt: text(p.retrievedAt),
+            updatedAt: text(p.updatedAt) || undefined,
+            tags: Object.fromEntries(
+              Object.entries(object(p.tags)).filter(
+                (entry): entry is [string, string] =>
+                  typeof entry[1] === "string",
+              ),
+            ),
+            coordinates:
+              typeof co.lat === "number" &&
+              typeof co.lng === "number" &&
+              Math.abs(co.lat) <= 90 &&
+              Math.abs(co.lng) <= 180
+                ? { lat: co.lat, lng: co.lng }
+                : undefined,
+          },
+        };
+      });
     trip.documents = list(v.documents)
       .map(object)
       .filter((d) => validDocumentData(text(d.url)))
