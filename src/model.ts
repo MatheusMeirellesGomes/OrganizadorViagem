@@ -1,4 +1,7 @@
 export type Activity = {
+  placeId?: string;
+  source?: string;
+  coordinates?: { lat: number; lng: number };
   period?: "morning" | "afternoon" | "evening" | "any";
   id: string;
   title: string;

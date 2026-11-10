@@ -1782,7 +1782,9 @@ function App() {
                   )}
                 </>
               )}
-              {page === "explore" && <Catalog trips={trips} />}
+              {page === "explore" && (
+                <Catalog trips={trips} onSave={save} saving={busy} />
+              )}
               {page === "map" && (
                 <section className="panel world-panel">
                   <div className="section-head">

@@ -66,7 +66,9 @@ export function toggleVisited(trip: Trip, activityId: string): Trip {
   };
 }
 export function navigationUrl(activity: Activity): string | undefined {
-  const address = activity.address?.trim();
+  const address = activity.coordinates
+    ? `${activity.coordinates.lat},${activity.coordinates.lng}`
+    : activity.address?.trim();
   return address
     ? "https://www.google.com/maps/dir/?api=1&destination=" +
         encodeURIComponent(address)

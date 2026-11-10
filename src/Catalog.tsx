@@ -2,7 +2,16 @@ import { useState } from "react";
 import { MapPin, Search, Compass } from "lucide-react";
 import { TravelMap } from "./TravelMap";
 import type { Trip } from "./model";
-import { categories, feeLabel, type Place, type Point } from "./places";
+import { foodMatches, nearestPlaces, isFood, addPlaceToTrip } from "./food";
+import { safeExternalUrl } from "./travel-mode";
+import {
+  categories,
+  feeLabel,
+  distanceKm,
+  type CatalogKind,
+  type Place,
+  type Point,
+} from "./places";
 import {
   searchCatalog,
   locateDestination,
@@ -19,9 +28,9 @@ export function PlaceDetails({ place: p }: { place: Place }) {
           {[p.address, p.city, p.country].filter(Boolean).join(" · ") ||
             "Não informado"}
         </dd>
-        <dt>Entrada</dt>
+        <dt>{isFood(p) ? "Preço" : "Entrada"}</dt>
         <dd>
-          {feeLabel(p)}
+          {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
           {p.tags.charge && (
             <p>Valor cadastrado (confirme na fonte): {p.tags.charge}</p>
           )}
@@ -38,6 +47,10 @@ export function PlaceDetails({ place: p }: { place: Place }) {
           ["Acessibilidade", p.tags.wheelchair],
           ["Banheiros", p.tags.toilets],
           ["Reserva", p.tags.reservation],
+          ["Culinária", p.tags.cuisine],
+          ["Telefone", p.tags.phone || p.tags["contact:phone"]],
+          ["Vegetariano", p.tags["diet:vegetarian"]],
+          ["Vegano", p.tags["diet:vegan"]],
         ]
           .filter(([, v]) => v)
           .map(([label, value]) => (
@@ -48,6 +61,19 @@ export function PlaceDetails({ place: p }: { place: Place }) {
           ))}
       </dl>
       <div className="tm-actions">
+        {safeExternalUrl(
+          p.tags["website:menu"] || p.tags["contact:menu"] || "",
+        ) && (
+          <a
+            href={safeExternalUrl(
+              p.tags["website:menu"] || p.tags["contact:menu"],
+            )}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Cardápio cadastrado
+          </a>
+        )}
         {p.website && (
           <a href={p.website} target="_blank" rel="noreferrer">
             Site cadastrado
@@ -75,7 +101,22 @@ export function PlaceDetails({ place: p }: { place: Place }) {
     </details>
   );
 }
-export function Catalog({ trips }: { trips: Trip[] }) {
+export function Catalog({
+  trips,
+  onSave,
+  saving,
+}: {
+  trips: Trip[];
+  onSave: (t: Trip) => Promise<boolean>;
+  saving: boolean;
+}) {
+  const [kind, setKind] = useState<CatalogKind>("attractions"),
+    [cuisine, setCuisine] = useState(""),
+    [diet, setDiet] = useState(""),
+    [meal, setMeal] = useState(""),
+    [sort, setSort] = useState("name"),
+    [targetTrip, setTargetTrip] = useState(""),
+    [targetDay, setTargetDay] = useState(1);
   const [point, setPoint] = useState<Point>(),
     [destination, setDestination] = useState(""),
     [located, setLocated] = useState(""),
@@ -87,13 +128,16 @@ export function Catalog({ trips }: { trips: Trip[] }) {
     [query, setQuery] = useState(""),
     [fee, setFee] = useState("all"),
     [limit, setLimit] = useState(24);
-  const places = (result?.places || []).filter(
+  const filtered = (result?.places || []).filter(
     (p) =>
       (category === "all" || p.category === category) &&
       (!query ||
         p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())) &&
-      (fee === "all" || p.tags.fee === fee),
+      (fee === "all" || p.tags.fee === fee) &&
+      (kind !== "food" || foodMatches(p, { cuisine, diet, meal })),
   );
+  const places =
+    sort === "distance" ? nearestPlaces(filtered, point) : filtered;
   async function locate() {
     setBusy(true);
     setMessage("");
@@ -120,6 +164,24 @@ export function Catalog({ trips }: { trips: Trip[] }) {
             <p>Busque uma cidade ou escolha uma região no mapa.</p>
           </div>
           <Compass size={30} />
+        </div>
+        <div className="tm-actions">
+          {(["attractions", "food"] as CatalogKind[]).map((k) => (
+            <button
+              key={k}
+              className={k === kind ? "primary" : "secondary"}
+              aria-pressed={k === kind}
+              disabled={busy}
+              onClick={() => {
+                setKind(k);
+                setResult(undefined);
+                setFee("all");
+                setCategory("all");
+              }}
+            >
+              {k === "food" ? "Restaurantes e cafés" : "Atrações e passeios"}
+            </button>
+          ))}
         </div>
         <form
           className="catalog-search"
@@ -184,7 +246,7 @@ export function Catalog({ trips }: { trips: Trip[] }) {
               setBusy(true);
               setMessage("");
               try {
-                const r = await searchCatalog(point, radius, "attractions");
+                const r = await searchCatalog(point, radius, kind);
                 setResult(r);
                 setLimit(24);
                 setCategory("all");
@@ -197,7 +259,11 @@ export function Catalog({ trips }: { trips: Trip[] }) {
               }
             }}
           >
-            {busy ? "Consultando…" : "Buscar atrações nesta região"}
+            {busy
+              ? "Consultando…"
+              : kind === "food"
+                ? "Buscar restaurantes nesta região"
+                : "Buscar atrações nesta região"}
           </button>
         </div>
         <p className="subtle">
@@ -209,7 +275,10 @@ export function Catalog({ trips }: { trips: Trip[] }) {
         <a
           href={
             "https://www.google.com/maps/search/?api=1&query=" +
-            encodeURIComponent(destination || "atrações turísticas")
+            encodeURIComponent(
+              (kind === "food" ? "restaurantes " : "atrações turísticas ") +
+                destination,
+            )
           }
           target="_blank"
           rel="noreferrer"
@@ -275,13 +344,126 @@ export function Catalog({ trips }: { trips: Trip[] }) {
               </select>
             </label>
           </div>
+          {kind === "food" && (
+            <>
+              <div className="catalog-filters">
+                <label>
+                  Culinária
+                  <input
+                    placeholder="Ex.: italian, brazilian"
+                    value={cuisine}
+                    onChange={(e) => {
+                      setCuisine(e.target.value);
+                      setLimit(24);
+                    }}
+                  />
+                </label>
+                <label>
+                  Preferência alimentar
+                  <select
+                    value={diet}
+                    onChange={(e) => {
+                      setDiet(e.target.value);
+                      setLimit(24);
+                    }}
+                  >
+                    <option value="">Todas · inclusive sem informação</option>
+                    <option value="vegetarian">Vegetariana informada</option>
+                    <option value="vegan">Vegana informada</option>
+                  </select>
+                </label>
+                <label>
+                  Refeição cadastrada
+                  <select
+                    value={meal}
+                    onChange={(e) => {
+                      setMeal(e.target.value);
+                      setLimit(24);
+                    }}
+                  >
+                    <option value="">Todas</option>
+                    <option value="breakfast">Café da manhã</option>
+                    <option value="lunch">Almoço</option>
+                    <option value="dinner">Jantar</option>
+                  </select>
+                </label>
+              </div>
+              <p className="subtle">
+                Filtros usam apenas informações cadastradas. Faixa de custo e
+                avaliações não estão disponíveis nesta fonte.
+              </p>
+            </>
+          )}
+          <div className="catalog-filters">
+            <label>
+              Ordenar
+              <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                <option value="name">Nome</option>
+                <option value="distance">Proximidade do ponto escolhido</option>
+              </select>
+            </label>
+            <label>
+              Adicionar à viagem
+              <select
+                value={targetTrip}
+                onChange={(e) => setTargetTrip(e.target.value)}
+              >
+                <option value="">Escolha uma viagem</option>
+                {trips.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Dia do roteiro
+              <input
+                type="number"
+                min="1"
+                max="3660"
+                value={targetDay}
+                onChange={(e) => setTargetDay(Number(e.target.value))}
+              />
+            </label>
+          </div>
           <div className="catalog-grid">
             {places.slice(0, limit).map((p) => (
               <article className="panel place-card" key={p.id}>
                 <span className="eyebrow">{categories[p.category]}</span>
                 <h3>{p.name}</h3>
-                <p>{feeLabel(p)}</p>
+                <p>
+                  {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
+                </p>
+                {point && (
+                  <p>
+                    {distanceKm(point, p.coordinates).toFixed(1)} km em linha
+                    reta do ponto escolhido
+                  </p>
+                )}
                 <PlaceDetails place={p} />
+                <button
+                  className="secondary"
+                  disabled={!targetTrip || busy || saving}
+                  onClick={async () => {
+                    const t = trips.find((t) => t.id === targetTrip);
+                    if (!t) return;
+                    try {
+                      if (await onSave(addPlaceToTrip(t, p, targetDay)))
+                        setMessage(
+                          p.name + " adicionado ao dia " + targetDay + ".",
+                        );
+                    } catch (e) {
+                      setMessage(
+                        e instanceof Error
+                          ? e.message
+                          : "Não foi possível adicionar.",
+                      );
+                    }
+                  }}
+                >
+                  Adicionar ao roteiro
+                </button>
               </article>
             ))}
           </div>

@@ -131,6 +131,20 @@ export function parseBackup(raw: string): Trip[] {
       return {
         id,
         title: text(a.title, "Atividade"),
+        placeId: text(a.placeId) || undefined,
+        source: /^https?:\/\//i.test(text(a.source))
+          ? text(a.source)
+          : undefined,
+        coordinates:
+          typeof object(a.coordinates).lat === "number" &&
+          typeof object(a.coordinates).lng === "number" &&
+          Math.abs(Number(object(a.coordinates).lat)) <= 90 &&
+          Math.abs(Number(object(a.coordinates).lng)) <= 180
+            ? {
+                lat: Number(object(a.coordinates).lat),
+                lng: Number(object(a.coordinates).lng),
+              }
+            : undefined,
         day: Math.max(1, Math.min(365, Number(a.day) || 1)),
         time: text(a.time),
         address: text(a.address),
