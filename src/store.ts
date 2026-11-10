@@ -1,9 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Trip } from "./model";
-const env = (import.meta as unknown as { env: Record<string, string> }).env;
+import { readSupabaseConfig } from "./config";
+const env =
+  (import.meta as unknown as { env?: Record<string, string | undefined> }).env ??
+  {};
+export const supabaseConfig = readSupabaseConfig(env);
+if (supabaseConfig.status === "invalid")
+  console.warn("Supabase desativado:", supabaseConfig.reason);
 export const supabase =
-  env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY
-    ? createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY)
+  supabaseConfig.status === "ok"
+    ? createClient(supabaseConfig.url, supabaseConfig.key, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      })
     : null;
 export const localKey = "atlas-trips-v1";
 export function readLocal(): Trip[] {
