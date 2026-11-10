@@ -1,5 +1,6 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { assertPublicBuildConfig } from "./src/config";
 // Cache only our app shell. No Supabase responses, photos, maps, or credentials.
 function offlineShell(): Plugin {
   return {
@@ -38,7 +39,9 @@ self.addEventListener('fetch',event=>{
     },
   };
 }
-export default defineConfig({
+export default defineConfig(({mode}) => {
+  assertPublicBuildConfig(loadEnv(mode, process.cwd(), "VITE_"));
+  return {
   plugins: [react(), offlineShell()],
   build: {
     rollupOptions: {
@@ -50,4 +53,5 @@ export default defineConfig({
       },
     },
   },
+};
 });

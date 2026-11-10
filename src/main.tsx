@@ -280,7 +280,7 @@ function App() {
       if (session && repository) {
         if (accountSource === "cache" || !online)
           throw new Error("offline");
-        await repository.remove(t.id);
+        await repository.remove(t.id, versions.current[t.id]);
         delete versions.current[t.id];
         cacheTrips(session.user.id, next);
       } else saveLocal(next);
@@ -288,6 +288,7 @@ function App() {
       setSelected(null);
       setNotice("Viagem excluída.");
     } catch (e) {
+      if (e instanceof ConflictError) setStaleTrip(true);
       setNotice(
         friendlyError(
           e instanceof Error && e.message === "offline"

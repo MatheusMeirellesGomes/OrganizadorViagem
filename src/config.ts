@@ -41,7 +41,7 @@ export function readSupabaseConfig(env: Env): SupabaseConfig {
     return { status: "invalid", reason: "VITE_SUPABASE_URL não é uma URL válida." };
   }
   const local = ["localhost", "127.0.0.1"].includes(parsed.hostname);
-  if (parsed.protocol !== "https:" && !local)
+  if (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:"))
     return {
       status: "invalid",
       reason: "VITE_SUPABASE_URL precisa usar https://.",
@@ -53,4 +53,10 @@ export function readSupabaseConfig(env: Env): SupabaseConfig {
         "A chave informada é secreta (service_role). Use apenas a chave pública anon/publishable no navegador.",
     };
   return { status: "ok", url: parsed.origin, key };
+}
+
+/** Run before Vite replaces public env values: reject secrets before emitting assets. */
+export function assertPublicBuildConfig(env: Record<string, string | undefined>) {
+  const config = readSupabaseConfig(env);
+  if (config.status === "invalid") throw new Error("Configuração pública inválida: " + config.reason);
 }

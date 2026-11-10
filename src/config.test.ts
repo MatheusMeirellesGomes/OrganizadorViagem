@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSecretKey, readSupabaseConfig } from "./config";
+import { isSecretKey, readSupabaseConfig, assertPublicBuildConfig } from "./config";
 
 const jwt = (payload: object) =>
   [
@@ -64,4 +64,10 @@ describe("Supabase configuration", () => {
       }).status,
     ).toBe("ok");
   });
+});
+
+it("blocks a secret before bundling and accepts an unconfigured local build",()=>{
+ expect(()=>assertPublicBuildConfig({})).not.toThrow();
+ expect(()=>assertPublicBuildConfig({VITE_SUPABASE_URL:"https://test.supabase.co",VITE_SUPABASE_ANON_KEY:"sb_secret_test"})).toThrow();
+ expect(readSupabaseConfig({VITE_SUPABASE_URL:"ftp://localhost",VITE_SUPABASE_ANON_KEY:"x"}).status).toBe("invalid");
 });

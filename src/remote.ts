@@ -15,7 +15,7 @@ export interface TripRepository {
    * Throws ConflictError otherwise, so another device's edits are never overwritten.
    */
   update(trip: Trip, expectedUpdatedAt: string): Promise<RemoteRow>;
-  remove(id: string): Promise<void>;
+  remove(id: string, expectedUpdatedAt?: string): Promise<void>;
   /** Uploads a photo; an already existing object at the same path counts as success. */
   uploadPhoto(path: string, file: Blob, contentType: string): Promise<void>;
 }
@@ -62,9 +62,12 @@ export function supabaseRepository(client: SupabaseClient): TripRepository {
       if (!data || data.length !== 1) throw new ConflictError();
       return data[0] as RemoteRow;
     },
-    async remove(id) {
-      const { error } = await client.from("trips").delete().eq("id", id);
+    async remove(id, expectedUpdatedAt) {
+      let query = client.from("trips").delete().eq("id", id);
+      if (expectedUpdatedAt) query = query.eq("updated_at", expectedUpdatedAt);
+      const { data, error } = await query.select("id");
       if (error) throw error;
+      if (expectedUpdatedAt && data?.length !== 1) throw new ConflictError();
     },
     async uploadPhoto(path, file, contentType) {
       const { error } = await client.storage

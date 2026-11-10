@@ -139,3 +139,9 @@ describe("offline copy of the account", () => {
     expect(() => writeAccountCache("user-a", [])).not.toThrow();
   });
 });
+
+it("does not delete a trip changed by another device",async()=>{
+ const {client,calls}=fakeClient({data:[],error:null});
+ await expect(supabaseRepository(client).remove("trip", "old")).rejects.toBeInstanceOf(ConflictError);
+ expect(calls).toContainEqual(["eq",["updated_at","old"]]);
+});
