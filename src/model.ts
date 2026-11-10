@@ -86,3 +86,30 @@ export const coverLabels: Record<keyof typeof pictures, string> = {
   countryside: "Interior e campo",
   waterfall: "Cachoeiras e trilhas",
 };
+
+export type TripScope = NonNullable<Trip["scope"]>;
+export type ScopeFilter = "all" | TripScope;
+export const scopeLabels: Record<TripScope, string> = {
+  national: "Nacional",
+  international: "Internacional",
+  undecided: "Sem tipo definido",
+};
+// Older trips and backups may not have a scope; they stay valid as "undecided".
+export function tripScope(trip: Pick<Trip, "scope">): TripScope {
+  return trip.scope === "national" || trip.scope === "international"
+    ? trip.scope
+    : "undecided";
+}
+export function matchesScope(trip: Pick<Trip, "scope">, filter: ScopeFilter) {
+  return filter === "all" || tripScope(trip) === filter;
+}
+export function countByScope(trips: Pick<Trip, "scope">[]) {
+  const counts: Record<ScopeFilter, number> = {
+    all: trips.length,
+    national: 0,
+    international: 0,
+    undecided: 0,
+  };
+  for (const trip of trips) counts[tripScope(trip)]++;
+  return counts;
+}
