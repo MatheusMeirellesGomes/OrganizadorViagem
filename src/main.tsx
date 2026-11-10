@@ -67,6 +67,9 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { portableTrips } from "./backup";
+import { DocumentsPanel } from "./DocumentsPanel";
+import { prepareTripAssets } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
@@ -315,7 +318,12 @@ function App() {
         let failed = 0;
         for (const t of imported) {
           try {
-            const row = await repository.insert(t, session.user.id);
+            const prepared = await prepareTripAssets(
+              repository,
+              session.user.id,
+              t,
+            );
+            const row = await repository.insert(prepared, session.user.id);
             versions.current[row.id] = row.updated_at;
             saved.push(row.data);
           } catch {
@@ -349,16 +357,48 @@ function App() {
       if (importRef.current) importRef.current.value = "";
     }
   }
-  function exportData() {
-    const blob = new Blob([JSON.stringify({ version: 1, trips }, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "gomes-pelo-mundo-viagens.json";
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportData() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const portable = await portableTrips(trips, async (bucket, path) => {
+        if (!supabase || !session)
+          throw new Error(
+            "Entre na conta de origem para incluir os anexos no backup.",
+          );
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .download(path);
+        if (error || !data)
+          throw new Error(
+            "Um anexo não pôde ser baixado. Confira a conexão e tente novamente. Nenhum backup incompleto foi gerado.",
+          );
+        return data;
+      });
+      const blob = new Blob(
+        [JSON.stringify({ version: 1, trips: portable }, null, 2)],
+        { type: "application/json" },
+      );
+      if (blob.size > 20 * 1024 * 1024)
+        throw new Error(
+          "O backup excede o limite atual de 20 MB. Baixe seus anexos separadamente antes de reduzir o conteúdo.",
+        );
+      const url = URL.createObjectURL(blob),
+        a = document.createElement("a");
+      a.href = url;
+      a.download = "gomes-pelo-mundo-viagens.json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice(
+        "Backup criado com os anexos. Guarde o arquivo em local privado.",
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Não foi possível exportar.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
   const pageTrips = trips.filter((t) =>
     page === "history" ? t.status === "past" : t.status !== "past",
@@ -757,6 +797,7 @@ function App() {
                     "Informações",
                     "Hospedagens",
                     "Reservas",
+                    "Documentos",
                     "Checklist",
                     "Fotos",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
@@ -1170,6 +1211,14 @@ function App() {
                 )}
                 {tab === "Hospedagens" && (
                   <StaysPanel trip={trip} onSave={save} busy={busy} />
+                )}
+                {tab === "Documentos" && (
+                  <DocumentsPanel
+                    trip={trip}
+                    onSave={save}
+                    busy={busy}
+                    userId={session?.user.id}
+                  />
                 )}
                 {tab === "Reservas" && (
                   <section className="panel">

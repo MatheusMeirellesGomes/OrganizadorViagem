@@ -22,7 +22,16 @@ export type Stay = {
   notes: string;
   coordinates?: { lat: number; lng: number };
 };
+export type TripDocument = {
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+  url: string;
+  reservationId?: string;
+};
 export type Trip = {
+  documents?: TripDocument[];
   stays?: Stay[];
   party?: {
     adults?: number;

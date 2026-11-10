@@ -1,3 +1,4 @@
+import { validDocumentData } from "./documents";
 import { newTrip, type Trip, dateLabel, pictures } from "./model";
 export function escapeHtml(text: string) {
   return text.replace(
@@ -164,15 +165,31 @@ export function parseBackup(raw: string): Trip[] {
         amount: Number(x.amount),
         currency: text(x.currency),
       }));
+    const reservationIds = new Map<string, string>();
     trip.reservations = list(v.reservations)
       .map(object)
-      .map((r) => ({
+      .map((r) => {
+        const id = crypto.randomUUID();
+        if (text(r.id)) reservationIds.set(text(r.id), id);
+        return {
+          id,
+          title: text(r.title),
+          details: text(r.details),
+          activityId: activityIds.get(text(r.activityId)),
+          stayId: stayIds.get(text(r.stayId)),
+          url: /^https?:\/\//i.test(text(r.url)) ? text(r.url) : "",
+        };
+      });
+    trip.documents = list(v.documents)
+      .map(object)
+      .filter((d) => validDocumentData(text(d.url)))
+      .map((d) => ({
         id: crypto.randomUUID(),
-        title: text(r.title),
-        details: text(r.details),
-        activityId: activityIds.get(text(r.activityId)),
-        stayId: stayIds.get(text(r.stayId)),
-        url: /^https?:\/\//i.test(text(r.url)) ? text(r.url) : "",
+        name: text(d.name, "Documento"),
+        mime: text(d.url).slice(5).split(";")[0],
+        size: atob(text(d.url).split(",")[1]).length,
+        url: text(d.url),
+        reservationId: reservationIds.get(text(d.reservationId)),
       }));
     trip.photos = list(v.photos)
       .map(object)

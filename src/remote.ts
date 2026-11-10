@@ -17,13 +17,17 @@ export interface TripRepository {
   update(trip: Trip, expectedUpdatedAt: string): Promise<RemoteRow>;
   remove(id: string, expectedUpdatedAt?: string): Promise<void>;
   /** Uploads a photo; an already existing object at the same path counts as success. */
+  uploadDocument?(path: string, file: Blob, contentType: string): Promise<void>;
   uploadPhoto(path: string, file: Blob, contentType: string): Promise<void>;
 }
 
 const columns = "id,data,updated_at";
 export const photoBucket = "trip-photos";
 
-function alreadyExists(error: { message?: string; statusCode?: string | number }) {
+function alreadyExists(error: {
+  message?: string;
+  statusCode?: string | number;
+}) {
   const message = (error.message ?? "").toLowerCase();
   return (
     String(error.statusCode) === "409" ||
@@ -68,6 +72,12 @@ export function supabaseRepository(client: SupabaseClient): TripRepository {
       const { data, error } = await query.select("id");
       if (error) throw error;
       if (expectedUpdatedAt && data?.length !== 1) throw new ConflictError();
+    },
+    async uploadDocument(path, file, contentType) {
+      const { error } = await client.storage
+        .from("trip-documents")
+        .upload(path, file, { contentType, upsert: false });
+      if (error && !alreadyExists(error)) throw error;
     },
     async uploadPhoto(path, file, contentType) {
       const { error } = await client.storage

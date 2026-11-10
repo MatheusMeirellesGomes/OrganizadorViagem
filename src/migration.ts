@@ -32,7 +32,9 @@ const migratedKey = (userId: string) => "gomes-migrado-v1:" + userId;
 
 export function readMigrated(userId: string): Record<string, string> {
   try {
-    const parsed = JSON.parse(localStorage.getItem(migratedKey(userId)) || "{}");
+    const parsed = JSON.parse(
+      localStorage.getItem(migratedKey(userId)) || "{}",
+    );
     return parsed && typeof parsed === "object" && !Array.isArray(parsed)
       ? parsed
       : {};
@@ -41,7 +43,10 @@ export function readMigrated(userId: string): Record<string, string> {
   }
 }
 
-export function rememberMigrated(userId: string, confirmed: Record<string, string>) {
+export function rememberMigrated(
+  userId: string,
+  confirmed: Record<string, string>,
+) {
   try {
     localStorage.setItem(
       migratedKey(userId),
@@ -54,7 +59,8 @@ export function rememberMigrated(userId: string, confirmed: Record<string, strin
 
 /** JSON with sorted keys: Postgres jsonb does not keep key order. */
 export function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+  if (Array.isArray(value))
+    return "[" + value.map(stableStringify).join(",") + "]";
   if (value && typeof value === "object")
     return (
       "{" +
@@ -77,7 +83,10 @@ export const sameTrip = (a: Trip, b: Trip) =>
   stableStringify(a) === stableStringify(b);
 
 /** Local trips not yet confirmed in this account. */
-export function pendingLocalTrips(local: Trip[], migrated: Record<string, string>) {
+export function pendingLocalTrips(
+  local: Trip[],
+  migrated: Record<string, string>,
+) {
   return local.filter((t) => !migrated[t.id]);
 }
 
@@ -87,7 +96,11 @@ export function planMigration(
   migrated: Record<string, string>,
 ): MigrationPlan {
   const byId = new Map(remote.map((r) => [r.id, r.data]));
-  const plan: MigrationPlan = { toSend: [], alreadyInAccount: [], conflicts: [] };
+  const plan: MigrationPlan = {
+    toSend: [],
+    alreadyInAccount: [],
+    conflicts: [],
+  };
   for (const trip of local) {
     const existing = byId.get(trip.id);
     if (migrated[trip.id]) plan.alreadyInAccount.push(trip);
@@ -117,7 +130,11 @@ export function asCopy(trip: Trip, newId: string = uid()): Trip {
   };
 }
 
-async function uploadLocalPhotos(repo: TripRepository, userId: string, trip: Trip) {
+export async function prepareTripAssets(
+  repo: TripRepository,
+  userId: string,
+  trip: Trip,
+) {
   const photos = [];
   for (const photo of trip.photos ?? []) {
     if (!photo.url.startsWith("data:")) {
@@ -129,7 +146,20 @@ async function uploadLocalPhotos(repo: TripRepository, userId: string, trip: Tri
     await repo.uploadPhoto(path, blob, blob.type);
     photos.push({ ...photo, url: path });
   }
-  return { ...trip, photos };
+  const documents = [];
+  for (const doc of trip.documents || []) {
+    if (!doc.url.startsWith("data:")) {
+      documents.push(doc);
+      continue;
+    }
+    if (!repo.uploadDocument)
+      throw new Error("Armazenamento privado de documentos não configurado.");
+    const blob = dataUrlToBlob(doc.url),
+      path = `${userId}/${trip.id}/${doc.id}`;
+    await repo.uploadDocument(path, blob, blob.type);
+    documents.push({ ...doc, url: path });
+  }
+  return { ...trip, photos, ...(trip.documents ? { documents } : {}) };
 }
 
 export async function runMigration(
@@ -141,15 +171,18 @@ export async function runMigration(
   const sent: Record<string, string> = {};
   const result: MigrationResult = { confirmed: {}, conflicts: [], failed: [] };
   for (const original of trips) {
-    const trip = options.asCopies ? asCopy(original, (options.newId ?? uid)()) : original;
+    const trip = options.asCopies
+      ? asCopy(original, (options.newId ?? uid)())
+      : original;
     try {
-      const prepared = await uploadLocalPhotos(repo, userId, trip);
+      const prepared = await prepareTripAssets(repo, userId, trip);
       await repo.insert(prepared, userId);
       sent[original.id] = trip.id;
     } catch (error) {
       const code = (error as { code?: string })?.code;
       if (code === "23505") result.conflicts.push(original);
-      else result.failed.push({ trip: original, message: friendlyError(error) });
+      else
+        result.failed.push({ trip: original, message: friendlyError(error) });
     }
   }
   // Confirm with a fresh read before treating anything as safely migrated.
