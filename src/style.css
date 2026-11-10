@@ -2219,3 +2219,17 @@ dialog .section-head {
     white-space: normal;
   }
 }
+
+/* Scope badge on trip cards, next to the status tag. */
+.tag.scope-tag {
+  margin-left: 6px;
+  font-weight: 600;
+}
+.tag.scope-tag-national {
+  background: #f6ecbfee;
+  color: #576f3c;
+}
+.tag.scope-tag-international {
+  background: #e3eff1ee;
+  color: #2f5c66;
+}

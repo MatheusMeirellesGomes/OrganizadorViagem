@@ -47,6 +47,7 @@ import {
   countByScope,
   matchesScope,
   tripScope,
+  scopeLabels,
 } from "./model";
 import type { ScopeFilter, Trip, TripScope } from "./model";
 import {
@@ -369,6 +370,12 @@ function App() {
           }}
         >
           <span className="tag">{statusLabels[t.status]}</span>
+          {tripScope(t) !== "undecided" && (
+            <span className={"tag scope-tag scope-tag-" + tripScope(t)}>
+              {tripScope(t) === "national" ? "BR " : ""}
+              {scopeLabels[tripScope(t)]}
+            </span>
+          )}
           <span className="card-arrow">
             <ArrowRight size={19} />
           </span>
