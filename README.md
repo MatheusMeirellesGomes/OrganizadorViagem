@@ -32,7 +32,9 @@ npm run preview
 - Download HTML offline com todos os dias, hospedagem, reservas e checklist.
 - PWA com cache da interface em produção; dados locais acessíveis sem rede após a primeira visita.
 - Mapa interativo OpenStreetMap com marcação manual de destinos por viagem.
-- Aba Viagens nacionais, com filtros de status e categoria opcional Nacional/Internacional.
+- Minhas viagens e Histórico organizados por tipo: Todas, Nacionais, Internacionais e Sem tipo, com contador em cada opção e combinados com os filtros de status.
+- Escolha visual de viagem Nacional, Internacional ou "Ainda não sei" no cadastro e na edição. O tipo é opcional; viagens e backups antigos sem tipo continuam válidos.
+- Selo Nacional/Internacional nos cartões das viagens.
 - Pesquisa e trajetos com links para Google Maps.
 - Login e cadastro com Supabase quando configurado.
 
