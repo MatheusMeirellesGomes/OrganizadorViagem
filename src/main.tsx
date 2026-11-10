@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown,
@@ -52,17 +52,24 @@ import {
 } from "./model";
 import type { ScopeFilter, Trip, TripScope } from "./model";
 const localModeKey = "gomes-modo-local";
+const repository = supabase ? supabaseRepository(supabase) : null;
 import {
-  fetchTrips,
   localKey,
-  persistTrip,
   readLocal,
   saveLocal,
   supabase,
 } from "./store";
 import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
-import { friendlyError } from "./errors";
+import { ConflictError, friendlyError } from "./errors";
+import {
+  clearAccountCaches,
+  persistWithVersion,
+  readAccountCache,
+  supabaseRepository,
+  writeAccountCache,
+  type RemoteRow,
+} from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
@@ -106,6 +113,10 @@ function App() {
     [menu, setMenu] = useState(false),
     [session, setSession] = useState<Session | null>(null),
     [loading, setLoading] = useState(!!supabase),
+    // "live": loaded from the account; "cache": read-only copy on this device.
+    [accountSource, setAccountSource] = useState<"live" | "cache">("live"),
+    [loadError, setLoadError] = useState(""),
+    [staleTrip, setStaleTrip] = useState(false),
     [busy, setBusy] = useState(false),
     [online, setOnline] = useState(navigator.onLine),
     [profile, setProfile] = useState(() => {
@@ -118,37 +129,79 @@ function App() {
         return { name: "", style: "No meu ritmo" };
       }
     });
+  const versions = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
   const firstName = profile.name.trim().split(" ")[0];
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => setNotice("Não foi possível verificar sua sessão."))
+      .finally(() => setLoading(false));
     // Token refreshes also fire this event; only a sign-out swaps the data source.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (event === "SIGNED_OUT") {
         setSelected(null);
         setTravelMode(false);
+        versions.current = {};
+        setLoadError("");
+        setStaleTrip(false);
         setTrips(readLocal());
       }
     });
     return () => data.subscription.unsubscribe();
   }, []);
-  useEffect(() => {
-    if (!session) return;
+  const applyRows = (rows: RemoteRow[]) => {
+    versions.current = Object.fromEntries(rows.map((r) => [r.id, r.updated_at]));
+    setTrips(rows.map((r) => r.data));
+  };
+  const cacheTrips = (userId: string, list: Trip[]) =>
+    writeAccountCache(
+      userId,
+      list
+        .filter((t) => versions.current[t.id])
+        .map((t) => ({ id: t.id, data: t, updated_at: versions.current[t.id] })),
+    );
+  const loadAccount = useCallback(async (userId: string) => {
+    if (!repository) return;
     setLoading(true);
-    fetchTrips()
-      .then(setTrips)
-      .catch((e) =>
-        setNotice("Não foi possível carregar suas viagens: " + e.message),
-      )
-      .finally(() => setLoading(false));
-  }, [session?.user.id]);
+    setLoadError("");
+    try {
+      const rows = await repository.list();
+      applyRows(rows);
+      setAccountSource("live");
+      setStaleTrip(false);
+      writeAccountCache(userId, rows);
+    } catch (e) {
+      const cache = readAccountCache(userId);
+      if (cache) {
+        applyRows(cache.rows);
+        setAccountSource("cache");
+        setNotice(
+          "Sem conexão com a conta. Mostrando a cópia salva neste aparelho em " +
+            new Date(cache.savedAt).toLocaleString("pt-BR") +
+            ". Para editar, conecte-se à internet.",
+        );
+      } else
+        setLoadError(
+          friendlyError(e, "Não foi possível carregar suas viagens da conta."),
+        );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (session) loadAccount(session.user.id);
+  }, [session?.user.id, loadAccount]);
+  useEffect(() => {
+    // Back online after showing the offline copy: refresh from the account.
+    if (online && session && accountSource === "cache")
+      loadAccount(session.user.id);
+  }, [online]);
   useEffect(() => {
     const on = () => setOnline(navigator.onLine);
     window.addEventListener("online", on);
@@ -186,12 +239,33 @@ function App() {
       const next = trips.some((x) => x.id === t.id)
         ? trips.map((x) => (x.id === t.id ? t : x))
         : [t, ...trips];
-      if (session) await persistTrip(t, session.user.id);
-      else saveLocal(next);
+      if (session && repository) {
+        if (accountSource === "cache" || !online)
+          throw new Error(
+            "Sem conexão: esta alteração não foi salva. Conecte-se à internet para editar as viagens da sua conta.",
+          );
+        const row = await persistWithVersion(
+          repository,
+          t,
+          session.user.id,
+          versions.current,
+        );
+        versions.current[row.id] = row.updated_at;
+        const saved = next.map((x) => (x.id === row.id ? row.data : x));
+        setTrips(saved);
+        cacheTrips(session.user.id, saved);
+        return true;
+      }
+      saveLocal(next);
       setTrips(next);
       return true;
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Não foi possível salvar.");
+      if (e instanceof ConflictError) setStaleTrip(true);
+      setNotice(
+        e instanceof Error && e.message.startsWith("Sem conexão:")
+          ? e.message
+          : friendlyError(e, "Não foi possível salvar. Tente novamente."),
+      );
       return false;
     } finally {
       setBusy(false);
@@ -201,17 +275,26 @@ function App() {
     if (!confirm(`Excluir “${t.title}”? Esta ação não pode ser desfeita.`))
       return;
     try {
-      if (supabase && session) {
-        const { error } = await supabase.from("trips").delete().eq("id", t.id);
-        if (error) throw error;
-      }
       const next = trips.filter((x) => x.id !== t.id);
-      if (!session) saveLocal(next);
+      if (session && repository) {
+        if (accountSource === "cache" || !online)
+          throw new Error("offline");
+        await repository.remove(t.id);
+        delete versions.current[t.id];
+        cacheTrips(session.user.id, next);
+      } else saveLocal(next);
       setTrips(next);
       setSelected(null);
       setNotice("Viagem excluída.");
-    } catch {
-      setNotice("Não foi possível excluir a viagem.");
+    } catch (e) {
+      setNotice(
+        friendlyError(
+          e instanceof Error && e.message === "offline"
+            ? { message: "Failed to fetch" }
+            : e,
+          "Não foi possível excluir a viagem.",
+        ),
+      );
     }
   }
   async function restoreBackup(file: File | undefined) {
@@ -221,22 +304,42 @@ function App() {
       if (file.size > 20 * 1024 * 1024)
         throw new Error("O limite de importação é 20 MB.");
       const imported = parseBackup(await file.text());
-      if (supabase && session) {
-        const { error } = await supabase.from("trips").insert(
-          imported.map((t) => ({
-            id: t.id,
-            user_id: session.user.id,
-            data: t,
-          })),
+      if (session && repository) {
+        if (accountSource === "cache" || !online)
+          throw { message: "Failed to fetch" };
+        const saved: Trip[] = [];
+        let failed = 0;
+        for (const t of imported) {
+          try {
+            const row = await repository.insert(t, session.user.id);
+            versions.current[row.id] = row.updated_at;
+            saved.push(row.data);
+          } catch {
+            failed++;
+          }
+        }
+        const next = [...saved, ...trips];
+        setTrips(next);
+        cacheTrips(session.user.id, next);
+        setNotice(
+          failed
+            ? `${saved.length} viagens importadas para a conta. ${failed} não puderam ser salvas; tente importar o arquivo novamente.`
+            : `${saved.length} viagens importadas para a conta como novas cópias.`,
         );
-        if (error) throw error;
+        return;
       }
       const next = [...imported, ...trips];
-      if (!session) saveLocal(next);
+      saveLocal(next);
       setTrips(next);
       setNotice(`${imported.length} viagens importadas como novas cópias.`);
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Falha na importação.");
+      setNotice(
+        e instanceof SyntaxError
+          ? "O arquivo não é um JSON válido."
+          : e instanceof Error && !("code" in e)
+            ? e.message
+            : friendlyError(e, "Falha na importação."),
+      );
     } finally {
       setBusy(false);
       if (importRef.current) importRef.current.value = "";
@@ -499,11 +602,13 @@ function App() {
             <span className="storage-badge">
               {session ? <Cloud size={14} /> : <HardDrive size={14} />}
               <span>
-                {!online
-                  ? "Sem conexão"
-                  : session
-                    ? "Conta sincronizada"
-                    : "Salvo neste navegador"}
+                {session && accountSource === "cache"
+                  ? "Cópia offline da conta"
+                  : !online
+                    ? "Sem conexão"
+                    : session
+                      ? "Conta sincronizada"
+                      : "Salvo neste navegador"}
               </span>
             </span>
             <button
@@ -516,11 +621,37 @@ function App() {
           </div>
         </header>
         <main>
+          {staleTrip && session && !loading && (
+            <div className="stale-banner" role="status">
+              <Cloud size={18} />
+              <p>
+                Uma viagem foi alterada em outro aparelho. Nada foi
+                sobrescrito. Recarregue para continuar a partir da versão mais
+                recente.
+              </p>
+              <button
+                className="secondary small"
+                onClick={() => loadAccount(session.user.id)}
+              >
+                Recarregar viagens
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="empty">
               <Compass className="spin" />
               <h2>Preparando seus caminhos…</h2>
             </div>
+          ) : session && loadError ? (
+            <section className="panel account-error" role="alert">
+              <Empty
+                icon={Cloud}
+                title="Não conseguimos abrir suas viagens"
+                text={loadError}
+                action="Tentar novamente"
+                onAction={() => loadAccount(session.user.id)}
+              />
+            </section>
           ) : supabase && !session && !localChoice ? (
             <Auth
               onNotice={setNotice}
@@ -1817,7 +1948,14 @@ function App() {
                     {session ? (
                       <button
                         className="text-button"
-                        onClick={() => supabase!.auth.signOut()}
+                        onClick={async () => {
+                          clearAccountCaches();
+                          const { error } = await supabase!.auth.signOut();
+                          if (error)
+                            setNotice(
+                              friendlyError(error, "Não foi possível sair da conta."),
+                            );
+                        }}
                       >
                         <LogOut size={16} />
                         Sair da conta
