@@ -1,3 +1,4 @@
+import { ItineraryBuilder } from "./ItineraryBuilder";
 import { useRef, useState } from "react";
 import { uid, type Trip } from "./model";
 import {
@@ -41,6 +42,7 @@ export function SavedPlaces({
   }
   return (
     <>
+      <ItineraryBuilder trip={trip} onSave={onSave} busy={busy || pending} />
       <section className="panel">
         <h2>Seus lugares, suas escolhas</h2>
         <p>

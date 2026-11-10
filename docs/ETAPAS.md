@@ -57,3 +57,9 @@ Arquivos: `food.ts`, `food.test.ts`, `Catalog.tsx`, `main.tsx`, `model.ts`, `off
 Decisões persistem por viagem, com botões acessíveis e gestos horizontais (rolagem vertical preservada). Aba interna Lugares filtra escolhas, desfaz mediante confirmação, inclui no roteiro e mostra pontos conhecidos no mapa. Cadastro manual opcional funciona sem API, endereço ou coordenadas. Backup mantém escolhas; desfazer não apaga passeios já adicionados. Catálogo permite decidir após selecionar a viagem.
 
 Arquivos: `choices.ts`, `choices.test.ts`, `ChoiceButtons.tsx`, `SavedPlaces.tsx`, `Catalog.tsx`, `catalog.css`, `food.ts`, `model.ts`, `offline.ts`, `main.tsx`. **83 testes aprovados**, build aprovado; cadastro manual e decisão Talvez preservados após reload no navegador. Limites: nuvem depende da configuração existente; gesto verificado por lógica automatizada, sem teste físico em telefone. Próxima etapa: gerador determinístico de roteiro com prévia editável.
+
+## Etapa 7 — gerador sem IA com prévia editável
+
+Proposta usa Quero ir e opcionalmente Talvez, quantidade de dias (datas sugerem o total), ritmo e proximidade geográfica. Não exige destino/datas/coordenadas. Mostra explicitamente lugares fora da capacidade. Prévia permite editar título/dia/horário/período, reordenar, retirar e descartar. Aceitar acrescenta atividades sem substituir as existentes e evita repetir lugares já presentes.
+
+Arquivos: `itinerary.ts`, `itinerary.test.ts`, `ItineraryBuilder.tsx`, `SavedPlaces.tsx`. **86 testes aprovados**, build aprovado; geração e aceitação verificadas no navegador com lugar manual sem coordenadas. Limites: heurística de proximidade/capacidade, não otimização de trânsito; não calcula horários de abertura, duração, custos ou deslocamentos sem dados confirmados. Isso é informado antes de aceitar. Comparação/substituição de alternativas fica na etapa 13. Próxima etapa: mapas por dia e navegação com modos de transporte.
