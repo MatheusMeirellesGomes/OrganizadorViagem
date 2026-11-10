@@ -31,6 +31,7 @@ import {
   X,
   Plane,
   BookOpen,
+  LogIn,
   LogOut,
   Cloud,
   HardDrive,
@@ -50,6 +51,7 @@ import {
   scopeLabels,
 } from "./model";
 import type { ScopeFilter, Trip, TripScope } from "./model";
+const localModeKey = "gomes-modo-local";
 import {
   fetchTrips,
   localKey,
@@ -60,6 +62,7 @@ import {
 } from "./store";
 import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
+import { friendlyError } from "./errors";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
@@ -84,7 +87,14 @@ function App() {
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
   const [page, setPage] = useState<Page>("home"),
-    [trips, setTrips] = useState<Trip[]>(supabase ? [] : readLocal),
+    [trips, setTrips] = useState<Trip[]>(readLocal),
+    [localChoice, setLocalChoice] = useState(() => {
+      try {
+        return localStorage.getItem(localModeKey) === "1";
+      } catch {
+        return false;
+      }
+    }),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [modal, setModal] = useState<Modal>(null),
@@ -118,10 +128,14 @@ function App() {
       setSession(data.session);
       setLoading(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => {
+    // Token refreshes also fire this event; only a sign-out swaps the data source.
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      setSelected(null);
-      setTrips([]);
+      if (event === "SIGNED_OUT") {
+        setSelected(null);
+        setTravelMode(false);
+        setTrips(readLocal());
+      }
     });
     return () => data.subscription.unsubscribe();
   }, []);
@@ -172,10 +186,8 @@ function App() {
       const next = trips.some((x) => x.id === t.id)
         ? trips.map((x) => (x.id === t.id ? t : x))
         : [t, ...trips];
-      if (supabase) {
-        if (!session) throw new Error("Entre na sua conta para salvar.");
-        await persistTrip(t, session.user.id);
-      } else saveLocal(next);
+      if (session) await persistTrip(t, session.user.id);
+      else saveLocal(next);
       setTrips(next);
       return true;
     } catch (e) {
@@ -189,12 +201,12 @@ function App() {
     if (!confirm(`Excluir “${t.title}”? Esta ação não pode ser desfeita.`))
       return;
     try {
-      if (supabase) {
+      if (supabase && session) {
         const { error } = await supabase.from("trips").delete().eq("id", t.id);
         if (error) throw error;
       }
       const next = trips.filter((x) => x.id !== t.id);
-      if (!supabase) saveLocal(next);
+      if (!session) saveLocal(next);
       setTrips(next);
       setSelected(null);
       setNotice("Viagem excluída.");
@@ -209,8 +221,7 @@ function App() {
       if (file.size > 20 * 1024 * 1024)
         throw new Error("O limite de importação é 20 MB.");
       const imported = parseBackup(await file.text());
-      if (supabase) {
-        if (!session) throw new Error("Entre na conta.");
+      if (supabase && session) {
         const { error } = await supabase.from("trips").insert(
           imported.map((t) => ({
             id: t.id,
@@ -221,7 +232,7 @@ function App() {
         if (error) throw error;
       }
       const next = [...imported, ...trips];
-      if (!supabase) saveLocal(next);
+      if (!session) saveLocal(next);
       setTrips(next);
       setNotice(`${imported.length} viagens importadas como novas cópias.`);
     } catch (e) {
@@ -510,8 +521,18 @@ function App() {
               <Compass className="spin" />
               <h2>Preparando seus caminhos…</h2>
             </div>
-          ) : supabase && !session ? (
-            <Auth onNotice={setNotice} />
+          ) : supabase && !session && !localChoice ? (
+            <Auth
+              onNotice={setNotice}
+              onContinueLocal={() => {
+                try {
+                  localStorage.setItem(localModeKey, "1");
+                } catch {
+                  // Choice lasts only for this visit.
+                }
+                setLocalChoice(true);
+              }}
+            />
           ) : trip ? (
             travelMode ? (
               <TravelMode
@@ -1801,6 +1822,31 @@ function App() {
                         <LogOut size={16} />
                         Sair da conta
                       </button>
+                    ) : supabase ? (
+                      <div className="tip">
+                        <Cloud size={20} />
+                        <div>
+                          <p>
+                            Crie uma conta ou entre para acessar suas viagens
+                            em outros aparelhos. Você poderá enviar as viagens
+                            deste navegador para a conta.
+                          </p>
+                          <button
+                            className="secondary"
+                            onClick={() => {
+                              try {
+                                localStorage.removeItem(localModeKey);
+                              } catch {
+                                // Nothing stored.
+                              }
+                              setLocalChoice(false);
+                            }}
+                          >
+                            <LogIn size={17} />
+                            Entrar ou criar conta
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="tip">
                         <Cloud size={20} />
@@ -2165,7 +2211,13 @@ function routeUrl(t: Trip, day: number) {
     encodeURIComponent(stops.slice(1, -1).join("|"))
   );
 }
-function Auth({ onNotice }: { onNotice: (s: string) => void }) {
+function Auth({
+  onNotice,
+  onContinueLocal,
+}: {
+  onNotice: (s: string) => void;
+  onContinueLocal: () => void;
+}) {
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false);
   return (
@@ -2180,16 +2232,26 @@ function Auth({ onNotice }: { onNotice: (s: string) => void }) {
             email: String(f.get("email")),
             password: String(f.get("password")),
           };
-          const { error } = signup
-            ? await supabase!.auth.signUp(credentials)
+          const { data, error } = signup
+            ? await supabase!.auth.signUp({
+                ...credentials,
+                options: { emailRedirectTo: window.location.origin },
+              })
             : await supabase!.auth.signInWithPassword(credentials);
           if (error) throw error;
-          if (signup)
+          if (signup && !data.session)
             onNotice(
-              "Conta criada. Confira seu e-mail para confirmar o cadastro.",
+              "Conta criada. Confira seu e-mail e abra o link de confirmação para entrar.",
             );
         } catch (e) {
-          onNotice(e instanceof Error ? e.message : "Não foi possível entrar.");
+          onNotice(
+            friendlyError(
+              e,
+              signup
+                ? "Não foi possível criar a conta. Tente novamente."
+                : "Não foi possível entrar. Tente novamente.",
+            ),
+          );
         } finally {
           setBusy(false);
         }
@@ -2228,6 +2290,16 @@ function Auth({ onNotice }: { onNotice: (s: string) => void }) {
       >
         {signup ? "Já tenho uma conta" : "Quero criar minha conta"}
       </button>
+      <div className="auth-local">
+        <button className="secondary full" type="button" onClick={onContinueLocal}>
+          <HardDrive size={17} />
+          Continuar sem conta
+        </button>
+        <p className="subtle">
+          Suas viagens ficam salvas só neste navegador. Você pode criar a conta
+          depois, pelo Perfil, e enviar essas viagens para ela.
+        </p>
+      </div>
     </form>
   );
 }

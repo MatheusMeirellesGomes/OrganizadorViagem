@@ -2259,3 +2259,19 @@ input[type="date"]::-webkit-date-and-time-value {
     gap: 0;
   }
 }
+
+/* Optional account: local mode stays one tap away. */
+.auth-local {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 4px;
+}
+.auth-local .full {
+  margin-top: 16px;
+}
+.auth-local .subtle {
+  text-align: center;
+}
+.tip > div > .secondary {
+  margin-top: 12px;
+}
