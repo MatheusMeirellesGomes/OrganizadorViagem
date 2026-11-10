@@ -2233,3 +2233,29 @@ dialog .section-head {
   background: #e3eff1ee;
   color: #2f5c66;
 }
+
+/* Date fields: native date inputs have an intrinsic min-width that pushed the
+   second column out of forms on phones. Let grid columns shrink instead. */
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.form-grid > label {
+  min-width: 0;
+}
+input[type="date"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+@media (max-width: 340px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
