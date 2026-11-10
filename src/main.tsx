@@ -57,6 +57,7 @@ import {
 import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { TravelMap, type Coordinates } from "./TravelMap";
+import { TravelMode } from "./TravelMode";
 type Page =
   "home" | "national" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
@@ -78,6 +79,7 @@ const pageTitles = {
   profile: "Uma experiência com a sua cara.",
 };
 function App() {
+  const [travelMode, setTravelMode] = useState(false);
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
   const [page, setPage] = useState<Page>("home"),
@@ -154,6 +156,7 @@ function App() {
     return () => before?.focus();
   }, [modal]);
   const go = (p: Page) => {
+    setTravelMode(false);
     setPage(p);
     setSelected(null);
     setMenu(false);
@@ -205,15 +208,13 @@ function App() {
       const imported = parseBackup(await file.text());
       if (supabase) {
         if (!session) throw new Error("Entre na conta.");
-        const { error } = await supabase
-          .from("trips")
-          .insert(
-            imported.map((t) => ({
-              id: t.id,
-              user_id: session.user.id,
-              data: t,
-            })),
-          );
+        const { error } = await supabase.from("trips").insert(
+          imported.map((t) => ({
+            id: t.id,
+            user_id: session.user.id,
+            data: t,
+          })),
+        );
         if (error) throw error;
       }
       const next = [...imported, ...trips];
@@ -251,6 +252,7 @@ function App() {
         .includes(search.toLowerCase()),
   );
   const openTrip = (t: Trip) => {
+    setTravelMode(false);
     setSelected(t.id);
     setTab("Roteiro");
     setDay(1);
@@ -385,7 +387,7 @@ function App() {
     );
   }
   return (
-    <div className="app">
+    <div className={trip && travelMode ? "app travel-mode-active" : "app"}>
       <aside className={"sidebar " + (menu ? "open" : "")}>
         <a
           className="brand"
@@ -502,739 +504,778 @@ function App() {
           ) : supabase && !session ? (
             <Auth onNotice={setNotice} />
           ) : trip ? (
-            <>
-              <button className="back" onClick={() => setSelected(null)}>
-                <ArrowLeft size={16} />
-                Todas as viagens
-              </button>
-              <div
-                className="detail-hero"
-                style={{
-                  backgroundImage: `linear-gradient(90deg,rgba(15,36,32,.8),rgba(15,36,32,.1)),url(${pictures[trip.cover as keyof typeof pictures] || pictures.coast})`,
+            travelMode ? (
+              <TravelMode
+                trip={trip}
+                day={day}
+                onDayChange={setDay}
+                online={online}
+                busy={busy}
+                onSave={save}
+                onBack={() => {
+                  setTravelMode(false);
+                  requestAnimationFrame(() =>
+                    document.getElementById("travel-mode-entry")?.focus(),
+                  );
                 }}
-              >
-                <span className="eyebrow light">SEU PRÓXIMO CAPÍTULO</span>
-                <h1>{trip.title}</h1>
-                <p>
-                  <MapPin size={16} />
-                  {trip.destination || "Destino em aberto"}
-                  <span>·</span>
-                  <CalendarDays size={16} />
-                  {dateLabel(trip)}
-                </p>
-              </div>
-              <div className="detail-toolbar">
-                <select
-                  aria-label="Status da viagem"
-                  value={trip.status}
-                  disabled={busy}
-                  onChange={(e) =>
-                    save({ ...trip, status: e.target.value as Trip["status"] })
-                  }
-                >
-                  {Object.entries(statusLabels).map(([k, v]) => (
-                    <option value={k} key={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  className="text-button"
-                  onClick={() => downloadOffline(trip)}
-                >
-                  <Download size={16} />
-                  Baixar roteiro offline
+              />
+            ) : (
+              <>
+                <button className="back" onClick={() => setSelected(null)}>
+                  <ArrowLeft size={16} />
+                  Todas as viagens
                 </button>
-              </div>
-              <div className="tabs detail-tabs">
-                {[
-                  "Roteiro",
-                  "Mapa",
-                  "Informações",
-                  "Reservas",
-                  "Checklist",
-                  "Fotos",
-                  ...(trip.budgetEnabled ? ["Despesas"] : []),
-                ].map((v) => (
+                <div
+                  className="detail-hero"
+                  style={{
+                    backgroundImage: `linear-gradient(90deg,rgba(15,36,32,.8),rgba(15,36,32,.1)),url(${pictures[trip.cover as keyof typeof pictures] || pictures.coast})`,
+                  }}
+                >
+                  <span className="eyebrow light">SEU PRÓXIMO CAPÍTULO</span>
+                  <h1>{trip.title}</h1>
+                  <p>
+                    <MapPin size={16} />
+                    {trip.destination || "Destino em aberto"}
+                    <span>·</span>
+                    <CalendarDays size={16} />
+                    {dateLabel(trip)}
+                  </p>
+                </div>
+                <div className="detail-toolbar">
                   <button
-                    key={v}
-                    className={tab === v ? "selected" : ""}
-                    onClick={() => setTab(v)}
+                    id="travel-mode-entry"
+                    className="primary travel-mode-entry"
+                    onClick={() => setTravelMode(true)}
                   >
-                    {v}
+                    <Compass size={18} />
+                    Modo Viagem
                   </button>
-                ))}
-              </div>
-              {tab === "Roteiro" && (
-                <div className="planner">
-                  <section className="panel itinerary">
-                    <div className="section-head">
-                      <div>
-                        <h2>Um dia de cada vez</h2>
-                        <p>Monte seu roteiro no seu ritmo.</p>
+                  <select
+                    aria-label="Status da viagem"
+                    value={trip.status}
+                    disabled={busy}
+                    onChange={(e) =>
+                      save({
+                        ...trip,
+                        status: e.target.value as Trip["status"],
+                      })
+                    }
+                  >
+                    {Object.entries(statusLabels).map(([k, v]) => (
+                      <option value={k} key={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="text-button"
+                    onClick={() => downloadOffline(trip)}
+                  >
+                    <Download size={16} />
+                    Baixar roteiro offline
+                  </button>
+                </div>
+                <div className="tabs detail-tabs">
+                  {[
+                    "Roteiro",
+                    "Mapa",
+                    "Informações",
+                    "Reservas",
+                    "Checklist",
+                    "Fotos",
+                    ...(trip.budgetEnabled ? ["Despesas"] : []),
+                  ].map((v) => (
+                    <button
+                      key={v}
+                      className={tab === v ? "selected" : ""}
+                      onClick={() => setTab(v)}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                {tab === "Roteiro" && (
+                  <div className="planner">
+                    <section className="panel itinerary">
+                      <div className="section-head">
+                        <div>
+                          <h2>Um dia de cada vez</h2>
+                          <p>Monte seu roteiro no seu ritmo.</p>
+                        </div>
+                        <button
+                          className="primary small"
+                          onClick={() => setModal("activity")}
+                        >
+                          <Plus size={16} />
+                          Atividade
+                        </button>
                       </div>
-                      <button
-                        className="primary small"
-                        onClick={() => setModal("activity")}
-                      >
-                        <Plus size={16} />
-                        Atividade
-                      </button>
-                    </div>
-                    <div className="days">
-                      {Array.from(
-                        {
-                          length: Math.max(
-                            3,
-                            day,
-                            ...trip.activities.map((a) => a.day),
-                          ),
-                        },
-                        (_, i) => (
-                          <button
-                            key={i}
-                            className={day === i + 1 ? "selected" : ""}
-                            onClick={() => setDay(i + 1)}
-                          >
-                            Dia {i + 1}
-                          </button>
-                        ),
-                      )}
-                      <button
-                        aria-label="Adicionar dia"
-                        onClick={() =>
-                          setDay(
-                            Math.max(
+                      <div className="days">
+                        {Array.from(
+                          {
+                            length: Math.max(
                               3,
                               day,
                               ...trip.activities.map((a) => a.day),
-                            ) + 1,
-                          )
-                        }
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        save({
-                          ...trip,
-                          activities: moveActivity(
-                            trip.activities,
-                            e.dataTransfer.getData("text/plain"),
-                            day,
-                          ),
-                        });
-                      }}
-                    >
-                      {trip.activities.filter((a) => a.day === day).length ===
-                      0 ? (
-                        <Empty
-                          icon={MapPin}
-                          title="O dia está aberto a possibilidades"
-                          text="Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer."
-                          action="Adicionar atividade"
-                          onAction={() => setModal("activity")}
-                        />
-                      ) : (
-                        trip.activities
-                          .filter((a) => a.day === day)
-                          .map((a) => (
-                            <article
-                              className={"activity " + (a.done ? "done" : "")}
-                              key={a.id}
-                              draggable
-                              onDragStart={(e) =>
-                                e.dataTransfer.setData("text/plain", a.id)
-                              }
+                            ),
+                          },
+                          (_, i) => (
+                            <button
+                              key={i}
+                              className={day === i + 1 ? "selected" : ""}
+                              onClick={() => setDay(i + 1)}
                             >
-                              <button
-                                className="check"
-                                aria-label={
-                                  a.done
-                                    ? "Marcar como não visitado"
-                                    : "Marcar como visitado"
-                                }
-                                onClick={() =>
-                                  save({
-                                    ...trip,
-                                    activities: trip.activities.map((x) =>
-                                      x.id === a.id
-                                        ? { ...x, done: !x.done }
-                                        : x,
-                                    ),
-                                  })
-                                }
-                              >
-                                {a.done ? (
-                                  <Check size={15} />
-                                ) : (
-                                  <MapPin size={15} />
-                                )}
-                              </button>
-                              <div className="activity-content">
-                                <small>
-                                  {a.time || "Sem horário"} · {a.kind}
-                                </small>
-                                <h3>{a.title}</h3>
-                                {a.address && (
-                                  <a
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    href={
-                                      "https://www.google.com/maps/search/?api=1&query=" +
-                                      encodeURIComponent(a.address)
-                                    }
-                                  >
-                                    {a.address}
-                                    <ExternalLink size={12} />
-                                  </a>
-                                )}
-                                <div className="activity-controls">
-                                  <select
-                                    aria-label={
-                                      "Mover " + a.title + " para dia"
-                                    }
-                                    value={a.day}
-                                    onChange={(e) =>
-                                      save({
-                                        ...trip,
-                                        activities: moveActivity(
-                                          trip.activities,
-                                          a.id,
-                                          Number(e.target.value),
-                                        ),
-                                      })
-                                    }
-                                  >
-                                    {Array.from(
-                                      {
-                                        length: Math.max(
-                                          4,
-                                          day + 1,
-                                          ...trip.activities.map(
-                                            (x) => x.day + 1,
-                                          ),
-                                        ),
-                                      },
-                                      (_, i) => (
-                                        <option key={i} value={i + 1}>
-                                          Dia {i + 1}
-                                        </option>
-                                      ),
-                                    )}
-                                  </select>
-                                  <button
-                                    aria-label="Mover para cima"
-                                    className="icon-button"
-                                    onClick={() => {
-                                      const items = [...trip.activities];
-                                      const i = items.findIndex(
-                                        (x) => x.id === a.id,
-                                      );
-                                      let prev = -1;
-                                      for (let n = 0; n < i; n++) {
-                                        if (items[n].day === a.day) prev = n;
-                                      }
-                                      if (prev >= 0) {
-                                        [items[i], items[prev]] = [
-                                          items[prev],
-                                          items[i],
-                                        ];
-                                        save({ ...trip, activities: items });
-                                      }
-                                    }}
-                                  >
-                                    <ArrowUp size={14} />
-                                  </button>
-                                  <button
-                                    aria-label="Mover para baixo"
-                                    className="icon-button"
-                                    onClick={() => {
-                                      const items = [...trip.activities];
-                                      const i = items.findIndex(
-                                        (x) => x.id === a.id,
-                                      );
-                                      const offset = items
-                                        .slice(i + 1)
-                                        .findIndex((x) => x.day === a.day);
-                                      if (offset >= 0) {
-                                        const j = i + 1 + offset;
-                                        [items[i], items[j]] = [
-                                          items[j],
-                                          items[i],
-                                        ];
-                                        save({ ...trip, activities: items });
-                                      }
-                                    }}
-                                  >
-                                    <ArrowDown size={14} />
-                                  </button>
-                                </div>
-                              </div>
-                              <button
-                                className="icon-button"
-                                aria-label={"Excluir " + a.title}
-                                onClick={() =>
-                                  save({
-                                    ...trip,
-                                    activities: trip.activities.filter(
-                                      (x) => x.id !== a.id,
-                                    ),
-                                  })
-                                }
-                              >
-                                <X size={16} />
-                              </button>
-                            </article>
-                          ))
-                      )}
-                    </div>
-                  </section>
-                  <aside className="panel route-panel">
-                    <div className="section-head">
-                      <h2>Seu caminho</h2>
-                      <Map size={18} />
-                    </div>
-                    <TravelMap trips={[trip]} />
-                    <h3>
-                      {trip.destination || "O destino é você quem escolhe"}
-                    </h3>
-                    <p>Consulte lugares e trajetos no Google Maps.</p>
-                    <a
-                      className="secondary"
-                      target="_blank"
-                      rel="noreferrer"
-                      href={
-                        "https://www.google.com/maps/search/?api=1&query=" +
-                        encodeURIComponent(trip.destination || "mundo")
-                      }
-                    >
-                      Abrir mapa <ExternalLink size={15} />
-                    </a>
-                    {trip.activities.filter((a) => a.day === day && a.address)
-                      .length >= 2 && (
-                      <a
-                        className="text-button"
-                        target="_blank"
-                        rel="noreferrer"
-                        href={routeUrl(trip, day)}
-                      >
-                        Ver trajeto do dia <ArrowRight size={15} />
-                      </a>
-                    )}
-                    <div className="tip">
-                      <Sparkles size={18} />
-                      <p>
-                        Deixe espaço para o inesperado. Nem todo momento precisa
-                        de horário.
-                      </p>
-                    </div>
-                  </aside>
-                </div>
-              )}
-              {tab === "Mapa" && (
-                <section className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>O destino no mapa</h2>
-                      <p>
-                        Toque para marcar a localização principal desta viagem.
-                      </p>
-                    </div>
-                  </div>
-                  <TravelMap
-                    trips={[trip]}
-                    selectable
-                    onPick={(point) => save({ ...trip, coordinates: point })}
-                  />
-                  <p className="subtle">
-                    Os trajetos por ruas continuam disponíveis no Google Maps,
-                    pelos endereços das atividades.
-                  </p>
-                </section>
-              )}
-              {tab === "Informações" && (
-                <form
-                  key={trip.id}
-                  className="panel settings-form"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const f = new FormData(e.currentTarget);
-                    const start = field(f, "start"),
-                      end = field(f, "end");
-                    if (start && end && end < start) {
-                      setNotice("Confira a ordem das datas.");
-                      return;
-                    }
-                    if (
-                      await save({
-                        ...trip,
-                        title: field(f, "title") || "Nova viagem",
-                        destination: field(f, "destination"),
-                        start,
-                        end,
-                        scope: field(f, "scope") as Trip["scope"],
-                        hotel: field(f, "hotel"),
-                        notes: field(f, "notes"),
-                        budgetEnabled: f.has("budget"),
-                      })
-                    )
-                      setNotice("Informações atualizadas.");
-                  }}
-                >
-                  <h2>Do seu jeito, no seu tempo</h2>
-                  <p>Todos os campos são opcionais.</p>
-                  <label>
-                    Nome da viagem
-                    <input name="title" defaultValue={trip.title} />
-                  </label>
-                  <label>
-                    Destino ou destinos
-                    <input name="destination" defaultValue={trip.destination} />
-                  </label>
-                  <div className="form-grid">
-                    <label>
-                      Ida
-                      <input
-                        type="date"
-                        name="start"
-                        defaultValue={trip.start}
-                      />
-                    </label>
-                    <label>
-                      Volta
-                      <input type="date" name="end" defaultValue={trip.end} />
-                    </label>
-                  </div>
-                  <label>
-                    Tipo de viagem
-                    <select
-                      name="scope"
-                      defaultValue={trip.scope || "undecided"}
-                    >
-                      <option value="undecided">Ainda não defini</option>
-                      <option value="national">Nacional · Brasil</option>
-                      <option value="international">Internacional</option>
-                    </select>
-                  </label>
-                  <label>
-                    Hospedagem e endereço
-                    <input
-                      name="hotel"
-                      defaultValue={trip.hotel}
-                      placeholder="Adicione quando decidir"
-                    />
-                  </label>
-                  <label>
-                    Anotações
-                    <textarea name="notes" defaultValue={trip.notes} rows={4} />
-                  </label>
-                  <label className="checkbox-label">
-                    <input
-                      name="budget"
-                      type="checkbox"
-                      defaultChecked={trip.budgetEnabled}
-                    />
-                    Quero usar o controle de despesas nesta viagem
-                  </label>
-                  <div className="section-head">
-                    <button disabled={busy} className="primary">
-                      Salvar alterações
-                    </button>
-                    <button
-                      className="danger text-button"
-                      type="button"
-                      onClick={() => remove(trip)}
-                    >
-                      <Trash2 size={16} />
-                      Excluir viagem
-                    </button>
-                  </div>
-                </form>
-              )}
-              {tab === "Reservas" && (
-                <section className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>Tudo à mão</h2>
-                      <p>Hotéis, voos, ingressos e links importantes.</p>
-                    </div>
-                    <button
-                      className="primary small"
-                      onClick={() => setModal("reservation")}
-                    >
-                      <Plus size={16} />
-                      Reserva
-                    </button>
-                  </div>
-                  {!(trip.reservations || []).length ? (
-                    <Empty
-                      icon={Plane}
-                      title="Uma viagem sem papelada espalhada"
-                      text="Guarde os detalhes e links das suas reservas aqui."
-                    />
-                  ) : (
-                    trip.reservations.map((r) => (
-                      <article className="list-row" key={r.id}>
-                        <Plane size={22} />
-                        <div>
-                          <h3>{r.title}</h3>
-                          <p className="pre-wrap">{r.details}</p>
-                          {r.url && (
-                            <a href={r.url} target="_blank" rel="noreferrer">
-                              Abrir reserva <ExternalLink size={12} />
-                            </a>
-                          )}
-                        </div>
+                              Dia {i + 1}
+                            </button>
+                          ),
+                        )}
                         <button
-                          className="icon-button"
-                          aria-label="Excluir reserva"
+                          aria-label="Adicionar dia"
                           onClick={() =>
-                            save({
-                              ...trip,
-                              reservations: trip.reservations.filter(
-                                (x) => x.id !== r.id,
-                              ),
-                            })
+                            setDay(
+                              Math.max(
+                                3,
+                                day,
+                                ...trip.activities.map((a) => a.day),
+                              ) + 1,
+                            )
                           }
                         >
-                          <Trash2 size={16} />
+                          <Plus size={16} />
                         </button>
-                      </article>
-                    ))
-                  )}
-                </section>
-              )}
-              {tab === "Checklist" && (
-                <section className="panel settings-form">
-                  <h2>Uma coisa de cada vez</h2>
-                  <p>
-                    {trip.checklist.filter((x) => x.done).length} de{" "}
-                    {trip.checklist.length} tarefas concluídas
-                  </p>
-                  <form
-                    className="inline-form"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const form = e.currentTarget;
-                      const title = field(new FormData(form), "task");
-                      if (
-                        title &&
-                        (await save({
-                          ...trip,
-                          checklist: [
-                            ...trip.checklist,
-                            { id: uid(), title, done: false },
-                          ],
-                        }))
-                      )
-                        form.reset();
-                    }}
-                  >
-                    <input
-                      name="task"
-                      placeholder="O que você quer lembrar?"
-                      aria-label="Nova tarefa"
-                    />
-                    <button className="primary" disabled={busy}>
-                      <Plus size={17} />
-                      Adicionar
-                    </button>
-                  </form>
-                  {trip.checklist.map((c) => (
-                    <div className="list-row" key={c.id}>
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={c.done}
-                          onChange={() =>
-                            save({
-                              ...trip,
-                              checklist: trip.checklist.map((x) =>
-                                x.id === c.id ? { ...x, done: !x.done } : x,
-                              ),
-                            })
-                          }
-                        />
-                        <span className={c.done ? "struck" : ""}>
-                          {c.title}
-                        </span>
-                      </label>
-                      <button
-                        className="icon-button"
-                        aria-label="Excluir tarefa"
-                        onClick={() =>
+                      </div>
+                      <div
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
                           save({
                             ...trip,
-                            checklist: trip.checklist.filter(
-                              (x) => x.id !== c.id,
+                            activities: moveActivity(
+                              trip.activities,
+                              e.dataTransfer.getData("text/plain"),
+                              day,
                             ),
-                          })
+                          });
+                        }}
+                      >
+                        {trip.activities.filter((a) => a.day === day).length ===
+                        0 ? (
+                          <Empty
+                            icon={MapPin}
+                            title="O dia está aberto a possibilidades"
+                            text="Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer."
+                            action="Adicionar atividade"
+                            onAction={() => setModal("activity")}
+                          />
+                        ) : (
+                          trip.activities
+                            .filter((a) => a.day === day)
+                            .map((a) => (
+                              <article
+                                className={"activity " + (a.done ? "done" : "")}
+                                key={a.id}
+                                draggable
+                                onDragStart={(e) =>
+                                  e.dataTransfer.setData("text/plain", a.id)
+                                }
+                              >
+                                <button
+                                  className="check"
+                                  aria-label={
+                                    a.done
+                                      ? "Marcar como não visitado"
+                                      : "Marcar como visitado"
+                                  }
+                                  onClick={() =>
+                                    save({
+                                      ...trip,
+                                      activities: trip.activities.map((x) =>
+                                        x.id === a.id
+                                          ? { ...x, done: !x.done }
+                                          : x,
+                                      ),
+                                    })
+                                  }
+                                >
+                                  {a.done ? (
+                                    <Check size={15} />
+                                  ) : (
+                                    <MapPin size={15} />
+                                  )}
+                                </button>
+                                <div className="activity-content">
+                                  <small>
+                                    {a.time || "Sem horário"} · {a.kind}
+                                  </small>
+                                  <h3>{a.title}</h3>
+                                  {a.address && (
+                                    <a
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      href={
+                                        "https://www.google.com/maps/search/?api=1&query=" +
+                                        encodeURIComponent(a.address)
+                                      }
+                                    >
+                                      {a.address}
+                                      <ExternalLink size={12} />
+                                    </a>
+                                  )}
+                                  <div className="activity-controls">
+                                    <select
+                                      aria-label={
+                                        "Mover " + a.title + " para dia"
+                                      }
+                                      value={a.day}
+                                      onChange={(e) =>
+                                        save({
+                                          ...trip,
+                                          activities: moveActivity(
+                                            trip.activities,
+                                            a.id,
+                                            Number(e.target.value),
+                                          ),
+                                        })
+                                      }
+                                    >
+                                      {Array.from(
+                                        {
+                                          length: Math.max(
+                                            4,
+                                            day + 1,
+                                            ...trip.activities.map(
+                                              (x) => x.day + 1,
+                                            ),
+                                          ),
+                                        },
+                                        (_, i) => (
+                                          <option key={i} value={i + 1}>
+                                            Dia {i + 1}
+                                          </option>
+                                        ),
+                                      )}
+                                    </select>
+                                    <button
+                                      aria-label="Mover para cima"
+                                      className="icon-button"
+                                      onClick={() => {
+                                        const items = [...trip.activities];
+                                        const i = items.findIndex(
+                                          (x) => x.id === a.id,
+                                        );
+                                        let prev = -1;
+                                        for (let n = 0; n < i; n++) {
+                                          if (items[n].day === a.day) prev = n;
+                                        }
+                                        if (prev >= 0) {
+                                          [items[i], items[prev]] = [
+                                            items[prev],
+                                            items[i],
+                                          ];
+                                          save({ ...trip, activities: items });
+                                        }
+                                      }}
+                                    >
+                                      <ArrowUp size={14} />
+                                    </button>
+                                    <button
+                                      aria-label="Mover para baixo"
+                                      className="icon-button"
+                                      onClick={() => {
+                                        const items = [...trip.activities];
+                                        const i = items.findIndex(
+                                          (x) => x.id === a.id,
+                                        );
+                                        const offset = items
+                                          .slice(i + 1)
+                                          .findIndex((x) => x.day === a.day);
+                                        if (offset >= 0) {
+                                          const j = i + 1 + offset;
+                                          [items[i], items[j]] = [
+                                            items[j],
+                                            items[i],
+                                          ];
+                                          save({ ...trip, activities: items });
+                                        }
+                                      }}
+                                    >
+                                      <ArrowDown size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                                <button
+                                  className="icon-button"
+                                  aria-label={"Excluir " + a.title}
+                                  onClick={() =>
+                                    save({
+                                      ...trip,
+                                      activities: trip.activities.filter(
+                                        (x) => x.id !== a.id,
+                                      ),
+                                    })
+                                  }
+                                >
+                                  <X size={16} />
+                                </button>
+                              </article>
+                            ))
+                        )}
+                      </div>
+                    </section>
+                    <aside className="panel route-panel">
+                      <div className="section-head">
+                        <h2>Seu caminho</h2>
+                        <Map size={18} />
+                      </div>
+                      <TravelMap trips={[trip]} />
+                      <h3>
+                        {trip.destination || "O destino é você quem escolhe"}
+                      </h3>
+                      <p>Consulte lugares e trajetos no Google Maps.</p>
+                      <a
+                        className="secondary"
+                        target="_blank"
+                        rel="noreferrer"
+                        href={
+                          "https://www.google.com/maps/search/?api=1&query=" +
+                          encodeURIComponent(trip.destination || "mundo")
                         }
                       >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </section>
-              )}
-              {tab === "Fotos" && (
-                <section className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>Os lugares pelos seus olhos</h2>
-                      <p>
-                        Imagens de até 5 MB.{" "}
-                        {session
-                          ? "Arquivos privados na sua conta."
-                          : "Salvas apenas neste navegador; exporte um backup."}
-                      </p>
-                    </div>
-                    <button
-                      className="primary small"
-                      disabled={busy}
-                      onClick={() => fileRef.current?.click()}
-                    >
-                      <ImagePlus size={16} />
-                      Adicionar fotos
-                    </button>
-                    <input
-                      ref={fileRef}
-                      hidden
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => photos(e.target.files)}
-                    />
-                  </div>
-                  {!(trip.photos || []).length ? (
-                    <Empty
-                      icon={ImagePlus}
-                      title="Suas fotos vão morar aqui"
-                      text="Adicione quando quiser, antes ou depois da viagem."
-                    />
-                  ) : (
-                    <div className="photo-grid">
-                      {trip.photos.map((p) => (
-                        <Photo
-                          key={p.id}
-                          photo={p}
-                          onDelete={() =>
-                            save({
-                              ...trip,
-                              photos: trip.photos.filter((x) => x.id !== p.id),
-                            })
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
-              {tab === "Despesas" && (
-                <section className="panel settings-form">
-                  <h2>Despesas, se fizer sentido para você</h2>
-                  <p>
-                    Os totais são separados por moeda, sem conversão automática.
-                  </p>
-                  <div className="expense-totals">
-                    {["BRL", "EUR", "USD"].map((c) => (
-                      <div key={c}>
-                        <small>{c}</small>
-                        <h2>
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: c,
-                          }).format(
-                            trip.expenses
-                              .filter((x) => x.currency === c)
-                              .reduce((s, x) => s + x.amount, 0),
-                          )}
-                        </h2>
+                        Abrir mapa <ExternalLink size={15} />
+                      </a>
+                      {trip.activities.filter((a) => a.day === day && a.address)
+                        .length >= 2 && (
+                        <a
+                          className="text-button"
+                          target="_blank"
+                          rel="noreferrer"
+                          href={routeUrl(trip, day)}
+                        >
+                          Ver trajeto do dia <ArrowRight size={15} />
+                        </a>
+                      )}
+                      <div className="tip">
+                        <Sparkles size={18} />
+                        <p>
+                          Deixe espaço para o inesperado. Nem todo momento
+                          precisa de horário.
+                        </p>
                       </div>
-                    ))}
+                    </aside>
                   </div>
+                )}
+                {tab === "Mapa" && (
+                  <section className="panel">
+                    <div className="section-head">
+                      <div>
+                        <h2>O destino no mapa</h2>
+                        <p>
+                          Toque para marcar a localização principal desta
+                          viagem.
+                        </p>
+                      </div>
+                    </div>
+                    <TravelMap
+                      trips={[trip]}
+                      selectable
+                      onPick={(point) => save({ ...trip, coordinates: point })}
+                    />
+                    <p className="subtle">
+                      Os trajetos por ruas continuam disponíveis no Google Maps,
+                      pelos endereços das atividades.
+                    </p>
+                  </section>
+                )}
+                {tab === "Informações" && (
                   <form
-                    className="expense-form"
+                    key={trip.id}
+                    className="panel settings-form"
                     onSubmit={async (e) => {
                       e.preventDefault();
-                      const form = e.currentTarget,
-                        f = new FormData(form);
-                      const amount = Number(field(f, "amount"));
-                      if (!Number.isFinite(amount) || amount <= 0) {
-                        setNotice(
-                          "Informe um valor maior que zero para registrar a despesa.",
-                        );
+                      const f = new FormData(e.currentTarget);
+                      const start = field(f, "start"),
+                        end = field(f, "end");
+                      if (start && end && end < start) {
+                        setNotice("Confira a ordem das datas.");
                         return;
                       }
                       if (
                         await save({
                           ...trip,
-                          expenses: [
-                            ...trip.expenses,
-                            {
-                              id: uid(),
-                              title: field(f, "title") || "Despesa",
-                              amount,
-                              currency: field(f, "currency"),
-                            },
-                          ],
+                          title: field(f, "title") || "Nova viagem",
+                          destination: field(f, "destination"),
+                          start,
+                          end,
+                          scope: field(f, "scope") as Trip["scope"],
+                          hotel: field(f, "hotel"),
+                          notes: field(f, "notes"),
+                          budgetEnabled: f.has("budget"),
                         })
                       )
-                        form.reset();
+                        setNotice("Informações atualizadas.");
                     }}
                   >
-                    <input
-                      name="title"
-                      placeholder="Descrição"
-                      aria-label="Descrição da despesa"
-                    />
-                    <input
-                      name="amount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      placeholder="Valor"
-                      aria-label="Valor"
-                    />
-                    <select name="currency" aria-label="Moeda">
-                      <option>BRL</option>
-                      <option>EUR</option>
-                      <option>USD</option>
-                    </select>
-                    <button className="primary" disabled={busy}>
-                      <Plus size={16} />
-                    </button>
-                  </form>
-                  {trip.expenses.map((x) => (
-                    <div className="list-row" key={x.id}>
-                      <Wallet size={20} />
-                      <span>{x.title}</span>
-                      <b>
-                        {x.currency} {x.amount.toFixed(2)}
-                      </b>
-                      <button
-                        className="icon-button"
-                        aria-label="Excluir despesa"
-                        onClick={() =>
-                          save({
-                            ...trip,
-                            expenses: trip.expenses.filter(
-                              (a) => a.id !== x.id,
-                            ),
-                          })
-                        }
+                    <h2>Do seu jeito, no seu tempo</h2>
+                    <p>Todos os campos são opcionais.</p>
+                    <label>
+                      Nome da viagem
+                      <input name="title" defaultValue={trip.title} />
+                    </label>
+                    <label>
+                      Destino ou destinos
+                      <input
+                        name="destination"
+                        defaultValue={trip.destination}
+                      />
+                    </label>
+                    <div className="form-grid">
+                      <label>
+                        Ida
+                        <input
+                          type="date"
+                          name="start"
+                          defaultValue={trip.start}
+                        />
+                      </label>
+                      <label>
+                        Volta
+                        <input type="date" name="end" defaultValue={trip.end} />
+                      </label>
+                    </div>
+                    <label>
+                      Tipo de viagem
+                      <select
+                        name="scope"
+                        defaultValue={trip.scope || "undecided"}
                       >
-                        <X size={16} />
+                        <option value="undecided">Ainda não defini</option>
+                        <option value="national">Nacional · Brasil</option>
+                        <option value="international">Internacional</option>
+                      </select>
+                    </label>
+                    <label>
+                      Hospedagem e endereço
+                      <input
+                        name="hotel"
+                        defaultValue={trip.hotel}
+                        placeholder="Adicione quando decidir"
+                      />
+                    </label>
+                    <label>
+                      Anotações
+                      <textarea
+                        name="notes"
+                        defaultValue={trip.notes}
+                        rows={4}
+                      />
+                    </label>
+                    <label className="checkbox-label">
+                      <input
+                        name="budget"
+                        type="checkbox"
+                        defaultChecked={trip.budgetEnabled}
+                      />
+                      Quero usar o controle de despesas nesta viagem
+                    </label>
+                    <div className="section-head">
+                      <button disabled={busy} className="primary">
+                        Salvar alterações
+                      </button>
+                      <button
+                        className="danger text-button"
+                        type="button"
+                        onClick={() => remove(trip)}
+                      >
+                        <Trash2 size={16} />
+                        Excluir viagem
                       </button>
                     </div>
-                  ))}
-                </section>
-              )}
-            </>
+                  </form>
+                )}
+                {tab === "Reservas" && (
+                  <section className="panel">
+                    <div className="section-head">
+                      <div>
+                        <h2>Tudo à mão</h2>
+                        <p>Hotéis, voos, ingressos e links importantes.</p>
+                      </div>
+                      <button
+                        className="primary small"
+                        onClick={() => setModal("reservation")}
+                      >
+                        <Plus size={16} />
+                        Reserva
+                      </button>
+                    </div>
+                    {!(trip.reservations || []).length ? (
+                      <Empty
+                        icon={Plane}
+                        title="Uma viagem sem papelada espalhada"
+                        text="Guarde os detalhes e links das suas reservas aqui."
+                      />
+                    ) : (
+                      trip.reservations.map((r) => (
+                        <article className="list-row" key={r.id}>
+                          <Plane size={22} />
+                          <div>
+                            <h3>{r.title}</h3>
+                            <p className="pre-wrap">{r.details}</p>
+                            {r.url && (
+                              <a href={r.url} target="_blank" rel="noreferrer">
+                                Abrir reserva <ExternalLink size={12} />
+                              </a>
+                            )}
+                          </div>
+                          <button
+                            className="icon-button"
+                            aria-label="Excluir reserva"
+                            onClick={() =>
+                              save({
+                                ...trip,
+                                reservations: trip.reservations.filter(
+                                  (x) => x.id !== r.id,
+                                ),
+                              })
+                            }
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </article>
+                      ))
+                    )}
+                  </section>
+                )}
+                {tab === "Checklist" && (
+                  <section className="panel settings-form">
+                    <h2>Uma coisa de cada vez</h2>
+                    <p>
+                      {trip.checklist.filter((x) => x.done).length} de{" "}
+                      {trip.checklist.length} tarefas concluídas
+                    </p>
+                    <form
+                      className="inline-form"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const form = e.currentTarget;
+                        const title = field(new FormData(form), "task");
+                        if (
+                          title &&
+                          (await save({
+                            ...trip,
+                            checklist: [
+                              ...trip.checklist,
+                              { id: uid(), title, done: false },
+                            ],
+                          }))
+                        )
+                          form.reset();
+                      }}
+                    >
+                      <input
+                        name="task"
+                        placeholder="O que você quer lembrar?"
+                        aria-label="Nova tarefa"
+                      />
+                      <button className="primary" disabled={busy}>
+                        <Plus size={17} />
+                        Adicionar
+                      </button>
+                    </form>
+                    {trip.checklist.map((c) => (
+                      <div className="list-row" key={c.id}>
+                        <label className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={c.done}
+                            onChange={() =>
+                              save({
+                                ...trip,
+                                checklist: trip.checklist.map((x) =>
+                                  x.id === c.id ? { ...x, done: !x.done } : x,
+                                ),
+                              })
+                            }
+                          />
+                          <span className={c.done ? "struck" : ""}>
+                            {c.title}
+                          </span>
+                        </label>
+                        <button
+                          className="icon-button"
+                          aria-label="Excluir tarefa"
+                          onClick={() =>
+                            save({
+                              ...trip,
+                              checklist: trip.checklist.filter(
+                                (x) => x.id !== c.id,
+                              ),
+                            })
+                          }
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </section>
+                )}
+                {tab === "Fotos" && (
+                  <section className="panel">
+                    <div className="section-head">
+                      <div>
+                        <h2>Os lugares pelos seus olhos</h2>
+                        <p>
+                          Imagens de até 5 MB.{" "}
+                          {session
+                            ? "Arquivos privados na sua conta."
+                            : "Salvas apenas neste navegador; exporte um backup."}
+                        </p>
+                      </div>
+                      <button
+                        className="primary small"
+                        disabled={busy}
+                        onClick={() => fileRef.current?.click()}
+                      >
+                        <ImagePlus size={16} />
+                        Adicionar fotos
+                      </button>
+                      <input
+                        ref={fileRef}
+                        hidden
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => photos(e.target.files)}
+                      />
+                    </div>
+                    {!(trip.photos || []).length ? (
+                      <Empty
+                        icon={ImagePlus}
+                        title="Suas fotos vão morar aqui"
+                        text="Adicione quando quiser, antes ou depois da viagem."
+                      />
+                    ) : (
+                      <div className="photo-grid">
+                        {trip.photos.map((p) => (
+                          <Photo
+                            key={p.id}
+                            photo={p}
+                            onDelete={() =>
+                              save({
+                                ...trip,
+                                photos: trip.photos.filter(
+                                  (x) => x.id !== p.id,
+                                ),
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
+                {tab === "Despesas" && (
+                  <section className="panel settings-form">
+                    <h2>Despesas, se fizer sentido para você</h2>
+                    <p>
+                      Os totais são separados por moeda, sem conversão
+                      automática.
+                    </p>
+                    <div className="expense-totals">
+                      {["BRL", "EUR", "USD"].map((c) => (
+                        <div key={c}>
+                          <small>{c}</small>
+                          <h2>
+                            {new Intl.NumberFormat("pt-BR", {
+                              style: "currency",
+                              currency: c,
+                            }).format(
+                              trip.expenses
+                                .filter((x) => x.currency === c)
+                                .reduce((s, x) => s + x.amount, 0),
+                            )}
+                          </h2>
+                        </div>
+                      ))}
+                    </div>
+                    <form
+                      className="expense-form"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const form = e.currentTarget,
+                          f = new FormData(form);
+                        const amount = Number(field(f, "amount"));
+                        if (!Number.isFinite(amount) || amount <= 0) {
+                          setNotice(
+                            "Informe um valor maior que zero para registrar a despesa.",
+                          );
+                          return;
+                        }
+                        if (
+                          await save({
+                            ...trip,
+                            expenses: [
+                              ...trip.expenses,
+                              {
+                                id: uid(),
+                                title: field(f, "title") || "Despesa",
+                                amount,
+                                currency: field(f, "currency"),
+                              },
+                            ],
+                          })
+                        )
+                          form.reset();
+                      }}
+                    >
+                      <input
+                        name="title"
+                        placeholder="Descrição"
+                        aria-label="Descrição da despesa"
+                      />
+                      <input
+                        name="amount"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="Valor"
+                        aria-label="Valor"
+                      />
+                      <select name="currency" aria-label="Moeda">
+                        <option>BRL</option>
+                        <option>EUR</option>
+                        <option>USD</option>
+                      </select>
+                      <button className="primary" disabled={busy}>
+                        <Plus size={16} />
+                      </button>
+                    </form>
+                    {trip.expenses.map((x) => (
+                      <div className="list-row" key={x.id}>
+                        <Wallet size={20} />
+                        <span>{x.title}</span>
+                        <b>
+                          {x.currency} {x.amount.toFixed(2)}
+                        </b>
+                        <button
+                          className="icon-button"
+                          aria-label="Excluir despesa"
+                          onClick={() =>
+                            save({
+                              ...trip,
+                              expenses: trip.expenses.filter(
+                                (a) => a.id !== x.id,
+                              ),
+                            })
+                          }
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </section>
+                )}
+              </>
+            )
           ) : (
             <>
               <div className="page-heading">
@@ -2138,8 +2179,8 @@ if (
   "serviceWorker" in navigator &&
   (import.meta as unknown as { env: { PROD: boolean } }).env.PROD
 ) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+    console.warn("Cache offline indisponível neste navegador:", error);
   });
 }
 createRoot(document.getElementById("root")!).render(
