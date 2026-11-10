@@ -46,8 +46,9 @@ import {
   uid,
   countByScope,
   matchesScope,
+  tripScope,
 } from "./model";
-import type { ScopeFilter, Trip } from "./model";
+import type { ScopeFilter, Trip, TripScope } from "./model";
 import {
   fetchTrips,
   localKey,
@@ -943,17 +944,7 @@ function App() {
                         <input type="date" name="end" defaultValue={trip.end} />
                       </label>
                     </div>
-                    <label>
-                      Tipo de viagem
-                      <select
-                        name="scope"
-                        defaultValue={trip.scope || "undecided"}
-                      >
-                        <option value="undecided">Ainda não defini</option>
-                        <option value="national">Nacional · Brasil</option>
-                        <option value="international">Internacional</option>
-                      </select>
-                    </label>
+                    <ScopePicker defaultValue={tripScope(trip)} />
                     <label>
                       Hospedagem e endereço
                       <input
@@ -1924,19 +1915,11 @@ function App() {
                     <input type="date" name="end" />
                   </label>
                 </div>
-                <label>
-                  Tipo de viagem
-                  <select
-                    name="scope"
-                    defaultValue={
-                      scopeFilter === "all" ? "undecided" : scopeFilter
-                    }
-                  >
-                    <option value="undecided">Ainda não defini</option>
-                    <option value="national">Nacional · Brasil</option>
-                    <option value="international">Internacional</option>
-                  </select>
-                </label>
+                <ScopePicker
+                  defaultValue={
+                    scopeFilter === "all" ? "undecided" : scopeFilter
+                  }
+                />
                 <label>
                   Momento da viagem
                   <select
@@ -2031,6 +2014,42 @@ function App() {
         </dialog>
       )}
     </div>
+  );
+}
+function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
+  const options = [
+    ["national", "Nacional", "Pelo Brasil", "BR"],
+    ["international", "Internacional", "Fora do Brasil", ""],
+    ["undecided", "Ainda não sei", "Defina depois", ""],
+  ] as const;
+  return (
+    <fieldset className="scope-picker">
+      <legend>
+        Tipo de viagem <small>opcional</small>
+      </legend>
+      {options.map(([value, label, hint, mark]) => (
+        <label key={value}>
+          <input
+            type="radio"
+            name="scope"
+            value={value}
+            defaultChecked={defaultValue === value}
+          />
+          <span className={"scope-mark scope-" + value} aria-hidden="true">
+            {mark ||
+              (value === "international" ? (
+                <Globe2 size={16} />
+              ) : (
+                <Compass size={16} />
+              ))}
+          </span>
+          <span className="scope-text">
+            <b>{label}</b>
+            <small>{hint}</small>
+          </span>
+        </label>
+      ))}
+    </fieldset>
   );
 }
 function Stat({
