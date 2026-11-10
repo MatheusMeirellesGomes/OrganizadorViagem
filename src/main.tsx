@@ -72,6 +72,7 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
@@ -413,6 +414,7 @@ function App() {
             time: field(f, "time"),
             address: field(f, "address"),
             kind: field(f, "kind"),
+            period: field(f,"period") as import("./calendar").Period,
             done: false,
           },
         ],
@@ -750,6 +752,7 @@ function App() {
                 <div className="tabs detail-tabs">
                   {[
                     "Roteiro",
+                    "Calendário",
                     "Mapa",
                     "Informações",
                     "Reservas",
@@ -766,6 +769,7 @@ function App() {
                     </button>
                   ))}
                 </div>
+                {tab === "Calendário" && <TripCalendar trip={trip} day={day} onDayChange={setDay} onOpenDay={()=>setTab("Roteiro")} onSave={save} busy={busy}/>}
                 {tab === "Roteiro" && (
                   <div className="planner">
                     <section className="panel itinerary">
@@ -2168,6 +2172,10 @@ function App() {
                     <input name="time" type="time" />
                   </label>
                 </div>
+                <label>
+                  Período opcional
+                  <select name="period"><option value="any">Sem período</option><option value="morning">Manhã</option><option value="afternoon">Tarde</option><option value="evening">Noite</option></select>
+                </label>
                 <label>
                   Categoria
                   <select name="kind">

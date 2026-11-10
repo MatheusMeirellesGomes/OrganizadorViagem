@@ -1,4 +1,5 @@
 export type Activity = {
+  period?: "morning" | "afternoon" | "evening" | "any";
   id: string;
   title: string;
   day: number;
@@ -8,6 +9,7 @@ export type Activity = {
   kind: string;
 };
 export type Trip = {
+  party?: {adults?:number;children?:number;members?:string[];preferences?:string};
   scope?: "national" | "international" | "undecided";
   coordinates?: { lat: number; lng: number };
   id: string;

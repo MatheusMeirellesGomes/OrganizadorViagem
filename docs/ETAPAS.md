@@ -21,3 +21,9 @@ Mantidos os recursos Supabase entregues anteriormente. Acrescentados CI de teste
 Arquivos: `.github/workflows/quality.yml`, `netlify.toml`, `vite.config.ts`, `src/config.ts`, `src/config.test.ts`, `src/remote.ts`, `src/remote.test.ts`, integração em `src/main.tsx`. **61 testes aprovados**, build aprovado. A revisão não identificou credenciais versionadas. Ambiente local preservado.
 
 Bloqueios: URL/chave pública e duas contas de teste ainda não fornecidas; Auth/RLS/PostgreSQL/Storage reais e publicação HTTPS continuam pendentes. Netlify é uma preparação opcional, não um site publicado; nenhum serviço pago foi ativado. Próxima etapa: calendário e grupo opcional.
+
+## Etapa 2 — calendário e grupo opcional
+
+Aba Calendário com mês navegável, seleção de dias, datas editáveis, dias livres e visão por período. Datas alteradas preservam o número e ordem das atividades. Sem datas, navegação por Dia 1/2/3. Grupo opcional com adultos, crianças, nomes/apelidos e preferências; despesas permanecem desativadas por padrão.
+
+Arquivos: `TripCalendar.tsx`, `calendar.ts`, `calendar.test.ts`, `extensions.css`, integração em `main.tsx`, campos opcionais em `model.ts` e importação em `offline.ts`. **64 testes aprovados**, build aprovado e formulário sem datas verificado no navegador. Backup antigo continua válido. Limites: participantes são registros locais, não convites/contas compartilhadas. Próxima etapa: múltiplas hospedagens e reservas associadas.

@@ -73,6 +73,8 @@ export function parseBackup(raw: string): Trip[] {
       hotel: text(v.hotel),
       budgetEnabled: v.budgetEnabled === true,
     });
+    const party=object(v.party);
+    if(v.party) trip.party={adults:typeof party.adults==='number'&&party.adults>=0?Math.floor(party.adults):undefined,children:typeof party.children==='number'&&party.children>=0?Math.floor(party.children):undefined,members:list(party.members).filter((x):x is string=>typeof x==='string'),preferences:text(party.preferences)};
     const coords = object(v.coordinates);
     if (
       typeof coords.lat === "number" &&
@@ -90,6 +92,7 @@ export function parseBackup(raw: string): Trip[] {
         time: text(a.time),
         address: text(a.address),
         kind: text(a.kind, "Passeio"),
+        period: (["morning","afternoon","evening","any"].includes(text(a.period))?text(a.period):"any") as import("./calendar").Period,
         done: a.done === true,
       };
     });

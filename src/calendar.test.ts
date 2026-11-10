@@ -1,0 +1,7 @@
+import {expect,it} from 'vitest';
+import {newTrip} from './model';
+import {activityPeriod,calendarCells,optionalCount} from './calendar';
+import {parseBackup} from './offline';
+it('calendar spans months with free days without shifting activity numbers',()=>{const t=newTrip({start:'2027-01-30',end:'2027-02-02'});const cells=calendarCells(2027,1,t);expect(cells.find(c=>c.iso==='2027-02-01')?.day).toBe(3);expect(cells.find(c=>c.iso==='2027-02-03')?.day).toBeUndefined();expect(calendarCells(2027,1,newTrip()).every(c=>!c.day)).toBe(true);});
+it('periods are optional and never create an hour',()=>{const a={id:'a',title:'a',day:1,time:'',kind:'',address:'',done:false};expect(activityPeriod(a)).toBe('any');expect(activityPeriod({...a,time:'14:30'})).toBe('afternoon');expect(activityPeriod({...a,time:'19:00',period:'morning'})).toBe('morning');expect(optionalCount('')).toBeUndefined();expect(optionalCount('0')).toBe(0);});
+it('group and period survive backups while old backups remain valid',()=>{const t=newTrip({party:{adults:2,children:0,members:['A'],preferences:'Calmo'},activities:[{id:'a',title:'a',day:1,time:'',address:'',kind:'',done:false,period:'evening'}]});const [r]=parseBackup(JSON.stringify({version:1,trips:[t]}));expect(r.party).toEqual(t.party);expect(r.activities[0].period).toBe('evening');expect(parseBackup(JSON.stringify({version:1,trips:[newTrip()]}))[0].party).toBeUndefined();});
