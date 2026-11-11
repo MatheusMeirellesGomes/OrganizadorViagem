@@ -98,3 +98,11 @@ Revisão da `main` após o PR #1: 98 testes e build aprovados; fluxos de conta, 
 - Distâncias formatadas no idioma da interface; cache antigo do catálogo removido.
 
 Arquivos: `wiki-places.ts`, `osm-places.ts`, `catalog-service.ts`, `Catalog.tsx`, `catalog.css`, `LazyMaps.tsx`, `main.tsx`, `scripts/verificar-supabase.mjs` e testes. Verificação: testes unitários, build, testes de navegador (catálogo, conta, migração, telas, falha de carregamento) e testes reais das fontes no navegador do computador do Matheus.
+
+## Etapa 11b — idiomas completos (Claude)
+
+Todos os textos da interface passam por `tr()`/`tf()`: telas, rótulos de acessibilidade, mensagens de sucesso e de erro (inclusive as vindas de `errors.ts`, do catálogo e da migração), categorias, status, decisões e o HTML offline. Frases com números ou nomes viraram frases completas com variáveis (`{count} lugares encontrados`), para a ordem das palavras ficar natural em cada idioma; singular e plural são frases separadas. Dicionário de 218 para 730+ entradas, em inglês e espanhol.
+
+Verificação: `i18n-coverage.test.ts` lê o código e falha se algum texto da interface não tiver tradução ou se as variáveis divergirem; varredura no navegador em inglês e espanhol por todas as telas, abas, Modo Viagem, catálogo e cadastro sem textos em português além de nomes de lugares (dados); telas de 360 e 390 px sem rolagem lateral nos dois idiomas. Conteúdo pessoal (títulos, notas) e valores salvos (status, categorias) não são traduzidos nos dados, só na exibição, então backups continuam compatíveis entre idiomas.
+
+Limites: textos vindos das fontes externas (descrições da Wikipédia, nomes no OpenStreetMap) aparecem no idioma da fonte; a Wikipédia usa a edição do idioma da interface.

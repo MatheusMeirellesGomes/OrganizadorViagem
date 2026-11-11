@@ -36,6 +36,10 @@ npm run preview
 - Escolha visual de viagem Nacional, Internacional ou "Ainda não sei" no cadastro e na edição. O tipo é opcional; viagens e backups antigos sem tipo continuam válidos.
 - Selo Nacional/Internacional nos cartões das viagens.
 - Pesquisa e trajetos com links para Google Maps.
+- Calendário, participantes opcionais, várias hospedagens, reservas vinculadas, documentos privados, álbuns de fotos e gerador de roteiro sem IA (veja `docs/ETAPAS.md`).
+- **Explorar lugares reais:** atrações da Wikipédia e do Wikidata com fotos livres creditadas (autor e licença), patrimônio e site oficial; complemento e restaurantes do OpenStreetMap via Nominatim, dentro da política de uso. Nada de preço, nota ou horário inventado. Detalhes em `docs/CATALOGO.md`.
+- **Idiomas:** português, inglês e espanhol, com datas e números no formato de cada idioma, inclusive mensagens de erro e o HTML offline. Um teste automático falha se algum texto novo ficar sem tradução.
+- Mapas e catálogo carregados sob demanda, com aviso em vez de travar se faltar conexão.
 - Login e cadastro com Supabase quando configurado.
 
 ## Conectar Supabase
@@ -110,10 +114,10 @@ Abra uma viagem e toque em **Modo Viagem**, ao lado do status. Funciona com qual
 
 - Cabeçalho compacto, navegação horizontal por dias, timeline na ordem original e progresso das visitas.
 - Atividades sem datas, horários ou endereços continuam utilizáveis. Quando há datas, os dias são calculados por calendário, sem inferir o fuso do destino.
-- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Como o modelo não possui fuso horário, não há “Hoje” automático, contagem regressiva ou reordenação por horário.
+- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Com um fuso horário opcional (calendário da viagem), o Modo Viagem indica o dia atual; sem ele, usa o fuso do aparelho e avisa isso.
 - “Como chegar” só existe com endereço informado. Links externos ficam indisponíveis quando o navegador informa ausência de conexão.
 - Detalhes expansíveis mantêm o dia selecionado. Endereços e hospedagem podem ser copiados.
-- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. As reservas são gerais: o modelo ainda não associa reservas a atividades.
+- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. Reservas podem ser vinculadas a atividades e hospedagens no planejamento.
 - Marcar/desmarcar visitas e atualizar checklist reutiliza o mesmo objeto Trip, a mesma função save e o mesmo localStorage do planejamento. Sem novos bancos, migrações, dependências ou filas de sincronização.
 - Foco de teclado ao entrar/sair, feedback por região live, controles de toque com 44px ou mais e respeito a movimento reduzido.
 
