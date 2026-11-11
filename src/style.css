@@ -2388,3 +2388,21 @@ input[type="date"]::-webkit-date-and-time-value {
 .lazy-failed p {
   margin: 0;
 }
+
+/* Trip sections on phones: scrollable row with a fade showing there is more. */
+@media (max-width: 720px) {
+  .detail-tabs {
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+    padding-right: 28px;
+  }
+  .detail-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .detail-tabs button {
+    scroll-snap-align: start;
+    min-height: 44px;
+  }
+}

@@ -811,7 +811,11 @@ function App() {
                     {tr("Baixar roteiro offline")}
                   </button>
                 </div>
-                <div className="tabs detail-tabs">
+                <div
+                  className="tabs detail-tabs"
+                  role="tablist"
+                  aria-label={tr("Seções da viagem")}
+                >
                   {/* Internal tab ids stay in Portuguese; only the label is translated. */}
                   {[
                     "Roteiro",
@@ -828,7 +832,13 @@ function App() {
                   ].map((v) => (
                     <button
                       key={v}
+                      role="tab"
+                      aria-selected={tab === v}
                       className={tab === v ? "selected" : ""}
+                      ref={(el) => {
+                        if (el && tab === v)
+                          el.scrollIntoView({ block: "nearest", inline: "nearest" });
+                      }}
                       onClick={() => setTab(v)}
                     >
                       {tr(v)}
@@ -1450,7 +1460,11 @@ function App() {
                         <option>EUR</option>
                         <option>USD</option>
                       </select>
-                      <button className="primary" disabled={busy}>
+                      <button
+                        className="primary"
+                        disabled={busy}
+                        aria-label={tr("Adicionar despesa")}
+                      >
                         <Plus size={16} />
                       </button>
                     </form>
