@@ -36,6 +36,12 @@ export const overpassEndpoints: string[] = [
 ].filter((url) => /^https:\/\//.test(url));
 
 const CACHE_KEY = "gomes-catalog-cache-v2";
+try {
+  // Results of the old Overpass-only catalog are no longer read.
+  localStorage.removeItem("gomes-catalog-cache-v1");
+} catch {
+  /* storage is optional */
+}
 const DAY = 86400000;
 
 export type CatalogResult = {
