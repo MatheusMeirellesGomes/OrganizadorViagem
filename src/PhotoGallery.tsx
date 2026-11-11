@@ -6,7 +6,7 @@ import { PrivatePhoto } from "./PrivatePhoto";
 import { portableTrips } from "./backup";
 import { supabase } from "./store";
 import { dateLabel } from "./model";
-import { TravelMap } from "./TravelMap";
+import { TravelMap } from "./LazyMaps";
 import "./photos.css";
 export function PhotoGallery({
   trip,

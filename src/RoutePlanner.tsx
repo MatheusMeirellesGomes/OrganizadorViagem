@@ -1,7 +1,7 @@
 import { t as tr } from "./i18n";
 import { useMemo, useState } from "react";
 import type { Trip } from "./model";
-import { RouteMap } from "./RouteMap";
+import { RouteMap } from "./LazyMaps";
 import {
   mapStops,
   daySegments,

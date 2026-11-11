@@ -4,7 +4,7 @@ import { ChoiceButtons } from "./ChoiceButtons";
 import { choosePlace } from "./choices";
 import { useState } from "react";
 import { MapPin, Search, Compass } from "lucide-react";
-import { TravelMap } from "./TravelMap";
+import { TravelMap } from "./LazyMaps";
 import type { Trip } from "./model";
 import { foodMatches, nearestPlaces, isFood, addPlaceToTrip } from "./food";
 import { safeExternalUrl } from "./travel-mode";

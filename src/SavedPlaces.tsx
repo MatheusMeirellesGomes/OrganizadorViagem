@@ -11,7 +11,7 @@ import {
 } from "./choices";
 import { ChoiceButtons } from "./ChoiceButtons";
 import { addPlaceToTrip } from "./food";
-import { TravelMap } from "./TravelMap";
+import { TravelMap } from "./LazyMaps";
 import { validPoint } from "./places";
 export function SavedPlaces({
   trip,

@@ -67,7 +67,8 @@ import {
   writeAccountCache,
   type RemoteRow,
 } from "./remote";
-import { TravelMap, type Coordinates } from "./TravelMap";
+import { TravelMap, Catalog, preloadHeavyParts } from "./LazyMaps";
+import type { Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
 import { PhotoGallery } from "./PhotoGallery";
 import { PrivatePhoto } from "./PrivatePhoto";
@@ -75,7 +76,7 @@ import { compressPhoto } from "./photos";
 import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
 import { SavedPlaces } from "./SavedPlaces";
-import { Catalog } from "./Catalog";
+
 import { portableTrips } from "./backup";
 import { DocumentsPanel } from "./DocumentsPanel";
 import { prepareTripAssets } from "./migration";
@@ -2435,3 +2436,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
+// Download maps and the catalog in the background while there is a connection,
+// so they still open later without internet.
+window.setTimeout(preloadHeavyParts, 1500);
