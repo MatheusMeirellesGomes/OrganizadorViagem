@@ -812,18 +812,19 @@ function App() {
                   </button>
                 </div>
                 <div className="tabs detail-tabs">
+                  {/* Internal tab ids stay in Portuguese; only the label is translated. */}
                   {[
-                    tr("Roteiro"),
-                    tr("Calendário"),
-                    tr("Lugares"),
-                    tr("Mapa"),
-                    tr("Informações"),
-                    tr("Hospedagens"),
-                    tr("Reservas"),
-                    tr("Documentos"),
-                    tr("Checklist"),
-                    tr("Fotos"),
-                    ...(trip.budgetEnabled ? [tr("Despesas")] : []),
+                    "Roteiro",
+                    "Calendário",
+                    "Lugares",
+                    "Mapa",
+                    "Informações",
+                    "Hospedagens",
+                    "Reservas",
+                    "Documentos",
+                    "Checklist",
+                    "Fotos",
+                    ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
                     <button
                       key={v}

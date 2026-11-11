@@ -48,6 +48,29 @@ describe("traduções", () => {
       .map(([k]) => k);
     expect(wrong).toEqual([]);
   });
+  it("textos traduzidos não são usados como valores de controle", () => {
+    // e.g. tabs: tr("Roteiro") stored as state but compared with "Roteiro"
+    // made every tab empty in English and Spanish.
+    const problems: string[] = [];
+    for (const [file, text] of sources) {
+      const translated = new Set(
+        [...text.matchAll(/\btr\(\s*"((?:[^"\\]|\\.)*)"\s*\)/g)].map((m) => m[1]),
+      );
+      for (const key of translated) {
+        const quoted = JSON.stringify(key);
+        const asValue = [
+          "=== " + quoted,
+          "!== " + quoted,
+          "case " + quoted,
+          "useState(" + quoted,
+        ].some((p) => text.includes(p));
+        const inSetter = new RegExp("set\\w+\\(" + quoted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\)").test(text);
+        if ((asValue || inSetter) && text.includes("tr(" + quoted + ")"))
+          problems.push(`${file}: ${key}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
   it("nenhuma tradução está vazia", () => {
     const empty = Object.entries(dictionary)
       .filter(([, v]) => v.length !== 2 || v.some((x) => !x.trim()))
