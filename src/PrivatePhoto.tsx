@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useState } from "react";
 import { supabase } from "./store";
 import type { TripPhoto } from "./photos";
@@ -56,8 +57,8 @@ export function PrivatePhoto({
   ) : (
     <span className={className + " photo-unavailable"}>
       {failed
-        ? "Foto indisponível. Verifique a conexão e sua conta."
-        : "Carregando foto…"}
+        ? tr("Foto indisponível. Verifique a conexão e sua conta.")
+        : tr("Carregando foto…")}
     </span>
   );
 }

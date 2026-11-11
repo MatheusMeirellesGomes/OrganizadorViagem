@@ -103,13 +103,13 @@ export function PlaceDetails({ place: p }: { place: Place }) {
         <dt>{tr("Endereço")}</dt>
         <dd>
           {[p.address, p.city, p.country].filter(Boolean).join(" · ") ||
-            "Não informado"}
+            tr("Não informado")}
         </dd>
-        <dt>{isFood(p) ? "Preço" : tr("Entrada")}</dt>
+        <dt>{isFood(p) ? tr("Preço") : tr("Entrada")}</dt>
         <dd>
-          {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
+          {isFood(p) ? tr("Faixa de preço não informada") : tr(feeLabel(p))}
           {p.tags.charge && (
-            <p>Valor cadastrado (confirme na fonte): {p.tags.charge}</p>
+            <p>{tr("Valor cadastrado (confirme na fonte):")}{" "}{p.tags.charge}</p>
           )}
         </dd>
         <dt>{tr("Horários")}</dt>
@@ -119,20 +119,20 @@ export function PlaceDetails({ place: p }: { place: Place }) {
             : tr("Consultar site oficial")}
         </dd>
         {[
-          ["Descrição", p.tags["description:pt"] || p.tags.description],
-          ["Nome alternativo", p.tags.alt_name],
-          ["Acessibilidade", p.tags.wheelchair],
-          ["Banheiros", p.tags.toilets],
-          ["Reserva", p.tags.reservation],
-          ["Culinária", p.tags.cuisine],
-          ["Telefone", p.tags.phone || p.tags["contact:phone"]],
-          ["Vegetariano", p.tags["diet:vegetarian"]],
-          ["Vegano", p.tags["diet:vegan"]],
+          [tr("Descrição"), p.tags["description:pt"] || p.tags.description],
+          [tr("Nome alternativo"), p.tags.alt_name],
+          [tr("Acessibilidade"), p.tags.wheelchair],
+          [tr("Banheiros"), p.tags.toilets],
+          [tr("Reserva"), p.tags.reservation],
+          [tr("Culinária"), p.tags.cuisine],
+          [tr("Telefone"), p.tags.phone || p.tags["contact:phone"]],
+          [tr("Vegetariano"), p.tags["diet:vegetarian"]],
+          [tr("Vegano"), p.tags["diet:vegan"]],
         ]
           .filter(([, v]) => v)
           .map(([label, value]) => (
             <div key={label}>
-              <dt>{label}</dt>
+              <dt>{tr(label)}</dt>
               <dd>{value}</dd>
             </div>
           ))}
@@ -167,14 +167,11 @@ export function PlaceDetails({ place: p }: { place: Place }) {
           {tr("Ver fonte")}
         </a>
       </div>
-      <p className="subtle">
-        Consultado em {new Date(p.retrievedAt).toLocaleString(getLocale())}
+      <p className="subtle">{tr("Consultado em")}{" "}{new Date(p.retrievedAt).toLocaleString(getLocale())}
         {p.updatedAt
-          ? " · Registro editado em " +
+          ? tr(" · Registro editado em ") +
             new Date(p.updatedAt).toLocaleDateString(getLocale())
-          : ""}
-        . Dados podem mudar.
-      </p>
+          : ""}{tr(". Dados podem mudar.")}</p>
     </details>
   );
 }
@@ -230,7 +227,7 @@ export function Catalog({
       setResult(undefined);
     } catch (e) {
       setMessage(
-        e instanceof Error ? e.message : "Não foi possível localizar.",
+        e instanceof Error ? e.message : tr("Não foi possível localizar."),
       );
     } finally {
       setBusy(false);
@@ -241,9 +238,9 @@ export function Catalog({
       <section className="panel">
         <div className="section-head">
           <div>
-            <p className="eyebrow">DESCUBRA O SEU PRÓXIMO CAMINHO</p>
-            <h2>Lugares de verdade, no seu ritmo</h2>
-            <p>Busque uma cidade ou escolha uma região no mapa.</p>
+            <p className="eyebrow">{tr("DESCUBRA O SEU PRÓXIMO CAMINHO")}</p>
+            <h2>{tr("Lugares de verdade, no seu ritmo")}</h2>
+            <p>{tr("Busque uma cidade ou escolha uma região no mapa.")}</p>
           </div>
           <Compass size={30} />
         </div>
@@ -279,7 +276,7 @@ export function Catalog({
             <input
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="Ex.: Madrid"
+              placeholder={tr("Ex.: Madrid")}
             />
           </label>
           <button className="secondary" disabled={busy}>
@@ -346,7 +343,7 @@ export function Catalog({
                 setSort(kind === "food" ? "name" : "distance");
               } catch (e) {
                 setMessage(
-                  e instanceof Error ? e.message : "Consulta indisponível.",
+                  e instanceof Error ? e.message : tr("Consulta indisponível."),
                 );
               } finally {
                 setBusy(false);
@@ -354,10 +351,10 @@ export function Catalog({
             }}
           >
             {busy
-              ? "Consultando…"
+              ? tr("Consultando…")
               : kind === "food"
-                ? "Buscar restaurantes nesta região"
-                : "Buscar atrações nesta região"}
+                ? tr("Buscar restaurantes nesta região")
+                : tr("Buscar atrações nesta região")}
           </button>
         </div>
         <p className="subtle">
@@ -372,7 +369,7 @@ export function Catalog({
             "A consulta envia apenas a região escolhida. Nenhum catálogo reúne todos os lugares.",
           )}
         </p>
-        <p role="status">{message}</p>
+        <p role="status">{tr(message)}</p>
         <a
           href={
             "https://www.google.com/maps/search/?api=1&query=" +
@@ -383,17 +380,15 @@ export function Catalog({
           }
           target="_blank"
           rel="noreferrer"
-        >
-          Pesquisar também no Google Maps
-        </a>
+        >{tr("Pesquisar também no Google Maps")}</a>
       </section>
       {result && (
         <section className="catalog-results">
           <div className="section-head">
             <div>
-              <h2>{places.length} lugares encontrados</h2>
+              <h2>{tf("{count} lugares encontrados", { count: places.length })}</h2>
               <p>
-                {result.cached ? "Consulta salva" : "Consulta recebida"} em{" "}
+                {result.cached ? tr("Consulta salva") : tr("Consulta recebida")} em{" "}
                 {new Date(result.retrievedAt).toLocaleString(getLocale())}
               </p>
             </div>
@@ -473,7 +468,7 @@ export function Catalog({
                   )
                   .map(([key, label]) => (
                     <option key={key} value={key}>
-                      {label}
+                      {tr(label)}
                     </option>
                   ))}
               </select>
@@ -488,9 +483,9 @@ export function Catalog({
                   setLimit(24);
                 }}
               >
-                <option value="all">Todas · inclusive sem preço</option>
-                <option value="no">Gratuitas cadastradas</option>
-                <option value="yes">Pagas cadastradas</option>
+                <option value="all">{tr("Todas · inclusive sem preço")}</option>
+                <option value="no">{tr("Gratuitas cadastradas")}</option>
+                <option value="yes">{tr("Pagas cadastradas")}</option>
               </select>
             </label>
             )}
@@ -516,7 +511,7 @@ export function Catalog({
                 <label>
                   {tr("Culinária")}
                   <input
-                    placeholder="Ex.: italian, brazilian"
+                    placeholder={tr("Ex.: italian, brazilian")}
                     value={cuisine}
                     onChange={(e) => {
                       setCuisine(e.target.value);
@@ -533,7 +528,7 @@ export function Catalog({
                       setLimit(24);
                     }}
                   >
-                    <option value="">Todas · inclusive sem informação</option>
+                    <option value="">{tr("Todas · inclusive sem informação")}</option>
                     <option value="vegetarian">
                       {tr("Vegetariana informada")}
                     </option>
@@ -556,10 +551,7 @@ export function Catalog({
                   </select>
                 </label>
               </div>
-              <p className="subtle">
-                Filtros usam apenas informações cadastradas. Faixa de custo e
-                avaliações não estão disponíveis nesta fonte.
-              </p>
+              <p className="subtle">{tr("Filtros usam apenas informações cadastradas. Faixa de custo e avaliações não estão disponíveis nesta fonte.")}</p>
             </>
           )}
           <div className="catalog-filters">
@@ -624,7 +616,7 @@ export function Catalog({
                   )
                 ) : (
                   <p>
-                    {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
+                    {isFood(p) ? tr("Faixa de preço não informada") : tr(feeLabel(p))}
                   </p>
                 )}
                 {point && (
@@ -646,7 +638,7 @@ export function Catalog({
                     const t = trips.find((t) => t.id === targetTrip);
                     if (t && (await onSave(choosePlace(t, p, decision))))
                       setMessage(
-                        "Decisão salva. Veja seus lugares dentro da viagem.",
+                        tr("Decisão salva. Veja seus lugares dentro da viagem."),
                       );
                   }}
                 />
@@ -659,13 +651,13 @@ export function Catalog({
                     try {
                       if (await onSave(addPlaceToTrip(t, p, targetDay)))
                         setMessage(
-                          p.name + " adicionado ao dia " + targetDay + ".",
+                          tf("{name} adicionado ao dia {day}.", { name: p.name, day: targetDay }),
                         );
                     } catch (e) {
                       setMessage(
                         e instanceof Error
                           ? e.message
-                          : "Não foi possível adicionar.",
+                          : tr("Não foi possível adicionar."),
                       );
                     }
                   }}
@@ -676,18 +668,13 @@ export function Catalog({
             ))}
           </div>
           {!places.length && (
-            <p className="panel">
-              Nenhum lugar corresponde a esta busca. Ajuste os filtros ou
-              consulte outra região.
-            </p>
+            <p className="panel">{tr("Nenhum lugar corresponde a esta busca. Ajuste os filtros ou consulte outra região.")}</p>
           )}
           {places.length > limit && (
             <button
               className="secondary"
               onClick={() => setLimit((n) => n + 24)}
-            >
-              Mostrar mais lugares ({places.length - limit} restantes)
-            </button>
+            >{tr("Mostrar mais lugares (")}{places.length - limit}{" "}{tr("restantes)")}</button>
           )}
           <p className="subtle">
             {result.provider === "wikipedia" && (
@@ -697,17 +684,13 @@ export function Catalog({
                   href="https://creativecommons.org/licenses/by-sa/4.0/"
                   target="_blank"
                   rel="noreferrer"
-                >
-                  Wikipédia · CC BY-SA
-                </a>
+                >{tr("Wikipédia · CC BY-SA")}</a>
                 {" · "}
                 <a
                   href="https://www.wikidata.org/wiki/Wikidata:Licensing"
                   target="_blank"
                   rel="noreferrer"
-                >
-                  Wikidata · CC0
-                </a>
+                >{tr("Wikidata · CC0")}</a>
                 {" · "}
                 {tr("Fotos: Wikimedia Commons, com autor e licença em cada foto.")}
               </>
@@ -719,9 +702,7 @@ export function Catalog({
                   href="https://www.openstreetmap.org/copyright"
                   target="_blank"
                   rel="noreferrer"
-                >
-                  OpenStreetMap contributors · ODbL
-                </a>
+                >{tr("OpenStreetMap contributors · ODbL")}</a>
               </>
             )}{" "}
             {tr("Sem preços, avaliações ou horários gerados por IA.")}

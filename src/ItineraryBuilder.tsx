@@ -1,3 +1,4 @@
+import { tf, formatNumber } from "./i18n";
 import { t as tr } from "./i18n";
 import { useState } from "react";
 import type { Trip } from "./model";
@@ -35,10 +36,7 @@ export function ItineraryBuilder({
   return (
     <section className="panel itinerary-builder">
       <h2>{tr("Gerar roteiro")}</h2>
-      <p>
-        Organize os lugares da sua lista Quero ir. Você revisa a proposta antes
-        de salvar.
-      </p>
+      <p>{tr("Organize os lugares da sua lista Quero ir. Você revisa a proposta antes de salvar.")}</p>
       <div className="catalog-filters">
         <label>
           {tr("Dias disponíveis")}
@@ -89,12 +87,12 @@ export function ItineraryBuilder({
             setDraft(next);
             setMessage(
               next.activities.length
-                ? "Prévia criada. Confira a distribuição."
-                : "Salve lugares em Quero ir, ou inclua Talvez.",
+                ? tr("Prévia criada. Confira a distribuição.")
+                : tr("Salve lugares em Quero ir, ou inclua Talvez."),
             );
           } catch (e) {
             setMessage(
-              e instanceof Error ? e.message : "Não foi possível gerar.",
+              e instanceof Error ? e.message : tr("Não foi possível gerar."),
             );
           }
         }}
@@ -103,7 +101,7 @@ export function ItineraryBuilder({
       </button>
       {draft && (
         <div className="itinerary-preview">
-          <h3>Sua proposta · {draft.activities.length} lugares</h3>
+          <h3>{tr("Sua proposta ·")}{" "}{draft.activities.length} lugares</h3>
           {draft.warnings.map((w) => (
             <p className="subtle" key={w}>
               {w}
@@ -111,9 +109,7 @@ export function ItineraryBuilder({
           ))}
           {distance && distance.segments > 0 && (
             <p>
-              {distance.km.toFixed(1)} km em linha reta entre pontos do mesmo
-              dia. Não inclui ida/volta do hotel.
-            </p>
+              {tf("{km} km em linha reta entre pontos do mesmo dia. Não inclui ida/volta do hotel.", { km: formatNumber(distance.km, 1) })}</p>
           )}
           {draft.activities.map((a, index) => (
             <article className="stay-card" key={a.id}>
@@ -234,15 +230,11 @@ export function ItineraryBuilder({
             </article>
           ))}
           {draft.unassigned.length > 0 && (
-            <p>
-              Fora da proposta: {draft.unassigned.map((p) => p.name).join(", ")}
+            <p>{tr("Fora da proposta:")}{" "}{draft.unassigned.map((p) => p.name).join(", ")}
               .
             </p>
           )}
-          <p>
-            As atividades atuais serão mantidas. Lugares já presentes no roteiro
-            não serão adicionados novamente.
-          </p>
+          <p>{tr("As atividades atuais serão mantidas. Lugares já presentes no roteiro não serão adicionados novamente.")}</p>
           <div className="tm-actions">
             <button
               className="primary"
@@ -253,18 +245,18 @@ export function ItineraryBuilder({
                   const next = appendDraft(trip, draft.activities),
                     added = next.activities.length - trip.activities.length;
                   if (!added) {
-                    setMessage("Todos estes lugares já estão no roteiro.");
+                    setMessage(tr("Todos estes lugares já estão no roteiro."));
                     return;
                   }
                   if (await onSave(next)) {
                     setDraft(undefined);
                     setMessage(
-                      `${added} atividades adicionadas. Seu roteiro anterior foi preservado.`,
+                      tf("{count} atividades adicionadas. Seu roteiro anterior foi preservado.", { count: added }),
                     );
                   }
                 } catch (e) {
                   setMessage(
-                    e instanceof Error ? e.message : "Não foi possível salvar.",
+                    e instanceof Error ? e.message : tr("Não foi possível salvar."),
                   );
                 } finally {
                   setPending(false);
@@ -278,7 +270,7 @@ export function ItineraryBuilder({
               disabled={pending}
               onClick={() => {
                 setDraft(undefined);
-                setMessage("Prévia descartada. Roteiro preservado.");
+                setMessage(tr("Prévia descartada. Roteiro preservado."));
               }}
             >
               {tr("Descartar prévia")}
@@ -286,7 +278,7 @@ export function ItineraryBuilder({
           </div>
         </div>
       )}
-      <p role="status">{message}</p>
+      <p role="status">{tr(message)}</p>
     </section>
   );
 }

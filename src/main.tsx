@@ -1,3 +1,4 @@
+import { tf } from "./i18n";
 import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -150,7 +151,7 @@ function App() {
     supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
-      .catch(() => setNotice("Não foi possível verificar sua sessão."))
+      .catch(() => setNotice(tr("Não foi possível verificar sua sessão.")))
       .finally(() => setLoading(false));
     // Token refreshes also fire this event; only a sign-out swaps the data source.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
@@ -199,9 +200,10 @@ function App() {
         applyRows(cache.rows);
         setAccountSource("cache");
         setNotice(
-          "Sem conexão com a conta. Mostrando a cópia salva neste aparelho em " +
-            new Date(cache.savedAt).toLocaleString(getLocale()) +
-            ". Para editar, conecte-se à internet.",
+          tf(
+            "Sem conexão com a conta. Mostrando a cópia salva neste aparelho em {date}. Para editar, conecte-se à internet.",
+            { date: new Date(cache.savedAt).toLocaleString(getLocale()) },
+          ),
         );
       } else
         setLoadError(
@@ -259,7 +261,7 @@ function App() {
       if (session && repository) {
         if (accountSource === "cache" || !online)
           throw new Error(
-            "Sem conexão: esta alteração não foi salva. Conecte-se à internet para editar as viagens da sua conta.",
+            tr("Sem conexão: esta alteração não foi salva. Conecte-se à internet para editar as viagens da sua conta."),
           );
         const row = await persistWithVersion(
           repository,
@@ -289,7 +291,7 @@ function App() {
     }
   }
   async function remove(t: Trip) {
-    if (!confirm(`Excluir “${t.title}”? Esta ação não pode ser desfeita.`))
+    if (!confirm(tf("Excluir “{title}”? Esta ação não pode ser desfeita.", { title: t.title })))
       return;
     try {
       const next = trips.filter((x) => x.id !== t.id);
@@ -301,7 +303,7 @@ function App() {
       } else saveLocal(next);
       setTrips(next);
       setSelected(null);
-      setNotice("Viagem excluída.");
+      setNotice(tr("Viagem excluída."));
     } catch (e) {
       if (e instanceof ConflictError) setStaleTrip(true);
       setNotice(
@@ -319,7 +321,7 @@ function App() {
     setBusy(true);
     try {
       if (file.size > 20 * 1024 * 1024)
-        throw new Error("O limite de importação é 20 MB.");
+        throw new Error(tr("O limite de importação é 20 MB."));
       const imported = parseBackup(await file.text());
       if (session && repository) {
         if (accountSource === "cache" || !online)
@@ -345,19 +347,19 @@ function App() {
         cacheTrips(session.user.id, next);
         setNotice(
           failed
-            ? `${saved.length} viagens importadas para a conta. ${failed} não puderam ser salvas; tente importar o arquivo novamente.`
-            : `${saved.length} viagens importadas para a conta como novas cópias.`,
+            ? tf("{saved} viagens importadas para a conta. {failed} não puderam ser salvas; tente importar o arquivo novamente.", { saved: saved.length, failed })
+            : tf("{count} viagens importadas para a conta como novas cópias.", { count: saved.length }),
         );
         return;
       }
       const next = [...imported, ...trips];
       saveLocal(next);
       setTrips(next);
-      setNotice(`${imported.length} viagens importadas como novas cópias.`);
+      setNotice(tf("{count} viagens importadas como novas cópias.", { count: imported.length }));
     } catch (e) {
       setNotice(
         e instanceof SyntaxError
-          ? "O arquivo não é um JSON válido."
+          ? tr("O arquivo não é um JSON válido.")
           : e instanceof Error && !("code" in e)
             ? e.message
             : friendlyError(e, "Falha na importação."),
@@ -374,14 +376,14 @@ function App() {
       const portable = await portableTrips(trips, async (bucket, path) => {
         if (!supabase || !session)
           throw new Error(
-            "Entre na conta de origem para incluir os anexos no backup.",
+            tr("Entre na conta de origem para incluir os anexos no backup."),
           );
         const { data, error } = await supabase.storage
           .from(bucket)
           .download(path);
         if (error || !data)
           throw new Error(
-            "Um anexo não pôde ser baixado. Confira a conexão e tente novamente. Nenhum backup incompleto foi gerado.",
+            tr("Um anexo não pôde ser baixado. Confira a conexão e tente novamente. Nenhum backup incompleto foi gerado."),
           );
         return data;
       });
@@ -391,7 +393,7 @@ function App() {
       );
       if (blob.size > 20 * 1024 * 1024)
         throw new Error(
-          "O backup excede o limite atual de 20 MB. Baixe seus anexos separadamente antes de reduzir o conteúdo.",
+          tr("O backup excede o limite atual de 20 MB. Baixe seus anexos separadamente antes de reduzir o conteúdo."),
         );
       const url = URL.createObjectURL(blob),
         a = document.createElement("a");
@@ -400,11 +402,11 @@ function App() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setNotice(
-        "Backup criado com os anexos. Guarde o arquivo em local privado.",
+        tr("Backup criado com os anexos. Guarde o arquivo em local privado."),
       );
     } catch (error) {
       setNotice(
-        error instanceof Error ? error.message : "Não foi possível exportar.",
+        error instanceof Error ? error.message : tr("Não foi possível exportar."),
       );
     } finally {
       setBusy(false);
@@ -438,7 +440,7 @@ function App() {
       const start = field(f, "start"),
         end = field(f, "end");
       if (start && end && end < start) {
-        setNotice("A data final precisa ser igual ou posterior à inicial.");
+        setNotice(tr("A data final precisa ser igual ou posterior à inicial."));
         return;
       }
       const t = newTrip({
@@ -475,7 +477,7 @@ function App() {
     if (modal === "reservation" && trip) {
       const url = field(f, "url");
       if (url && !/^https?:\/\//i.test(url)) {
-        setNotice("Use um link começando com https:// ou http://.");
+        setNotice(tr("Use um link começando com https:// ou http://."));
         return;
       }
       result = await save({
@@ -517,10 +519,10 @@ function App() {
       if (
         await save({ ...trip, photos: [...(trip.photos || []), ...additions] })
       )
-        setNotice("Fotos comprimidas e salvas. Guarde os originais com você.");
+        setNotice(tr("Fotos comprimidas e salvas. Guarde os originais com você."));
     } catch (e) {
       setNotice(
-        e instanceof Error ? e.message : "Não foi possível adicionar as fotos.",
+        e instanceof Error ? e.message : tr("Não foi possível adicionar as fotos."),
       );
     } finally {
       setBusy(false);
@@ -560,8 +562,8 @@ function App() {
           </p>
           <footer>
             <CalendarDays size={14} />
-            {dateLabel(t)}
-            <span>{t.activities.length} lugares</span>
+            {tr(dateLabel(t))}
+            <span>{tf("{count} lugares", { count: t.activities.length })}</span>
           </footer>
         </div>
       </button>
@@ -582,7 +584,7 @@ function App() {
             <Mountain size={25} />
           </span>
           <span className="brand-words">
-            gomes<span>PELO MUNDO</span>
+            gomes<span>{tr("PELO MUNDO")}</span>
           </span>
         </a>
         <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
@@ -609,12 +611,8 @@ function App() {
             <Plane size={22} />
             <span>✦</span>
           </div>
-          <h4>
-            Menos abas abertas.
-            <br />
-            Mais mundo lá fora.
-          </h4>
-          <p>Um lugar para todos os seus caminhos.</p>
+          <h4>{tr("Menos abas abertas.")}<br />{tr("Mais mundo lá fora.")}</h4>
+          <p>{tr("Um lugar para todos os seus caminhos.")}</p>
         </div>
         <button
           className={"profile-link " + (page === "profile" ? "active" : "")}
@@ -624,9 +622,9 @@ function App() {
             {firstName ? firstName[0].toUpperCase() : <User size={18} />}
           </span>
           <span>
-            <b>{firstName || "Seu espaço pessoal"}</b>
+            <b>{firstName || tr("Seu espaço pessoal")}</b>
             <small>
-              {session ? "Conta conectada" : "Explorador de possibilidades"}
+              {session ? tr("Conta conectada") : tr("Explorador de possibilidades")}
             </small>
           </span>
           <Settings2 size={16} />
@@ -635,7 +633,7 @@ function App() {
       {menu && (
         <button
           className="menu-shade"
-          aria-label="Fechar menu"
+          aria-label={tr("Fechar menu")}
           onClick={() => setMenu(false)}
         />
       )}
@@ -643,7 +641,7 @@ function App() {
         <header className="topbar">
           <button
             className="mobile-menu icon-button"
-            aria-label="Abrir menu"
+            aria-label={tr("Abrir menu")}
             onClick={() => setMenu(!menu)}
           >
             <Menu />
@@ -654,7 +652,7 @@ function App() {
             <b>
               {trip
                 ? trip.title
-                : nav.find((n) => n.id === page)?.label || tr("Perfil")}
+                : tr(nav.find((n) => n.id === page)?.label || "Perfil")}
             </b>
           </div>
           <div className="top-actions">
@@ -662,17 +660,17 @@ function App() {
               {session ? <Cloud size={14} /> : <HardDrive size={14} />}
               <span>
                 {session && accountSource === "cache"
-                  ? "Cópia offline da conta"
+                  ? tr("Cópia offline da conta")
                   : !online
-                    ? "Sem conexão"
+                    ? tr("Sem conexão")
                     : session
-                      ? "Conta sincronizada"
-                      : "Salvo neste navegador"}
+                      ? tr("Conta sincronizada")
+                      : tr("Salvo neste navegador")}
               </span>
             </span>
             <button
               className="avatar"
-              aria-label="Abrir perfil"
+              aria-label={tr("Abrir perfil")}
               onClick={() => go("profile")}
             >
               {firstName ? firstName[0].toUpperCase() : <User size={18} />}
@@ -683,10 +681,7 @@ function App() {
           {staleTrip && session && !loading && (
             <div className="stale-banner" role="status">
               <Cloud size={18} />
-              <p>
-                Uma viagem foi alterada em outro aparelho. Nada foi sobrescrito.
-                Recarregue para continuar a partir da versão mais recente.
-              </p>
+              <p>{tr("Uma viagem foi alterada em outro aparelho. Nada foi sobrescrito. Recarregue para continuar a partir da versão mais recente.")}</p>
               <button
                 className="secondary small"
                 onClick={() => loadAccount(session.user.id)}
@@ -707,14 +702,14 @@ function App() {
           {loading ? (
             <div className="empty">
               <Compass className="spin" />
-              <h2>Preparando seus caminhos…</h2>
+              <h2>{tr("Preparando seus caminhos…")}</h2>
             </div>
           ) : session && loadError ? (
             <section className="panel account-error" role="alert">
               <Empty
                 icon={Cloud}
-                title="Não conseguimos abrir suas viagens"
-                text={loadError}
+                title={tr("Não conseguimos abrir suas viagens")}
+                text={tr(loadError)}
                 action="Tentar novamente"
                 onAction={() => loadAccount(session.user.id)}
               />
@@ -776,7 +771,7 @@ function App() {
                     {trip.destination || tr("Destino em aberto")}
                     <span>·</span>
                     <CalendarDays size={16} />
-                    {dateLabel(trip)}
+                    {tr(dateLabel(trip))}
                   </p>
                 </div>
                 <div className="detail-toolbar">
@@ -789,7 +784,7 @@ function App() {
                     {tr("Modo Viagem")}
                   </button>
                   <select
-                    aria-label="Status da viagem"
+                    aria-label={tr("Status da viagem")}
                     value={trip.status}
                     disabled={busy}
                     onChange={(e) =>
@@ -801,7 +796,7 @@ function App() {
                   >
                     {Object.entries(statusLabels).map(([k, v]) => (
                       <option value={k} key={k}>
-                        {v}
+                        {tr(v)}
                       </option>
                     ))}
                   </select>
@@ -815,17 +810,17 @@ function App() {
                 </div>
                 <div className="tabs detail-tabs">
                   {[
-                    "Roteiro",
-                    "Calendário",
-                    "Lugares",
-                    "Mapa",
-                    "Informações",
-                    "Hospedagens",
-                    "Reservas",
-                    "Documentos",
-                    "Checklist",
-                    "Fotos",
-                    ...(trip.budgetEnabled ? ["Despesas"] : []),
+                    tr("Roteiro"),
+                    tr("Calendário"),
+                    tr("Lugares"),
+                    tr("Mapa"),
+                    tr("Informações"),
+                    tr("Hospedagens"),
+                    tr("Reservas"),
+                    tr("Documentos"),
+                    tr("Checklist"),
+                    tr("Fotos"),
+                    ...(trip.budgetEnabled ? [tr("Despesas")] : []),
                   ].map((v) => (
                     <button
                       key={v}
@@ -854,8 +849,8 @@ function App() {
                     <section className="panel itinerary">
                       <div className="section-head">
                         <div>
-                          <h2>Um dia de cada vez</h2>
-                          <p>Monte seu roteiro no seu ritmo.</p>
+                          <h2>{tr("Um dia de cada vez")}</h2>
+                          <p>{tr("Monte seu roteiro no seu ritmo.")}</p>
                         </div>
                         <button
                           className="primary small"
@@ -886,7 +881,7 @@ function App() {
                           ),
                         )}
                         <button
-                          aria-label="Adicionar dia"
+                          aria-label={tr("Adicionar dia")}
                           onClick={() =>
                             setDay(
                               Math.max(
@@ -918,7 +913,7 @@ function App() {
                         0 ? (
                           <Empty
                             icon={MapPin}
-                            title="O dia está aberto a possibilidades"
+                            title={tr("O dia está aberto a possibilidades")}
                             text="Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer."
                             action="Adicionar atividade"
                             onAction={() => setModal("activity")}
@@ -939,8 +934,8 @@ function App() {
                                   className="check"
                                   aria-label={
                                     a.done
-                                      ? "Marcar como não visitado"
-                                      : "Marcar como visitado"
+                                      ? tr("Marcar como não visitado")
+                                      : tr("Marcar como visitado")
                                   }
                                   onClick={() =>
                                     save({
@@ -961,7 +956,7 @@ function App() {
                                 </button>
                                 <div className="activity-content">
                                   <small>
-                                    {a.time || tr("Sem horário")} · {a.kind}
+                                    {a.time || tr("Sem horário")} · {tr(a.kind)}
                                   </small>
                                   <h3>{a.title}</h3>
                                   {a.address && (
@@ -980,7 +975,7 @@ function App() {
                                   <div className="activity-controls">
                                     <select
                                       aria-label={
-                                        "Mover " + a.title + " para dia"
+                                        tf("Mover {title} para dia", { title: a.title })
                                       }
                                       value={a.day}
                                       onChange={(e) =>
@@ -1013,7 +1008,7 @@ function App() {
                                       )}
                                     </select>
                                     <button
-                                      aria-label="Mover para cima"
+                                      aria-label={tr("Mover para cima")}
                                       className="icon-button"
                                       onClick={() => {
                                         const items = [...trip.activities];
@@ -1036,7 +1031,7 @@ function App() {
                                       <ArrowUp size={14} />
                                     </button>
                                     <button
-                                      aria-label="Mover para baixo"
+                                      aria-label={tr("Mover para baixo")}
                                       className="icon-button"
                                       onClick={() => {
                                         const items = [...trip.activities];
@@ -1062,7 +1057,7 @@ function App() {
                                 </div>
                                 <button
                                   className="icon-button"
-                                  aria-label={"Excluir " + a.title}
+                                  aria-label={tr("Excluir ") + a.title}
                                   onClick={() =>
                                     save({
                                       ...trip,
@@ -1081,14 +1076,14 @@ function App() {
                     </section>
                     <aside className="panel route-panel">
                       <div className="section-head">
-                        <h2>Seu caminho</h2>
+                        <h2>{tr("Seu caminho")}</h2>
                         <Map size={18} />
                       </div>
                       <TravelMap trips={[trip]} />
                       <h3>
-                        {trip.destination || "O destino é você quem escolhe"}
+                        {trip.destination || tr("O destino é você quem escolhe")}
                       </h3>
-                      <p>Consulte lugares e trajetos no Google Maps.</p>
+                      <p>{tr("Consulte lugares e trajetos no Google Maps.")}</p>
                       <a
                         className="secondary"
                         target="_blank"
@@ -1108,16 +1103,12 @@ function App() {
                           target="_blank"
                           rel="noreferrer"
                           href={routeUrl(trip, day)}
-                        >
-                          Ver trajeto do dia <ArrowRight size={15} />
+                        >{tr("Ver trajeto do dia")}{" "}<ArrowRight size={15} />
                         </a>
                       )}
                       <div className="tip">
                         <Sparkles size={18} />
-                        <p>
-                          Deixe espaço para o inesperado. Nem todo momento
-                          precisa de horário.
-                        </p>
+                        <p>{tr("Deixe espaço para o inesperado. Nem todo momento precisa de horário.")}</p>
                       </div>
                     </aside>
                   </div>
@@ -1129,10 +1120,7 @@ function App() {
                       <div className="section-head">
                         <div>
                           <h2>{tr("O destino no mapa")}</h2>
-                          <p>
-                            Toque para marcar a localização principal desta
-                            viagem.
-                          </p>
+                          <p>{tr("Toque para marcar a localização principal desta viagem.")}</p>
                         </div>
                       </div>
                       <TravelMap
@@ -1142,10 +1130,7 @@ function App() {
                           save({ ...trip, coordinates: point })
                         }
                       />
-                      <p className="subtle">
-                        Os trajetos por ruas continuam disponíveis no Google
-                        Maps, pelos endereços das atividades.
-                      </p>
+                      <p className="subtle">{tr("Os trajetos por ruas continuam disponíveis no Google Maps, pelos endereços das atividades.")}</p>
                     </section>
                   </>
                 )}
@@ -1159,7 +1144,7 @@ function App() {
                       const start = field(f, "start"),
                         end = field(f, "end");
                       if (start && end && end < start) {
-                        setNotice("Confira a ordem das datas.");
+                        setNotice(tr("Confira a ordem das datas."));
                         return;
                       }
                       if (
@@ -1175,10 +1160,10 @@ function App() {
                           budgetEnabled: f.has("budget"),
                         })
                       )
-                        setNotice("Informações atualizadas.");
+                        setNotice(tr("Informações atualizadas."));
                     }}
                   >
-                    <h2>Do seu jeito, no seu tempo</h2>
+                    <h2>{tr("Do seu jeito, no seu tempo")}</h2>
                     <p>{tr("Todos os campos são opcionais.")}</p>
                     <label>
                       {tr("Nome da viagem")}
@@ -1206,12 +1191,10 @@ function App() {
                       </label>
                     </div>
                     <ScopePicker defaultValue={tripScope(trip)} />
-                    <label>
-                      Hospedagem e endereço
-                      <input
+                    <label>{tr("Hospedagem e endereço")}<input
                         name="hotel"
                         defaultValue={trip.hotel}
-                        placeholder="Adicione quando decidir"
+                        placeholder={tr("Adicione quando decidir")}
                       />
                     </label>
                     <label>
@@ -1227,9 +1210,7 @@ function App() {
                         name="budget"
                         type="checkbox"
                         defaultChecked={trip.budgetEnabled}
-                      />
-                      Quero usar o controle de despesas nesta viagem
-                    </label>
+                      />{tr("Quero usar o controle de despesas nesta viagem")}</label>
                     <div className="section-head">
                       <button disabled={busy} className="primary">
                         {tr("Salvar alterações")}
@@ -1239,9 +1220,7 @@ function App() {
                         type="button"
                         onClick={() => remove(trip)}
                       >
-                        <Trash2 size={16} />
-                        Excluir viagem
-                      </button>
+                        <Trash2 size={16} />{tr("Excluir viagem")}</button>
                     </div>
                   </form>
                 )}
@@ -1260,8 +1239,8 @@ function App() {
                   <section className="panel">
                     <div className="section-head">
                       <div>
-                        <h2>Tudo à mão</h2>
-                        <p>Hotéis, voos, ingressos e links importantes.</p>
+                        <h2>{tr("Tudo à mão")}</h2>
+                        <p>{tr("Hotéis, voos, ingressos e links importantes.")}</p>
                       </div>
                       <button
                         className="primary small"
@@ -1274,7 +1253,7 @@ function App() {
                     {!(trip.reservations || []).length ? (
                       <Empty
                         icon={Plane}
-                        title="Uma viagem sem papelada espalhada"
+                        title={tr("Uma viagem sem papelada espalhada")}
                         text="Guarde os detalhes e links das suas reservas aqui."
                       />
                     ) : (
@@ -1299,9 +1278,9 @@ function App() {
                           </div>
                           <button
                             className="icon-button"
-                            aria-label="Excluir reserva"
+                            aria-label={tr("Excluir reserva")}
                             onClick={() =>
-                              confirm("Excluir esta reserva?") &&
+                              confirm(tr("Excluir esta reserva?")) &&
                               save({
                                 ...trip,
                                 reservations: trip.reservations.filter(
@@ -1319,11 +1298,10 @@ function App() {
                 )}
                 {tab === "Checklist" && (
                   <section className="panel settings-form">
-                    <h2>Uma coisa de cada vez</h2>
+                    <h2>{tr("Uma coisa de cada vez")}</h2>
                     <p>
                       {trip.checklist.filter((x) => x.done).length} de{" "}
-                      {trip.checklist.length} tarefas concluídas
-                    </p>
+                      {trip.checklist.length}{" "}{tr("tarefas concluídas")}</p>
                     <form
                       className="inline-form"
                       onSubmit={async (e) => {
@@ -1345,8 +1323,8 @@ function App() {
                     >
                       <input
                         name="task"
-                        placeholder="O que você quer lembrar?"
-                        aria-label="Nova tarefa"
+                        placeholder={tr("O que você quer lembrar?")}
+                        aria-label={tr("Nova tarefa")}
                       />
                       <button className="primary" disabled={busy}>
                         <Plus size={17} />
@@ -1374,7 +1352,7 @@ function App() {
                         </label>
                         <button
                           className="icon-button"
-                          aria-label="Excluir tarefa"
+                          aria-label={tr("Excluir tarefa")}
                           onClick={() =>
                             save({
                               ...trip,
@@ -1401,11 +1379,8 @@ function App() {
                 )}
                 {tab === "Despesas" && (
                   <section className="panel settings-form">
-                    <h2>Despesas, se fizer sentido para você</h2>
-                    <p>
-                      Os totais são separados por moeda, sem conversão
-                      automática.
-                    </p>
+                    <h2>{tr("Despesas, se fizer sentido para você")}</h2>
+                    <p>{tr("Os totais são separados por moeda, sem conversão automática.")}</p>
                     <div className="expense-totals">
                       {["BRL", "EUR", "USD"].map((c) => (
                         <div key={c}>
@@ -1432,7 +1407,7 @@ function App() {
                         const amount = Number(field(f, "amount"));
                         if (!Number.isFinite(amount) || amount <= 0) {
                           setNotice(
-                            "Informe um valor maior que zero para registrar a despesa.",
+                            tr("Informe um valor maior que zero para registrar a despesa."),
                           );
                           return;
                         }
@@ -1443,7 +1418,7 @@ function App() {
                               ...trip.expenses,
                               {
                                 id: uid(),
-                                title: field(f, "title") || "Despesa",
+                                title: field(f, "title") || tr("Despesa"),
                                 amount,
                                 currency: field(f, "currency"),
                               },
@@ -1455,18 +1430,18 @@ function App() {
                     >
                       <input
                         name="title"
-                        placeholder="Descrição"
-                        aria-label="Descrição da despesa"
+                        placeholder={tr("Descrição")}
+                        aria-label={tr("Descrição da despesa")}
                       />
                       <input
                         name="amount"
                         type="number"
                         step="0.01"
                         min="0.01"
-                        placeholder="Valor"
-                        aria-label="Valor"
+                        placeholder={tr("Valor")}
+                        aria-label={tr("Valor")}
                       />
-                      <select name="currency" aria-label="Moeda">
+                      <select name="currency" aria-label={tr("Moeda")}>
                         <option>BRL</option>
                         <option>EUR</option>
                         <option>USD</option>
@@ -1484,7 +1459,7 @@ function App() {
                         </b>
                         <button
                           className="icon-button"
-                          aria-label="Excluir despesa"
+                          aria-label={tr("Excluir despesa")}
                           onClick={() =>
                             save({
                               ...trip,
@@ -1508,14 +1483,14 @@ function App() {
                 <div>
                   <p className="eyebrow">
                     {page === "home"
-                      ? `BEM-VINDO${firstName ? ", " + firstName.toUpperCase() : " À GOMES PELO MUNDO"}`
-                      : "SEU MUNDO, SEM COMPLICAÇÃO"}
+                      ? `BEM-VINDO${firstName ? ", " + firstName.toUpperCase() : tr(" À GOMES PELO MUNDO")}`
+                      : tr("SEU MUNDO, SEM COMPLICAÇÃO")}
                   </p>
                   <h1>{tr(pageTitles[page])}</h1>
                   <p>
                     {page === "home"
-                      ? "Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho."
-                      : "Cada viagem começa com uma possibilidade. Organize do seu jeito."}
+                      ? tr("Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho.")
+                      : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
                   </p>
                 </div>
                 {page !== "profile" && (
@@ -1531,29 +1506,20 @@ function App() {
                     <div className="hero-shade" />
                     <div className="hero-content">
                       <span className="hero-pill">
-                        <span /> O MUNDO ESTÁ LÁ FORA
-                      </span>
-                      <h2>
-                        Qual vai ser o seu
-                        <br />
-                        <em>próximo destino?</em>
+                        <span />{" "}{tr("O MUNDO ESTÁ LÁ FORA")}</span>
+                      <h2>{tr("Qual vai ser o seu")}<br />
+                        <em>{tr("próximo destino?")}</em>
                       </h2>
-                      <p>
-                        Comece com uma ideia.
-                        <br />O resto a gente organiza pelo caminho.
-                      </p>
+                      <p>{tr("Comece com uma ideia.")}<br />{tr("O resto a gente organiza pelo caminho.")}</p>
                       <button
                         className="cream-button"
                         onClick={() => setModal("trip")}
-                      >
-                        Planejar uma viagem <ArrowRight size={18} />
+                      >{tr("Planejar uma viagem")}{" "}<ArrowRight size={18} />
                       </button>
                     </div>
                     <div className="hero-location">
                       <MapPin size={15} />
-                      <span>
-                        Inspiração para ir além
-                        <small>Um pouco de inspiração para começar</small>
+                      <span>{tr("Inspiração para ir além")}<small>{tr("Um pouco de inspiração para começar")}</small>
                       </span>
                     </div>
                   </section>
@@ -1561,7 +1527,7 @@ function App() {
                     <Stat
                       icon={Compass}
                       value={trips.filter((t) => t.status !== "past").length}
-                      label="viagens por vir"
+                      label={tr("viagens por vir")}
                     />
                     <Stat
                       icon={Globe2}
@@ -1572,23 +1538,23 @@ function App() {
                             .map((t) => t.destination.toLowerCase()),
                         ).size
                       }
-                      label="destinos visitados"
+                      label={tr("destinos visitados")}
                     />
                     <Stat
                       icon={MapPin}
                       value={trips.reduce((n, t) => n + t.activities.length, 0)}
-                      label="lugares no seu roteiro"
+                      label={tr("lugares no seu roteiro")}
                     />
                     <Stat
                       icon={CheckCheck}
                       value={trips.filter((t) => t.status === "past").length}
-                      label="viagens realizadas"
+                      label={tr("viagens realizadas")}
                     />
                   </div>
                   <div className="section-head">
                     <div>
-                      <h2>Seus próximos caminhos</h2>
-                      <p>Uma viagem de cada vez. Todas em um só lugar.</p>
+                      <h2>{tr("Seus próximos caminhos")}</h2>
+                      <p>{tr("Uma viagem de cada vez. Todas em um só lugar.")}</p>
                     </div>
                     <button className="text-button" onClick={() => go("trips")}>
                       {tr("Ver todas")}
@@ -1611,35 +1577,18 @@ function App() {
                         <span className="dashed-icon">
                           <Plus size={25} />
                         </span>
-                        <h3>Sua primeira viagem começa aqui</h3>
-                        <p>
-                          Um destino, uma ideia ou só a vontade de ir.
-                          <br />
-                          Você não precisa ter tudo decidido.
-                        </p>
-                        <span className="green-link">
-                          Criar minha primeira viagem <ArrowRight size={16} />
+                        <h3>{tr("Sua primeira viagem começa aqui")}</h3>
+                        <p>{tr("Um destino, uma ideia ou só a vontade de ir.")}<br />{tr("Você não precisa ter tudo decidido.")}</p>
+                        <span className="green-link">{tr("Criar minha primeira viagem")}{" "}<ArrowRight size={16} />
                         </span>
                       </button>
                       <div className="editorial-card">
                         <div>
-                          <span className="eyebrow">
-                            FEITO PARA O SEU RITMO
-                          </span>
-                          <h3>
-                            O melhor plano
-                            <br />
-                            tem espaço para
-                            <br />
-                            <em>o inesperado.</em>
+                          <span className="eyebrow">{tr("FEITO PARA O SEU RITMO")}</span>
+                          <h3>{tr("O melhor plano")}<br />{tr("tem espaço para")}<br />
+                            <em>{tr("o inesperado.")}</em>
                           </h3>
-                          <p>
-                            Sem formulários intermináveis.
-                            <br />
-                            Sem orçamento obrigatório.
-                            <br />
-                            Só o que faz sentido para você.
-                          </p>
+                          <p>{tr("Sem formulários intermináveis.")}<br />{tr("Sem orçamento obrigatório.")}<br />{tr("Só o que faz sentido para você.")}</p>
                         </div>
                         <div className="editorial-compass">
                           <Compass size={105} strokeWidth={0.65} />
@@ -1649,10 +1598,8 @@ function App() {
                   )}
                   <div className="bottom-note">
                     <span>
-                      <Heart size={15} />
-                      Planejar também faz parte da viagem.
-                    </span>
-                    <span>Seu mundo. Seu ritmo. Gomes pelo Mundo.</span>
+                      <Heart size={15} />{tr("Planejar também faz parte da viagem.")}</span>
+                    <span>{tr("Seu mundo. Seu ritmo. Gomes pelo Mundo.")}</span>
                   </div>
                 </>
               )}
@@ -1665,10 +1612,10 @@ function App() {
                   >
                     {(
                       [
-                        ["all", "Todas", "Nacionais e internacionais"],
-                        ["national", "Nacionais", "Pelo Brasil"],
-                        ["international", "Internacionais", "Pelo mundo"],
-                        ["undecided", "Sem tipo", "Ainda não definido"],
+                        ["all", tr("Todas"), tr("Nacionais e internacionais")],
+                        ["national", tr("Nacionais"), tr("Pelo Brasil")],
+                        ["international", tr("Internacionais"), tr("Pelo mundo")],
+                        ["undecided", tr("Sem tipo"), tr("Ainda não definido")],
                       ] as const
                     )
                       .filter(
@@ -1696,8 +1643,8 @@ function App() {
                             )}
                           </span>
                           <span className="scope-text">
-                            <b>{label}</b>
-                            <small>{hint}</small>
+                            <b>{tr(label)}</b>
+                            <small>{tr(hint)}</small>
                           </span>
                           <span className="scope-count">{scopeCounts[k]}</span>
                         </button>
@@ -1706,12 +1653,12 @@ function App() {
                   <div className="filter-bar">
                     <div className="tabs">
                       {(page === "history"
-                        ? [["all", "Todas as anteriores"]]
+                        ? [["all", tr("Todas as anteriores")]]
                         : [
-                            ["all", "Todas"],
-                            ["planning", "Em planejamento"],
-                            ["upcoming", "Próximas"],
-                            ["active", "Em andamento"],
+                            ["all", tr("Todas")],
+                            ["planning", tr("Em planejamento")],
+                            ["upcoming", tr("Próximas")],
+                            ["active", tr("Em andamento")],
                           ]
                       ).map(([k, v]) => (
                         <button
@@ -1726,8 +1673,8 @@ function App() {
                     <label className="search">
                       <Search size={17} />
                       <input
-                        aria-label="Buscar viagem"
-                        placeholder="Buscar viagem"
+                        aria-label={tr("Buscar viagem")}
+                        placeholder={tr("Buscar viagem")}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                       />
@@ -1741,31 +1688,31 @@ function App() {
                         icon={page === "history" ? BookOpen : Compass}
                         title={
                           search
-                            ? "Nenhuma viagem encontrada"
+                            ? tr("Nenhuma viagem encontrada")
                             : scopeFilter === "national"
-                              ? "Nenhuma viagem nacional por aqui"
+                              ? tr("Nenhuma viagem nacional por aqui")
                               : scopeFilter === "international"
-                                ? "Nenhuma viagem internacional por aqui"
+                                ? tr("Nenhuma viagem internacional por aqui")
                                 : page === "history"
-                                  ? "Seus caminhos anteriores, organizados"
-                                  : "Espaço para o seu próximo destino"
+                                  ? tr("Seus caminhos anteriores, organizados")
+                                  : tr("Espaço para o seu próximo destino")
                         }
                         text={
                           search
-                            ? "Tente outro nome ou destino."
+                            ? tr("Tente outro nome ou destino.")
                             : scopeFilter === "national" ||
                                 scopeFilter === "international"
-                              ? "Cadastre uma nova ou defina o tipo de uma viagem existente na aba Informações."
+                              ? tr("Cadastre uma nova ou defina o tipo de uma viagem existente na aba Informações.")
                               : page === "history"
-                                ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
-                                : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
+                                ? tr("Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída.")
+                                : tr("Comece sem datas, sem hotel e sem orçamento. Complete quando quiser.")
                         }
                         action={
                           search
                             ? undefined
                             : page === "history"
-                              ? "Cadastrar viagem anterior"
-                              : "Criar viagem"
+                              ? tr("Cadastrar viagem anterior")
+                              : tr("Criar viagem")
                         }
                         onAction={() => setModal("trip")}
                       />
@@ -1780,11 +1727,8 @@ function App() {
                 <section className="panel world-panel">
                   <div className="section-head">
                     <div>
-                      <h2>Todos os seus caminhos no mapa</h2>
-                      <p>
-                        Marque os destinos das suas viagens. Os pontos ficam
-                        salvos com cada viagem.
-                      </p>
+                      <h2>{tr("Todos os seus caminhos no mapa")}</h2>
+                      <p>{tr("Marque os destinos das suas viagens. Os pontos ficam salvos com cada viagem.")}</p>
                     </div>
                     <Globe2 size={26} />
                   </div>
@@ -1795,9 +1739,7 @@ function App() {
                     focus={mapPoint}
                   />
                   <div className="map-editor">
-                    <label>
-                      Marcar uma viagem
-                      <select
+                    <label>{tr("Marcar uma viagem")}<select
                         value={mapTrip}
                         onChange={(e) => {
                           setMapTrip(e.target.value);
@@ -1817,8 +1759,8 @@ function App() {
                     </label>
                     <p>
                       {mapTrip
-                        ? "Clique no mapa para escolher o destino e depois salve o ponto."
-                        : "Selecione uma viagem para posicionar o destino no mapa."}
+                        ? tr("Clique no mapa para escolher o destino e depois salve o ponto.")
+                        : tr("Selecione uma viagem para posicionar o destino no mapa.")}
                     </p>
                     <button
                       className="primary"
@@ -1830,7 +1772,7 @@ function App() {
                           mapPoint &&
                           (await save({ ...chosen, coordinates: mapPoint }))
                         ) {
-                          setNotice("Destino marcado no mapa.");
+                          setNotice(tr("Destino marcado no mapa."));
                           setMapPoint(undefined);
                           setMapTrip("");
                         }
@@ -1859,14 +1801,9 @@ function App() {
                       className="secondary"
                       onClick={() => setModal("trip")}
                     >
-                      <Plus size={17} />
-                      Criar uma viagem
-                    </button>
+                      <Plus size={17} />{tr("Criar uma viagem")}</button>
                   )}
-                  <p className="subtle">
-                    Mapa online · Você escolhe os pontos manualmente. A busca
-                    automática de endereços será conectada depois.
-                  </p>
+                  <p className="subtle">{tr("Mapa online · Você escolhe os pontos manualmente. A busca automática de endereços será conectada depois.")}</p>
                 </section>
               )}
               {page === "profile" && (
@@ -1885,7 +1822,7 @@ function App() {
                         JSON.stringify(next),
                       );
                       setProfile(next);
-                      setNotice("Preferências salvas neste aparelho.");
+                      setNotice(tr("Preferências salvas neste aparelho."));
                     }}
                   >
                     <LanguagePicker />
@@ -1901,16 +1838,16 @@ function App() {
                       <input
                         name="name"
                         defaultValue={profile.name}
-                        placeholder="Seu nome"
+                        placeholder={tr("Seu nome")}
                       />
                     </label>
                     <label>
                       {tr("Seu ritmo de viagem")}
                       <select name="style" defaultValue={profile.style}>
-                        <option>No meu ritmo</option>
-                        <option>Quero explorar bastante</option>
-                        <option>Prefiro dias tranquilos</option>
-                        <option>Um pouco de cada</option>
+                        <option>{tr("No meu ritmo")}</option>
+                        <option>{tr("Quero explorar bastante")}</option>
+                        <option>{tr("Prefiro dias tranquilos")}</option>
+                        <option>{tr("Um pouco de cada")}</option>
                       </select>
                     </label>
                     <button className="primary">
@@ -1921,17 +1858,14 @@ function App() {
                     <h2>{tr("Seus dados, com você")}</h2>
                     <p>
                       {session
-                        ? "Suas viagens são salvas na sua conta Supabase."
-                        : "Você está no modo local. As viagens ficam neste navegador e não são sincronizadas com outros aparelhos."}
+                        ? tr("Suas viagens são salvas na sua conta Supabase.")
+                        : tr("Você está no modo local. As viagens ficam neste navegador e não são sincronizadas com outros aparelhos.")}
                     </p>
                     <button className="secondary" onClick={exportData}>
                       <Download size={17} />
                       {tr("Exportar backup das viagens")}
                     </button>
-                    <p className="subtle">
-                      O backup inclui informações, fotos e documentos, inclusive
-                      os arquivos baixados da conta. Guarde-o em local privado.
-                    </p>
+                    <p className="subtle">{tr("O backup inclui informações, fotos e documentos, inclusive os arquivos baixados da conta. Guarde-o em local privado.")}</p>
                     <input
                       ref={importRef}
                       type="file"
@@ -1947,10 +1881,7 @@ function App() {
                       <Plus size={17} />
                       {tr("Importar backup")}
                     </button>
-                    <p className="subtle">
-                      As viagens são adicionadas como novas cópias. Nenhuma
-                      viagem existente é substituída.
-                    </p>
+                    <p className="subtle">{tr("As viagens são adicionadas como novas cópias. Nenhuma viagem existente é substituída.")}</p>
                     {session ? (
                       <button
                         className="text-button"
@@ -1973,11 +1904,7 @@ function App() {
                       <div className="tip">
                         <Cloud size={20} />
                         <div>
-                          <p>
-                            Crie uma conta ou entre para acessar suas viagens em
-                            outros aparelhos. Você poderá enviar as viagens
-                            deste navegador para a conta.
-                          </p>
+                          <p>{tr("Crie uma conta ou entre para acessar suas viagens em outros aparelhos. Você poderá enviar as viagens deste navegador para a conta.")}</p>
                           <button
                             className="secondary"
                             onClick={() => {
@@ -1997,11 +1924,7 @@ function App() {
                     ) : (
                       <div className="tip">
                         <Cloud size={20} />
-                        <p>
-                          Para entrar na conta e sincronizar aparelhos,
-                          configure o projeto Supabase seguindo o README do
-                          repositório.
-                        </p>
+                        <p>{tr("Para entrar na conta e sincronizar aparelhos, configure o projeto Supabase seguindo o README do repositório.")}</p>
                       </div>
                     )}
                   </section>
@@ -2034,10 +1957,10 @@ function App() {
       </div>
       {notice && (
         <div className="toast" role="status">
-          {notice}
+          {tr(notice)}
           <button
             className="icon-button"
-            aria-label="Fechar mensagem"
+            aria-label={tr("Fechar mensagem")}
             onClick={() => setNotice("")}
           >
             <X size={16} />
@@ -2073,15 +1996,15 @@ function App() {
             </div>
             <h2>
               {modal === "trip"
-                ? "Todo caminho começa com uma ideia."
+                ? tr("Todo caminho começa com uma ideia.")
                 : modal === "activity"
-                  ? "O que vamos fazer?"
-                  : "Uma reserva, tudo organizado."}
+                  ? tr("O que vamos fazer?")
+                  : tr("Uma reserva, tudo organizado.")}
             </h2>
             <p>
               {modal === "trip"
-                ? "Preencha só o que já sabe. O resto pode esperar."
-                : "Adicione os detalhes que forem úteis para você."}
+                ? tr("Preencha só o que já sabe. O resto pode esperar.")
+                : tr("Adicione os detalhes que forem úteis para você.")}
             </p>
             <label>
               {modal === "trip" ? tr("Nome da viagem") : tr("Nome")}
@@ -2089,10 +2012,10 @@ function App() {
                 name="title"
                 placeholder={
                   modal === "trip"
-                    ? "Uma nova aventura"
+                    ? tr("Uma nova aventura")
                     : modal === "activity"
-                      ? "Um café, um museu, uma caminhada…"
-                      : "Hotel, voo, ingresso…"
+                      ? tr("Um café, um museu, uma caminhada…")
+                      : tr("Hotel, voo, ingresso…")
                 }
               />
             </label>
@@ -2102,7 +2025,7 @@ function App() {
                   {tr("Destino")}
                   <input
                     name="destination"
-                    placeholder="Para onde a vontade leva?"
+                    placeholder={tr("Para onde a vontade leva?")}
                   />
                 </label>
                 <div className="form-grid">
@@ -2130,7 +2053,7 @@ function App() {
                   >
                     {Object.entries(statusLabels).map(([k, v]) => (
                       <option value={k} key={k}>
-                        {v}
+                        {tr(v)}
                       </option>
                     ))}
                   </select>
@@ -2180,16 +2103,16 @@ function App() {
                 <label>
                   {tr("Categoria")}
                   <select name="kind">
-                    <option>Passeio</option>
-                    <option>Restaurante</option>
+                    <option>{tr("Passeio")}</option>
+                    <option>{tr("Restaurante")}</option>
                     <option>{tr("Transporte")}</option>
-                    <option>Tempo livre</option>
-                    <option>Outro</option>
+                    <option>{tr("Tempo livre")}</option>
+                    <option>{tr("Outro")}</option>
                   </select>
                 </label>
                 <label>
                   {tr("Endereço ou lugar")}
-                  <input name="address" placeholder="Para abrir no mapa" />
+                  <input name="address" placeholder={tr("Para abrir no mapa")} />
                 </label>
               </>
             ) : (
@@ -2199,27 +2122,25 @@ function App() {
                   <textarea
                     name="details"
                     rows={3}
-                    placeholder="Código de reserva, horários, endereço…"
+                    placeholder={tr("Código de reserva, horários, endereço…")}
                   />
                 </label>
-                <label>
-                  Link
-                  <input name="url" type="url" placeholder="https://" />
+                <label>{tr("Link")}<input name="url" type="url" placeholder="https://" />
                 </label>
               </>
             )}
             <button className="primary full" disabled={busy}>
               {busy
-                ? "Salvando…"
+                ? tr("Salvando…")
                 : modal === "trip"
-                  ? "Criar viagem"
+                  ? tr("Criar viagem")
                   : tr("Adicionar")}
               <ArrowRight size={17} />
             </button>
             <span className="form-footnote">
               {modal === "trip"
-                ? "Sem orçamento obrigatório. Sem pressa."
-                : "Você pode reorganizar depois."}
+                ? tr("Sem orçamento obrigatório. Sem pressa.")
+                : tr("Você pode reorganizar depois.")}
             </span>
           </form>
         </dialog>
@@ -2256,8 +2177,8 @@ function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
               ))}
           </span>
           <span className="scope-text">
-            <b>{label}</b>
-            <small>{hint}</small>
+            <b>{tr(label)}</b>
+            <small>{tr(hint)}</small>
           </span>
         </label>
       ))}
@@ -2357,15 +2278,15 @@ function Auth({
           if (error) throw error;
           if (signup && !data.session)
             onNotice(
-              "Conta criada. Confira seu e-mail e abra o link de confirmação para entrar.",
+              tr("Conta criada. Confira seu e-mail e abra o link de confirmação para entrar."),
             );
         } catch (e) {
           onNotice(
             friendlyError(
               e,
               signup
-                ? "Não foi possível criar a conta. Tente novamente."
-                : "Não foi possível entrar. Tente novamente.",
+                ? tr("Não foi possível criar a conta. Tente novamente.")
+                : tr("Não foi possível entrar. Tente novamente."),
             ),
           );
         } finally {
@@ -2376,11 +2297,11 @@ function Auth({
       <span className="modal-icon">
         <Compass />
       </span>
-      <h1>Seu mundo começa aqui.</h1>
+      <h1>{tr("Seu mundo começa aqui.")}</h1>
       <p>
         {signup
-          ? "Crie sua conta para organizar seus caminhos."
-          : "Entre para acessar suas viagens em qualquer aparelho."}
+          ? tr("Crie sua conta para organizar seus caminhos.")
+          : tr("Entre para acessar suas viagens em qualquer aparelho.")}
       </p>
       <label>
         {tr("E-mail")}
@@ -2397,14 +2318,14 @@ function Auth({
         />
       </label>
       <button className="primary full" disabled={busy}>
-        {busy ? "Aguarde…" : signup ? "Criar conta" : "Entrar"}
+        {busy ? tr("Aguarde…") : signup ? tr("Criar conta") : tr("Entrar")}
       </button>
       <button
         className="text-button"
         type="button"
         onClick={() => setSignup(!signup)}
       >
-        {signup ? "Já tenho uma conta" : "Quero criar minha conta"}
+        {signup ? tr("Já tenho uma conta") : tr("Quero criar minha conta")}
       </button>
       <div className="auth-local">
         <button
@@ -2415,10 +2336,7 @@ function Auth({
           <HardDrive size={17} />
           {tr("Continuar sem conta")}
         </button>
-        <p className="subtle">
-          Suas viagens ficam salvas só neste navegador. Você pode criar a conta
-          depois, pelo Perfil, e enviar essas viagens para ela.
-        </p>
+        <p className="subtle">{tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Perfil, e enviar essas viagens para ela.")}</p>
       </div>
     </form>
   );

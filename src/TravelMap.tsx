@@ -98,27 +98,21 @@ export function TravelMap({
       <div
         ref={container}
         className={"travel-map " + (selectable ? "selectable" : "")}
-        aria-label="Mapa interativo de destinos"
+        aria-label={tr("Mapa interativo de destinos")}
       />
       {failed && (
-        <p className="map-error">
-          O mapa não carregou por completo. Verifique a conexão.
-        </p>
+        <p className="map-error">{tr("O mapa não carregou por completo. Verifique a conexão.")}</p>
       )}
       <div className="map-caption">
         <span>
           <i />
           {tr("Planejamento")}
-          <i className="past" />
-          Viagens anteriores
-        </span>
+          <i className="past" />{tr("Viagens anteriores")}</span>
         <a
           href="https://www.openstreetmap.org/fixthemap"
           target="_blank"
           rel="noreferrer"
-        >
-          Reportar erro no mapa
-        </a>
+        >{tr("Reportar erro no mapa")}</a>
       </div>
     </div>
   );

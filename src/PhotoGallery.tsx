@@ -46,13 +46,13 @@ export function PhotoGallery({
         [{ ...trip, photos, documents: [] }],
         async (bucket, path) => {
           if (!supabase)
-            throw new Error("Entre na conta para baixar as fotos.");
+            throw new Error(tr("Entre na conta para baixar as fotos."));
           const { data, error } = await supabase.storage
             .from(bucket)
             .download(path);
           if (error || !data)
             throw new Error(
-              "Uma foto não pôde ser baixada. Tente novamente com internet.",
+              tr("Uma foto não pôde ser baixada. Tente novamente com internet."),
             );
           return data;
         },
@@ -62,16 +62,16 @@ export function PhotoGallery({
         { type: "application/json" },
       );
       if (blob.size > 20 * 1024 * 1024)
-        throw new Error("Este álbum excede 20 MB. Exporte álbuns menores.");
+        throw new Error(tr("Este álbum excede 20 MB. Exporte álbuns menores."));
       const url = URL.createObjectURL(blob),
         a = document.createElement("a");
       a.href = url;
       a.download = "gomes-album.json";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMessage("Álbum exportado em JSON, restaurável pelo Perfil.");
+      setMessage(tr("Álbum exportado em JSON, restaurável pelo Perfil."));
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Não foi possível exportar.");
+      setMessage(e instanceof Error ? e.message : tr("Não foi possível exportar."));
     } finally {
       setExporting(false);
     }
@@ -80,15 +80,12 @@ export function PhotoGallery({
     <section className="panel">
       <div className="section-head">
         <div>
-          <h2>Os lugares pelos seus olhos</h2>
-          <p>
-            JPG, PNG ou WebP de até 15 MB, reduzidas para até 600 KB. Guarde os
-            originais com você.
-          </p>
+          <h2>{tr("Os lugares pelos seus olhos")}</h2>
+          <p>{tr("JPG, PNG ou WebP de até 15 MB, reduzidas para até 600 KB. Guarde os originais com você.")}</p>
           <p>
             {cloud
-              ? "Fotos privadas da sua conta."
-              : "Fotos neste navegador; exporte um backup para preservá-las."}
+              ? tr("Fotos privadas da sua conta.")
+              : tr("Fotos neste navegador; exporte um backup para preservá-las.")}
           </p>
         </div>
         <label className="secondary photo-upload">
@@ -110,7 +107,7 @@ export function PhotoGallery({
         {tr("Álbum")}
         <select value={album} onChange={(e) => setAlbum(e.target.value)}>
           <option value="">{tr("Todas as fotos")}</option>
-          {[...new Set(trip.photos.map((p) => p.album || "Sem álbum"))].map(
+          {[...new Set(trip.photos.map((p) => p.album || tr("Sem álbum")))].map(
             (a) => (
               <option key={a} value={a}>
                 {a}
@@ -124,7 +121,7 @@ export function PhotoGallery({
           <figure key={p.id}>
             <button
               className="photo-open"
-              aria-label={"Ampliar " + (p.caption || p.name)}
+              aria-label={tr("Ampliar ") + (p.caption || p.name)}
               onClick={() => setExpanded(p)}
             >
               <PrivatePhoto photo={p} />
@@ -147,12 +144,12 @@ export function PhotoGallery({
                   disabled={busy}
                   onClick={async () => {
                     if (await onSave({ ...trip, coverPhotoId: p.id }))
-                      setMessage("Capa da viagem atualizada.");
+                      setMessage(tr("Capa da viagem atualizada."));
                   }}
                 >
                   {trip.coverPhotoId === p.id
-                    ? "Foto de capa"
-                    : "Usar como capa"}
+                    ? tr("Foto de capa")
+                    : tr("Usar como capa")}
                 </button>
                 <button
                   className="text-button"
@@ -160,11 +157,11 @@ export function PhotoGallery({
                   onClick={async () => {
                     if (
                       confirm(
-                        "Remover esta foto da viagem? Guarde uma cópia antes.",
+                        tr("Remover esta foto da viagem? Guarde uma cópia antes."),
                       ) &&
                       (await onSave(removePhoto(trip, p.id)))
                     )
-                      setMessage("Foto removida da viagem.");
+                      setMessage(tr("Foto removida da viagem."));
                   }}
                 >
                   {tr("Remover")}
@@ -175,28 +172,25 @@ export function PhotoGallery({
         ))}
       </div>
       {!photos.length && (
-        <p className="photo-empty">
-          Seu álbum começa com a primeira foto. Adicione quando quiser.
-        </p>
+        <p className="photo-empty">{tr("Seu álbum começa com a primeira foto. Adicione quando quiser.")}</p>
       )}
       <button
         className="secondary"
         disabled={busy || exporting || !photos.length}
         onClick={() => void exportAlbum()}
       >
-        {exporting ? "Preparando álbum…" : "Exportar este álbum"}
+        {exporting ? tr("Preparando álbum…") : tr("Exportar este álbum")}
       </button>
-      <p role="status">{message}</p>
+      <p role="status">{tr(message)}</p>
       <details className="retrospective">
         <summary>{tr("Retrospectiva da viagem")}</summary>
         <h2>{trip.title}</h2>
         <p>
-          {trip.destination || tr("Destino em aberto")} · {dateLabel(trip)}
+          {trip.destination || tr("Destino em aberto")} · {tr(dateLabel(trip))}
         </p>
         <p>
-          {trip.photos.length} fotos ·{" "}
-          {trip.activities.filter((a) => a.done).length} lugares visitados
-        </p>
+          {trip.photos.length}{" "}{tr("fotos ·")}{" "}
+          {trip.activities.filter((a) => a.done).length}{" "}{tr("lugares visitados")}</p>
         <ul>
           {trip.activities
             .filter((a) => a.done)
@@ -271,11 +265,11 @@ export function PhotoGallery({
                 })
               ) {
                 setEditing(undefined);
-                setMessage("Detalhes da foto salvos.");
+                setMessage(tr("Detalhes da foto salvos."));
               }
             }}
           >
-            <h2>Detalhes da foto</h2>
+            <h2>{tr("Detalhes da foto")}</h2>
             <label>
               {tr("Legenda")}
               <input autoFocus name="caption" defaultValue={editing.caption} />
@@ -297,7 +291,7 @@ export function PhotoGallery({
               <input
                 name="album"
                 defaultValue={editing.album}
-                placeholder="Família, passeios, gastronomia…"
+                placeholder={tr("Família, passeios, gastronomia…")}
               />
             </label>
             <label>
