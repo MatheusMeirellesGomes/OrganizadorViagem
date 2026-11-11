@@ -174,3 +174,78 @@
   min-width: 220px;
   margin: 0;
 }
+
+/* Etapa 14: comparing itinerary alternatives side by side. */
+.alt-compare {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.alt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.alt-card h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.alt-card .subtle {
+  margin: 0;
+  min-height: 2.6em;
+}
+.alt-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+}
+.alt-badges span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  background: #edf2e5;
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+.alt-card dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin: 4px 0 8px;
+  font-size: 13px;
+}
+.alt-card dt {
+  color: #5d6e5f;
+}
+.alt-card dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+.alt-card dt:nth-last-of-type(1),
+.alt-card dd:nth-last-of-type(1) {
+  grid-column: 1 / -1;
+  text-align: left;
+}
+.alt-card button {
+  margin-top: auto;
+  min-height: 44px;
+}
+.alt-note {
+  grid-column: 1 / -1;
+}
+@media (max-width: 860px) {
+  .alt-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .alt-card .subtle {
+    min-height: 0;
+  }
+}
