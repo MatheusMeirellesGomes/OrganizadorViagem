@@ -1,0 +1,129 @@
+.photo-upload {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+.photo-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.enhanced-gallery figure {
+  margin: 0;
+  border: 1px solid #e1e8db;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+.enhanced-gallery .photo-open {
+  padding: 0;
+  border: 0;
+  background: #edf2e7;
+  width: 100%;
+  height: 230px;
+  display: block;
+  cursor: zoom-in;
+}
+.enhanced-gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.enhanced-gallery figcaption {
+  padding: 16px;
+  display: block;
+}
+.enhanced-gallery figcaption strong,
+.enhanced-gallery figcaption small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.enhanced-gallery .tm-actions {
+  margin-top: 12px;
+}
+.photo-dialog,
+.photo-edit-dialog {
+  border: 0;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: min(90vw, 1000px);
+  max-height: 90vh;
+  color: #244f43;
+}
+.photo-dialog::backdrop,
+.photo-edit-dialog::backdrop {
+  background: #102a23c9;
+}
+.photo-dialog img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  margin-top: 18px;
+}
+.photo-edit-dialog {
+  width: 480px;
+  box-sizing: border-box;
+}
+.photo-empty {
+  padding: 60px 20px;
+  text-align: center;
+  background: #f4f7ef;
+  border-radius: 16px;
+}
+.photo-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #627363;
+}
+.retrospective {
+  margin-top: 32px;
+}
+.retrospective summary {
+  padding: 16px 0;
+  font-size: 22px;
+  cursor: pointer;
+}
+.trip-image,
+.detail-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.personal-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+.detail-hero:has(.personal-cover)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #102820d9, #10282033);
+  z-index: -1;
+}
+.trip-image .personal-cover {
+  z-index: 0;
+}
+.trip-image .tag,
+.trip-image .card-arrow {
+  z-index: 1;
+  position: relative;
+}
+@media (max-width: 600px) {
+  .photo-dialog,
+  .photo-edit-dialog {
+    padding: 18px;
+    max-width: 95vw;
+  }
+  .enhanced-gallery .photo-open {
+    height: 240px;
+  }
+}

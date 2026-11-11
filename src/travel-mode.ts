@@ -1,3 +1,4 @@
+import { getLocale } from "./i18n";
 import type { Activity, Trip } from "./model";
 const DAY = 86400000;
 // Calendar arithmetic uses UTC, never the device's timezone as the destination's.
@@ -30,12 +31,12 @@ export function dayLabel(
   if (!start) return { short: `Dia ${day}`, full: `Dia ${day}` };
   const date = new Date(+start + (day - 1) * DAY);
   return {
-    short: new Intl.DateTimeFormat("pt-BR", {
+    short: new Intl.DateTimeFormat(getLocale(), {
       weekday: "short",
       day: "numeric",
       timeZone: "UTC",
     }).format(date),
-    full: new Intl.DateTimeFormat("pt-BR", {
+    full: new Intl.DateTimeFormat(getLocale(), {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -66,7 +67,9 @@ export function toggleVisited(trip: Trip, activityId: string): Trip {
   };
 }
 export function navigationUrl(activity: Activity): string | undefined {
-  const address = activity.address?.trim();
+  const address = activity.coordinates
+    ? `${activity.coordinates.lat},${activity.coordinates.lng}`
+    : activity.address?.trim();
   return address
     ? "https://www.google.com/maps/dir/?api=1&destination=" +
         encodeURIComponent(address)
@@ -82,6 +85,7 @@ export function safeExternalUrl(value: string): string | undefined {
 }
 export function hasTravelInformation(trip: Trip): boolean {
   return Boolean(
+    trip.stays?.length ||
     trip.hotel?.trim() ||
     trip.notes?.trim() ||
     trip.reservations?.length ||

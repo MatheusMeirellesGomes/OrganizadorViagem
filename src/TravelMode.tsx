@@ -1,3 +1,6 @@
+import { t as tr } from "./i18n";
+import { TravelNearby } from "./TravelNearby";
+import { currentTripDay } from "./travel-clock";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -12,13 +15,15 @@ import {
   Navigation,
   WifiOff,
 } from "lucide-react";
+import { directionsLink, transportLabels, type Transport } from "./routes";
+import { staysOnDate, stayDirections } from "./stays";
+import { calendarDate } from "./travel-mode";
 import type { Activity, Trip } from "./model";
 import {
   dayActivities,
   dayLabel,
   dayProgress,
   hasTravelInformation,
-  navigationUrl,
   nextActivity,
   safeExternalUrl,
   toggleVisited,
@@ -43,6 +48,13 @@ export function TravelMode({
   online,
   busy,
 }: Props) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const today = currentTripDay(trip, now);
+  const [transport, setTransport] = useState<Transport>("walking");
   const heading = useRef<HTMLHeadingElement>(null),
     daysRef = useRef<HTMLElement>(null),
     [feedback, setFeedback] = useState(""),
@@ -51,6 +63,11 @@ export function TravelMode({
     progress = dayProgress(trip, day),
     next = nextActivity(trip, day),
     label = dayLabel(trip, day);
+  const startDate = calendarDate(trip.start);
+  const selectedDate = startDate
+    ? new Date(+startDate + (day - 1) * 86400000).toISOString().slice(0, 10)
+    : "";
+  const selectedStays = staysOnDate(trip, selectedDate);
   const saving = busy || pending;
   useEffect(() => {
     heading.current?.focus();
@@ -108,7 +125,7 @@ export function TravelMode({
     );
   }
   function directions(activity: Activity) {
-    const url = navigationUrl(activity);
+    const url = directionsLink(activity, transport);
     return url ? externalLink(url, "Como chegar") : null;
   }
   return (
@@ -116,15 +133,15 @@ export function TravelMode({
       <header className="tm-header">
         <button className="tm-back" onClick={onBack}>
           <ArrowLeft size={20} />
-          <span>Planejamento</span>
+          <span>{tr("Planejamento")}</span>
         </button>
         <span className="tm-badge">
           <Compass size={15} />
-          Modo Viagem
+          {tr("Modo Viagem")}
         </span>
       </header>
       <div className="tm-title">
-        <p className="eyebrow">UM DIA DE CADA VEZ</p>
+        <p className="eyebrow">{tr("UM DIA DE CADA VEZ")}</p>
         <h1 id="travel-mode-title" ref={heading} tabIndex={-1}>
           {trip.title || "Sua viagem"}
         </h1>
@@ -150,11 +167,23 @@ export function TravelMode({
             aria-label={`Dia ${number}: ${dayLabel(trip, number).full}`}
             onClick={() => onDayChange(number)}
           >
-            <span>Dia {number}</span>
-            <b>{trip.start ? dayLabel(trip, number).short : "Sem data"}</b>
+            <span>
+              {tr("Dia")}
+              {number}
+              {today === number ? " · Hoje" : ""}
+            </span>
+            <b>{trip.start ? dayLabel(trip, number).short : tr("Sem data")}</b>
           </button>
         ))}
       </nav>
+      <div className="tm-actions">
+        <small>Dia atual pelo fuso {trip.timeZone || "do aparelho"}.</small>
+        {today && today !== day && (
+          <button className="secondary" onClick={() => onDayChange(today)}>
+            Ir para hoje · Dia {today}
+          </button>
+        )}
+      </div>
       <div className="tm-day-heading">
         <div>
           <h2>{label.full}</h2>
@@ -174,13 +203,26 @@ export function TravelMode({
           aria-label="Progresso das atividades do dia"
         />
       )}
+      <label className="tm-transport">
+        {tr("Como você vai?")}
+        <select
+          value={transport}
+          onChange={(e) => setTransport(e.target.value as Transport)}
+        >
+          {Object.entries(transportLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
       {next ? (
         <aside className="tm-next">
           <span className="tm-next-icon">
             <Navigation size={22} />
           </span>
           <div>
-            <small>A SEGUIR NO ROTEIRO</small>
+            <small>{tr("A SEGUIR NO ROTEIRO")}</small>
             <h3>{next.title}</h3>
             <p>
               {next.time || "Sem horário definido"}
@@ -210,7 +252,7 @@ export function TravelMode({
           </p>
           <button className="secondary" onClick={onBack}>
             <ArrowLeft size={17} />
-            Voltar ao planejamento
+            {tr("Voltar ao planejamento")}
           </button>
         </div>
       ) : (
@@ -235,10 +277,10 @@ export function TravelMode({
                   </span>
                   {activity.kind && <span>{activity.kind}</span>}
                   {activity.done && (
-                    <span className="tm-visited">Visitada</span>
+                    <span className="tm-visited">{tr("Visitada")}</span>
                   )}
                 </div>
-                <h3>{activity.title || "Atividade"}</h3>
+                <h3>{activity.title || tr("Atividade")}</h3>
                 {activity.address?.trim() && (
                   <p className="tm-address">
                     <MapPin size={15} />
@@ -266,20 +308,20 @@ export function TravelMode({
                     }
                   >
                     <Check size={17} />
-                    {activity.done ? "Visitado" : "Marcar visita"}
+                    {activity.done ? tr("Visitado") : "Marcar visita"}
                   </button>
                 </div>
                 <details className="tm-activity-details">
                   <summary>
-                    Ver detalhes
+                    {tr("Ver detalhes")}
                     <ChevronDown size={15} />
                   </summary>
                   <dl>
-                    <dt>Atividade</dt>
-                    <dd>{activity.title || "Atividade"}</dd>
+                    <dt>{tr("Atividade")}</dt>
+                    <dd>{activity.title || tr("Atividade")}</dd>
                     {activity.kind && (
                       <>
-                        <dt>Categoria</dt>
+                        <dt>{tr("Categoria")}</dt>
                         <dd>{activity.kind}</dd>
                       </>
                     )}
@@ -291,7 +333,7 @@ export function TravelMode({
                     )}
                     {activity.address?.trim() && (
                       <>
-                        <dt>Endereço</dt>
+                        <dt>{tr("Endereço")}</dt>
                         <dd>
                           {activity.address}
                           <button
@@ -299,13 +341,17 @@ export function TravelMode({
                             onClick={() => copy(activity.address)}
                           >
                             <Copy size={15} />
-                            Copiar endereço
+                            {tr("Copiar endereço")}
                           </button>
                         </dd>
                       </>
                     )}
                     <dt>Status</dt>
-                    <dd>{activity.done ? "Visitada" : "Ainda não visitada"}</dd>
+                    <dd>
+                      {activity.done
+                        ? tr("Visitada")
+                        : tr("Ainda não visitada")}
+                    </dd>
                   </dl>
                   {!activity.address?.trim() && (
                     <p className="tm-help">
@@ -318,40 +364,93 @@ export function TravelMode({
           ))}
         </ol>
       )}
+      <TravelNearby trip={trip} online={online} transport={transport} />
       {hasTravelInformation(trip) && (
         <details className="tm-information">
           <summary>
             <span>
-              Informações da viagem<small>O essencial, sempre à mão</small>
+              {tr("Informações da viagem")}
+              <small>O essencial, sempre à mão</small>
             </span>
             <ChevronDown size={21} />
           </summary>
           <div className="tm-information-content">
+            {Boolean(trip.stays?.length) && (
+              <section>
+                <h3>
+                  {selectedStays.length
+                    ? "Hospedagens deste dia"
+                    : "Hospedagens cadastradas"}
+                </h3>
+                {!selectedStays.length && (
+                  <p className="tm-help">
+                    Nenhuma estadia confirmada para este dia pelas datas
+                    cadastradas.
+                  </p>
+                )}
+                {(selectedStays.length ? selectedStays : trip.stays || []).map(
+                  (s) => (
+                    <article className="tm-reservation" key={s.id}>
+                      <h4>{s.name}</h4>
+                      <p>{[s.address, s.city].filter(Boolean).join(", ")}</p>
+                      <p>
+                        {s.start || tr("Sem data")} → {s.end || tr("Sem data")}
+                      </p>
+                      {s.confirmation && (
+                        <details>
+                          <summary>{tr("Código de confirmação")}</summary>
+                          <p>{s.confirmation}</p>
+                        </details>
+                      )}
+                      {stayDirections(s) &&
+                        externalLink(stayDirections(s)!, "Como chegar")}
+                    </article>
+                  ),
+                )}
+              </section>
+            )}
             {trip.hotel?.trim() && (
               <section>
-                <h3>Hospedagem</h3>
+                <h3>{tr("Hospedagem")}</h3>
                 <p className="pre-wrap">{trip.hotel}</p>
                 <button className="tm-copy" onClick={() => copy(trip.hotel)}>
                   <Copy size={16} />
-                  Copiar hospedagem
+                  {tr("Copiar hospedagem")}
                 </button>
               </section>
             )}
             {trip.notes?.trim() && (
               <section>
-                <h3>Anotações importantes</h3>
+                <h3>{tr("Anotações importantes")}</h3>
                 <p className="pre-wrap">{trip.notes}</p>
               </section>
             )}
             {Boolean(trip.reservations?.length) && (
               <section>
-                <h3>Reservas da viagem</h3>
+                <h3>{tr("Reservas da viagem")}</h3>
                 <p className="tm-help">
-                  Reservas gerais, sem vínculo automático com as atividades.
+                  {trip.reservations.some((r) => r.activityId || r.stayId)
+                    ? "Vínculos definidos por você no planejamento."
+                    : "Reservas gerais, sem vínculo automático com as atividades."}
                 </p>
                 {trip.reservations.map((reservation) => (
                   <article className="tm-reservation" key={reservation.id}>
-                    <h4>{reservation.title || "Reserva"}</h4>
+                    <h4>{reservation.title || tr("Reserva")}</h4>
+                    {reservation.activityId && (
+                      <p>
+                        Atividade:{" "}
+                        {trip.activities.find(
+                          (a) => a.id === reservation.activityId,
+                        )?.title || "Não disponível"}
+                      </p>
+                    )}
+                    {reservation.stayId && (
+                      <p>
+                        Hospedagem:{" "}
+                        {trip.stays?.find((s) => s.id === reservation.stayId)
+                          ?.name || "Não disponível"}
+                      </p>
+                    )}
                     {reservation.details && (
                       <p className="pre-wrap">{reservation.details}</p>
                     )}
@@ -366,7 +465,7 @@ export function TravelMode({
             )}
             {Boolean(trip.checklist?.length) && (
               <section>
-                <h3>Checklist</h3>
+                <h3>{tr("Checklist")}</h3>
                 {trip.checklist.map((item) => (
                   <label className="tm-checklist" key={item.id}>
                     <input
@@ -405,7 +504,7 @@ export function TravelMode({
       <footer className="tm-bottom">
         <button onClick={onBack}>
           <ArrowLeft size={18} />
-          Voltar ao planejamento
+          {tr("Voltar ao planejamento")}
         </button>
         <span>
           {progress.total

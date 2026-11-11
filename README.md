@@ -40,20 +40,54 @@ npm run preview
 
 ## Conectar Supabase
 
+### O que é necessário
+
+Do painel do projeto Supabase (**Project Settings → API** ou botão **Connect**):
+
+- **Project URL**, por exemplo `https://abcdefghijkl.supabase.co`.
+- **Chave pública**: `anon` (legacy) ou `publishable` (`sb_publishable_...`).
+
+Nunca use a `service_role` nem a `sb_secret_...` no frontend. O aplicativo recusa essas chaves e volta ao modo local.
+
+### Passo a passo
+
 1. Crie um projeto Supabase dedicado.
-2. Execute `supabase/migrations/202611090001_initial.sql` no SQL Editor desse projeto.
-3. Copie `.env.example` para `.env.local`.
-4. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com a URL e a chave pública publishable/anon do projeto. Nunca use a chave service_role no navegador.
-5. Configure as URLs de autenticação no painel Supabase para o domínio que hospeda a aplicação.
-6. Reinicie o servidor e crie a conta pela interface. A confirmação de e-mail depende da configuração do Supabase.
+2. Abra o **SQL Editor** e execute `supabase/migrations/202611090001_initial.sql`. Ele cria a tabela `trips`, as políticas RLS e o bucket privado `trip-photos`.
+3. Em **Authentication → URL Configuration**, defina a **Site URL** (em desenvolvimento, `http://localhost:5173`; em produção, o domínio publicado) e inclua a mesma URL em **Redirect URLs**. O link de confirmação de e-mail volta para ela.
+4. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O `.env.local` não é enviado ao Git.
+5. Reinicie `npm run dev`.
 
-Sem variáveis, a aplicação usa armazenamento local. Dados locais não são enviados automaticamente para uma conta; não apague os dados do navegador sem exportar um backup. Fotos grandes podem exceder a cota local, e o aplicativo avisa quando o salvamento falha.
+### Verificar o projeto real (obrigatório antes de publicar)
 
-A tabela `trips` guarda um documento JSON por viagem com proprietário validado pelas políticas RLS. Cada usuário autenticado só pode ler/escrever suas viagens. O bucket de fotos é privado, com políticas por prefixo de usuário e URLs assinadas.
+Crie duas contas de teste confirmadas (pelo app ou em **Authentication → Users → Add user**, marcando *Auto Confirm User*) e acrescente ao `.env.local`:
+
+```sh
+TESTE_EMAIL_A=...
+TESTE_SENHA_A=...
+TESTE_EMAIL_B=...
+TESTE_SENHA_B=...
+```
+
+Depois execute:
+
+```sh
+npm run verificar:supabase
+```
+
+O script usa só a chave pública, como o navegador, e confere: visitante sem login não lê nem cria viagens; cada conta só vê, altera e apaga as próprias viagens; ninguém cria viagem em nome de outra conta nem transfere viagens; uma versão desatualizada não sobrescreve outra; documento com id diferente é recusado; fotos ficam restritas à pasta do dono. Os dados de teste são apagados no final.
+
+### Como funciona
+
+- **Sem conta**: com ou sem Supabase configurado, o botão **Continuar sem conta** mantém o modo local (`localStorage`). A conta pode ser criada depois pelo Perfil.
+- **Com conta**: cada viagem é uma linha em `trips` (`data` guarda o mesmo documento usado localmente), protegida por RLS. A mesma conta vê as viagens em qualquer aparelho.
+- **Edição em dois aparelhos**: cada gravação confere o `updated_at`. Se a viagem mudou em outro aparelho, nada é sobrescrito e o app pede para recarregar.
+- **Sem internet com conta**: o app mostra uma cópia somente leitura salva no aparelho, incluindo o Modo Viagem. Alterações exigem conexão; não há fila de sincronização offline. A cópia é apagada ao sair da conta.
+- **Envio das viagens locais**: ao entrar, se houver viagens salvas só neste navegador, um painel oferece enviá-las. Viagens novas são inseridas; idênticas não são duplicadas; viagens com o mesmo id e conteúdo diferente nunca substituem a conta (podem ser enviadas como cópias). Fotos locais vão para o bucket privado. A conta é lida novamente para confirmar, e a cópia local só é removida se o usuário pedir.
+- **Backups e HTML offline** continuam funcionando nos dois modos. Importar um backup com conta cria novas viagens na conta.
 
 ## Limites atuais
 
-As integrações de descoberta por cartões, IA, colaboração em grupo, arquivos de reservas e sincronização offline de contas ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Supabase não foi validado contra um projeto remoto até o fornecimento da configuração.
+As integrações de descoberta por cartões, IA, colaboração em grupo, arquivos de reservas e edição offline com sincronização posterior ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 

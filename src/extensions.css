@@ -1,0 +1,135 @@
+.extension-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+.extension-grid form > .secondary {
+  margin-top: 14px;
+}
+.month-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 25px 0 16px;
+}
+.month-nav h3 {
+  text-transform: capitalize;
+}
+.month-nav button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 23px;
+}
+.month-grid > small {
+  text-align: center;
+  color: #66745c;
+  font-size: 10px;
+}
+.month-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 55px;
+  border: 1px solid #e4eadf;
+  border-radius: 7px;
+  background: #f9fbf6;
+  font-size: 12px;
+}
+.month-grid button small {
+  font-size: 9px;
+  color: #748566;
+}
+.month-grid button.selected {
+  background: #244f43;
+  color: white;
+}
+.month-grid button.selected small {
+  color: #d9e5c9;
+}
+.month-grid button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.month-grid button.muted {
+  opacity: 0.5;
+}
+.period-list {
+  margin: 18px 0;
+  padding: 12px;
+  border-left: 3px solid #b3c79b;
+  background: #f5f8ef;
+}
+.period-list h4 {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.period-list p {
+  font-size: 12px;
+}
+.extension-grid .days {
+  margin-top: 20px;
+}
+.extension-grid [role="status"] {
+  font-size: 12px;
+  margin-top: 16px;
+  color: #44633a;
+}
+@media (max-width: 850px) {
+  .extension-grid {
+    grid-template-columns: 1fr;
+  }
+  .month-grid {
+    gap: 3px;
+  }
+  .month-grid button {
+    min-height: 49px;
+  }
+}
+
+.stay-card {
+  border-top: 1px solid var(--line, #dfe7dc);
+  padding: 22px 0;
+  overflow-wrap: anywhere;
+}
+.stay-card h3 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.stay-form {
+  padding: 20px;
+  background: #f4f7ef;
+  border-radius: 16px;
+}
+.reservation-links {
+  margin: 12px 0;
+}
+.legacy-stay {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f4f7ef;
+  white-space: pre-wrap;
+}
+.stays-panel input,
+.stays-panel select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .stays-panel .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .reservation-links {
+    grid-template-columns: 1fr;
+  }
+}

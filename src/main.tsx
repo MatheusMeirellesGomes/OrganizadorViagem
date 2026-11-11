@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
+import { LanguagePicker } from "./LanguagePicker";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown,
@@ -31,6 +33,7 @@ import {
   X,
   Plane,
   BookOpen,
+  LogIn,
   LogOut,
   Cloud,
   HardDrive,
@@ -50,18 +53,35 @@ import {
   scopeLabels,
 } from "./model";
 import type { ScopeFilter, Trip, TripScope } from "./model";
-import {
-  fetchTrips,
-  localKey,
-  persistTrip,
-  readLocal,
-  saveLocal,
-  supabase,
-} from "./store";
+const localModeKey = "gomes-modo-local";
+const repository = supabase ? supabaseRepository(supabase) : null;
+import { localKey, readLocal, saveLocal, supabase } from "./store";
 import "./style.css";
 import { downloadOffline, parseBackup } from "./offline";
+import { ConflictError, friendlyError } from "./errors";
+import {
+  clearAccountCaches,
+  persistWithVersion,
+  readAccountCache,
+  supabaseRepository,
+  writeAccountCache,
+  type RemoteRow,
+} from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { PhotoGallery } from "./PhotoGallery";
+import { PrivatePhoto } from "./PrivatePhoto";
+import { compressPhoto } from "./photos";
+import { blobDataUrl } from "./backup";
+import { RoutePlanner } from "./RoutePlanner";
+import { SavedPlaces } from "./SavedPlaces";
+import { Catalog } from "./Catalog";
+import { portableTrips } from "./backup";
+import { DocumentsPanel } from "./DocumentsPanel";
+import { prepareTripAssets } from "./migration";
+import { StaysPanel, ReservationLinks } from "./StaysPanel";
+import { TripCalendar } from "./TripCalendar";
+import { MigrationPanel } from "./MigrationPanel";
 type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
@@ -80,11 +100,19 @@ const pageTitles = {
   profile: "Uma experiência com a sua cara.",
 };
 function App() {
+  useLanguage();
   const [travelMode, setTravelMode] = useState(false);
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
   const [page, setPage] = useState<Page>("home"),
-    [trips, setTrips] = useState<Trip[]>(supabase ? [] : readLocal),
+    [trips, setTrips] = useState<Trip[]>(readLocal),
+    [localChoice, setLocalChoice] = useState(() => {
+      try {
+        return localStorage.getItem(localModeKey) === "1";
+      } catch {
+        return false;
+      }
+    }),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [modal, setModal] = useState<Modal>(null),
@@ -96,6 +124,10 @@ function App() {
     [menu, setMenu] = useState(false),
     [session, setSession] = useState<Session | null>(null),
     [loading, setLoading] = useState(!!supabase),
+    // "live": loaded from the account; "cache": read-only copy on this device.
+    [accountSource, setAccountSource] = useState<"live" | "cache">("live"),
+    [loadError, setLoadError] = useState(""),
+    [staleTrip, setStaleTrip] = useState(false),
     [busy, setBusy] = useState(false),
     [online, setOnline] = useState(navigator.onLine),
     [profile, setProfile] = useState(() => {
@@ -108,33 +140,84 @@ function App() {
         return { name: "", style: "No meu ritmo" };
       }
     });
+  const versions = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
   const firstName = profile.name.trim().split(" ")[0];
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => {
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => setNotice("Não foi possível verificar sua sessão."))
+      .finally(() => setLoading(false));
+    // Token refreshes also fire this event; only a sign-out swaps the data source.
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      setSelected(null);
-      setTrips([]);
+      if (event === "SIGNED_OUT") {
+        setSelected(null);
+        setTravelMode(false);
+        versions.current = {};
+        setLoadError("");
+        setStaleTrip(false);
+        setTrips(readLocal());
+      }
     });
     return () => data.subscription.unsubscribe();
   }, []);
-  useEffect(() => {
-    if (!session) return;
+  const applyRows = (rows: RemoteRow[]) => {
+    versions.current = Object.fromEntries(
+      rows.map((r) => [r.id, r.updated_at]),
+    );
+    setTrips(rows.map((r) => r.data));
+  };
+  const cacheTrips = (userId: string, list: Trip[]) =>
+    writeAccountCache(
+      userId,
+      list
+        .filter((t) => versions.current[t.id])
+        .map((t) => ({
+          id: t.id,
+          data: t,
+          updated_at: versions.current[t.id],
+        })),
+    );
+  const loadAccount = useCallback(async (userId: string) => {
+    if (!repository) return;
     setLoading(true);
-    fetchTrips()
-      .then(setTrips)
-      .catch((e) =>
-        setNotice("Não foi possível carregar suas viagens: " + e.message),
-      )
-      .finally(() => setLoading(false));
-  }, [session?.user.id]);
+    setLoadError("");
+    try {
+      const rows = await repository.list();
+      applyRows(rows);
+      setAccountSource("live");
+      setStaleTrip(false);
+      writeAccountCache(userId, rows);
+    } catch (e) {
+      const cache = readAccountCache(userId);
+      if (cache) {
+        applyRows(cache.rows);
+        setAccountSource("cache");
+        setNotice(
+          "Sem conexão com a conta. Mostrando a cópia salva neste aparelho em " +
+            new Date(cache.savedAt).toLocaleString(getLocale()) +
+            ". Para editar, conecte-se à internet.",
+        );
+      } else
+        setLoadError(
+          friendlyError(e, "Não foi possível carregar suas viagens da conta."),
+        );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (session) loadAccount(session.user.id);
+  }, [session?.user.id, loadAccount]);
+  useEffect(() => {
+    // Back online after showing the offline copy: refresh from the account.
+    if (online && session && accountSource === "cache")
+      loadAccount(session.user.id);
+  }, [online]);
   useEffect(() => {
     const on = () => setOnline(navigator.onLine);
     window.addEventListener("online", on);
@@ -172,14 +255,33 @@ function App() {
       const next = trips.some((x) => x.id === t.id)
         ? trips.map((x) => (x.id === t.id ? t : x))
         : [t, ...trips];
-      if (supabase) {
-        if (!session) throw new Error("Entre na sua conta para salvar.");
-        await persistTrip(t, session.user.id);
-      } else saveLocal(next);
+      if (session && repository) {
+        if (accountSource === "cache" || !online)
+          throw new Error(
+            "Sem conexão: esta alteração não foi salva. Conecte-se à internet para editar as viagens da sua conta.",
+          );
+        const row = await persistWithVersion(
+          repository,
+          t,
+          session.user.id,
+          versions.current,
+        );
+        versions.current[row.id] = row.updated_at;
+        const saved = next.map((x) => (x.id === row.id ? row.data : x));
+        setTrips(saved);
+        cacheTrips(session.user.id, saved);
+        return true;
+      }
+      saveLocal(next);
       setTrips(next);
       return true;
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Não foi possível salvar.");
+      if (e instanceof ConflictError) setStaleTrip(true);
+      setNotice(
+        e instanceof Error && e.message.startsWith("Sem conexão:")
+          ? e.message
+          : friendlyError(e, "Não foi possível salvar. Tente novamente."),
+      );
       return false;
     } finally {
       setBusy(false);
@@ -189,17 +291,26 @@ function App() {
     if (!confirm(`Excluir “${t.title}”? Esta ação não pode ser desfeita.`))
       return;
     try {
-      if (supabase) {
-        const { error } = await supabase.from("trips").delete().eq("id", t.id);
-        if (error) throw error;
-      }
       const next = trips.filter((x) => x.id !== t.id);
-      if (!supabase) saveLocal(next);
+      if (session && repository) {
+        if (accountSource === "cache" || !online) throw new Error("offline");
+        await repository.remove(t.id, versions.current[t.id]);
+        delete versions.current[t.id];
+        cacheTrips(session.user.id, next);
+      } else saveLocal(next);
       setTrips(next);
       setSelected(null);
       setNotice("Viagem excluída.");
-    } catch {
-      setNotice("Não foi possível excluir a viagem.");
+    } catch (e) {
+      if (e instanceof ConflictError) setStaleTrip(true);
+      setNotice(
+        friendlyError(
+          e instanceof Error && e.message === "offline"
+            ? { message: "Failed to fetch" }
+            : e,
+          "Não foi possível excluir a viagem.",
+        ),
+      );
     }
   }
   async function restoreBackup(file: File | undefined) {
@@ -209,38 +320,94 @@ function App() {
       if (file.size > 20 * 1024 * 1024)
         throw new Error("O limite de importação é 20 MB.");
       const imported = parseBackup(await file.text());
-      if (supabase) {
-        if (!session) throw new Error("Entre na conta.");
-        const { error } = await supabase.from("trips").insert(
-          imported.map((t) => ({
-            id: t.id,
-            user_id: session.user.id,
-            data: t,
-          })),
+      if (session && repository) {
+        if (accountSource === "cache" || !online)
+          throw { message: "Failed to fetch" };
+        const saved: Trip[] = [];
+        let failed = 0;
+        for (const t of imported) {
+          try {
+            const prepared = await prepareTripAssets(
+              repository,
+              session.user.id,
+              t,
+            );
+            const row = await repository.insert(prepared, session.user.id);
+            versions.current[row.id] = row.updated_at;
+            saved.push(row.data);
+          } catch {
+            failed++;
+          }
+        }
+        const next = [...saved, ...trips];
+        setTrips(next);
+        cacheTrips(session.user.id, next);
+        setNotice(
+          failed
+            ? `${saved.length} viagens importadas para a conta. ${failed} não puderam ser salvas; tente importar o arquivo novamente.`
+            : `${saved.length} viagens importadas para a conta como novas cópias.`,
         );
-        if (error) throw error;
+        return;
       }
       const next = [...imported, ...trips];
-      if (!supabase) saveLocal(next);
+      saveLocal(next);
       setTrips(next);
       setNotice(`${imported.length} viagens importadas como novas cópias.`);
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Falha na importação.");
+      setNotice(
+        e instanceof SyntaxError
+          ? "O arquivo não é um JSON válido."
+          : e instanceof Error && !("code" in e)
+            ? e.message
+            : friendlyError(e, "Falha na importação."),
+      );
     } finally {
       setBusy(false);
       if (importRef.current) importRef.current.value = "";
     }
   }
-  function exportData() {
-    const blob = new Blob([JSON.stringify({ version: 1, trips }, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "gomes-pelo-mundo-viagens.json";
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportData() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const portable = await portableTrips(trips, async (bucket, path) => {
+        if (!supabase || !session)
+          throw new Error(
+            "Entre na conta de origem para incluir os anexos no backup.",
+          );
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .download(path);
+        if (error || !data)
+          throw new Error(
+            "Um anexo não pôde ser baixado. Confira a conexão e tente novamente. Nenhum backup incompleto foi gerado.",
+          );
+        return data;
+      });
+      const blob = new Blob(
+        [JSON.stringify({ version: 1, trips: portable }, null, 2)],
+        { type: "application/json" },
+      );
+      if (blob.size > 20 * 1024 * 1024)
+        throw new Error(
+          "O backup excede o limite atual de 20 MB. Baixe seus anexos separadamente antes de reduzir o conteúdo.",
+        );
+      const url = URL.createObjectURL(blob),
+        a = document.createElement("a");
+      a.href = url;
+      a.download = "gomes-pelo-mundo-viagens.json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice(
+        "Backup criado com os anexos. Guarde o arquivo em local privado.",
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Não foi possível exportar.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
   const pageTrips = trips.filter((t) =>
     page === "history" ? t.status === "past" : t.status !== "past",
@@ -274,7 +441,8 @@ function App() {
         return;
       }
       const t = newTrip({
-        title: field(f, "title") || field(f, "destination") || "Nova viagem",
+        title:
+          field(f, "title") || field(f, "destination") || tr("Nova viagem"),
         destination: field(f, "destination"),
         start,
         end,
@@ -297,6 +465,7 @@ function App() {
             time: field(f, "time"),
             address: field(f, "address"),
             kind: field(f, "kind"),
+            period: field(f, "period") as import("./calendar").Period,
             done: false,
           },
         ],
@@ -329,35 +498,31 @@ function App() {
     try {
       const additions = [];
       for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024)
-          throw new Error("Escolha imagens de até 5 MB.");
+        const compressed = await compressPhoto(file);
         const id = uid();
         let url = "";
         if (supabase && session) {
           const path = `${session.user.id}/${trip.id}/${id}`;
           const { error } = await supabase.storage
             .from("trip-photos")
-            .upload(path, file, { contentType: file.type });
+            .upload(path, compressed, { contentType: compressed.type });
           if (error) throw error;
           url = path;
         } else {
-          url = await new Promise<string>((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(String(r.result));
-            r.onerror = reject;
-            r.readAsDataURL(file);
-          });
+          url = await blobDataUrl(compressed);
         }
         additions.push({ id, url, name: file.name });
       }
-      await save({ ...trip, photos: [...(trip.photos || []), ...additions] });
+      if (
+        await save({ ...trip, photos: [...(trip.photos || []), ...additions] })
+      )
+        setNotice("Fotos comprimidas e salvas. Guarde os originais com você.");
     } catch (e) {
       setNotice(
         e instanceof Error ? e.message : "Não foi possível adicionar as fotos.",
       );
     } finally {
       setBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
   function card(t: Trip) {
@@ -369,11 +534,17 @@ function App() {
             backgroundImage: `url(${pictures[t.cover as keyof typeof pictures] || pictures.coast})`,
           }}
         >
-          <span className="tag">{statusLabels[t.status]}</span>
+          {t.photos.find((p) => p.id === t.coverPhotoId) && (
+            <PrivatePhoto
+              className="personal-cover"
+              photo={t.photos.find((p) => p.id === t.coverPhotoId)!}
+            />
+          )}
+          <span className="tag">{tLabel(statusLabels[t.status])}</span>
           {tripScope(t) !== "undecided" && (
             <span className={"tag scope-tag scope-tag-" + tripScope(t)}>
               {tripScope(t) === "national" ? "BR " : ""}
-              {scopeLabels[tripScope(t)]}
+              {tLabel(scopeLabels[tripScope(t)])}
             </span>
           )}
           <span className="card-arrow">
@@ -384,7 +555,7 @@ function App() {
           <h3>{t.title}</h3>
           <p>
             <MapPin size={14} />
-            {t.destination || "Destino em aberto"}
+            {t.destination || tr("Destino em aberto")}
           </p>
           <footer>
             <CalendarDays size={14} />
@@ -413,7 +584,7 @@ function App() {
             gomes<span>PELO MUNDO</span>
           </span>
         </a>
-        <p className="nav-caption">SEU ESPAÇO</p>
+        <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
         <nav>
           {nav.map((n) => (
             <button
@@ -422,7 +593,7 @@ function App() {
               onClick={() => go(n.id)}
             >
               <n.icon size={20} />
-              {n.label}
+              {tr(n.label)}
               {n.id === "trips" &&
                 trips.filter((t) => t.status !== "past").length > 0 && (
                   <small>
@@ -477,22 +648,25 @@ function App() {
             <Menu />
           </button>
           <div className="breadcrumb">
-            Meu espaço <ChevronRight size={13} />
+            {tr("Meu espaço")}
+            <ChevronRight size={13} />
             <b>
               {trip
                 ? trip.title
-                : nav.find((n) => n.id === page)?.label || "Perfil"}
+                : nav.find((n) => n.id === page)?.label || tr("Perfil")}
             </b>
           </div>
           <div className="top-actions">
             <span className="storage-badge">
               {session ? <Cloud size={14} /> : <HardDrive size={14} />}
               <span>
-                {!online
-                  ? "Sem conexão"
-                  : session
-                    ? "Conta sincronizada"
-                    : "Salvo neste navegador"}
+                {session && accountSource === "cache"
+                  ? "Cópia offline da conta"
+                  : !online
+                    ? "Sem conexão"
+                    : session
+                      ? "Conta sincronizada"
+                      : "Salvo neste navegador"}
               </span>
             </span>
             <button
@@ -505,13 +679,57 @@ function App() {
           </div>
         </header>
         <main>
+          {staleTrip && session && !loading && (
+            <div className="stale-banner" role="status">
+              <Cloud size={18} />
+              <p>
+                Uma viagem foi alterada em outro aparelho. Nada foi sobrescrito.
+                Recarregue para continuar a partir da versão mais recente.
+              </p>
+              <button
+                className="secondary small"
+                onClick={() => loadAccount(session.user.id)}
+              >
+                {tr("Recarregar viagens")}
+              </button>
+            </div>
+          )}
+          {session && repository && !loadError && accountSource === "live" && (
+            <MigrationPanel
+              key={session.user.id}
+              userId={session.user.id}
+              repo={repository}
+              online={online}
+              onSent={() => loadAccount(session.user.id)}
+            />
+          )}
           {loading ? (
             <div className="empty">
               <Compass className="spin" />
               <h2>Preparando seus caminhos…</h2>
             </div>
-          ) : supabase && !session ? (
-            <Auth onNotice={setNotice} />
+          ) : session && loadError ? (
+            <section className="panel account-error" role="alert">
+              <Empty
+                icon={Cloud}
+                title="Não conseguimos abrir suas viagens"
+                text={loadError}
+                action="Tentar novamente"
+                onAction={() => loadAccount(session.user.id)}
+              />
+            </section>
+          ) : supabase && !session && !localChoice ? (
+            <Auth
+              onNotice={setNotice}
+              onContinueLocal={() => {
+                try {
+                  localStorage.setItem(localModeKey, "1");
+                } catch {
+                  // Choice lasts only for this visit.
+                }
+                setLocalChoice(true);
+              }}
+            />
           ) : trip ? (
             travelMode ? (
               <TravelMode
@@ -532,7 +750,7 @@ function App() {
               <>
                 <button className="back" onClick={() => setSelected(null)}>
                   <ArrowLeft size={16} />
-                  Todas as viagens
+                  {tr("Todas as viagens")}
                 </button>
                 <div
                   className="detail-hero"
@@ -540,11 +758,21 @@ function App() {
                     backgroundImage: `linear-gradient(90deg,rgba(15,36,32,.8),rgba(15,36,32,.1)),url(${pictures[trip.cover as keyof typeof pictures] || pictures.coast})`,
                   }}
                 >
-                  <span className="eyebrow light">SEU PRÓXIMO CAPÍTULO</span>
+                  {trip.photos.find((p) => p.id === trip.coverPhotoId) && (
+                    <PrivatePhoto
+                      className="personal-cover"
+                      photo={trip.photos.find(
+                        (p) => p.id === trip.coverPhotoId,
+                      )!}
+                    />
+                  )}
+                  <span className="eyebrow light">
+                    {tr("SEU PRÓXIMO CAPÍTULO")}
+                  </span>
                   <h1>{trip.title}</h1>
                   <p>
                     <MapPin size={16} />
-                    {trip.destination || "Destino em aberto"}
+                    {trip.destination || tr("Destino em aberto")}
                     <span>·</span>
                     <CalendarDays size={16} />
                     {dateLabel(trip)}
@@ -557,7 +785,7 @@ function App() {
                     onClick={() => setTravelMode(true)}
                   >
                     <Compass size={18} />
-                    Modo Viagem
+                    {tr("Modo Viagem")}
                   </button>
                   <select
                     aria-label="Status da viagem"
@@ -581,15 +809,19 @@ function App() {
                     onClick={() => downloadOffline(trip)}
                   >
                     <Download size={16} />
-                    Baixar roteiro offline
+                    {tr("Baixar roteiro offline")}
                   </button>
                 </div>
                 <div className="tabs detail-tabs">
                   {[
                     "Roteiro",
+                    "Calendário",
+                    "Lugares",
                     "Mapa",
                     "Informações",
+                    "Hospedagens",
                     "Reservas",
+                    "Documentos",
                     "Checklist",
                     "Fotos",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
@@ -599,10 +831,23 @@ function App() {
                       className={tab === v ? "selected" : ""}
                       onClick={() => setTab(v)}
                     >
-                      {v}
+                      {tr(v)}
                     </button>
                   ))}
                 </div>
+                {tab === "Lugares" && (
+                  <SavedPlaces trip={trip} onSave={save} busy={busy} />
+                )}
+                {tab === "Calendário" && (
+                  <TripCalendar
+                    trip={trip}
+                    day={day}
+                    onDayChange={setDay}
+                    onOpenDay={() => setTab("Roteiro")}
+                    onSave={save}
+                    busy={busy}
+                  />
+                )}
                 {tab === "Roteiro" && (
                   <div className="planner">
                     <section className="panel itinerary">
@@ -616,7 +861,7 @@ function App() {
                           onClick={() => setModal("activity")}
                         >
                           <Plus size={16} />
-                          Atividade
+                          {tr("Atividade")}
                         </button>
                       </div>
                       <div className="days">
@@ -634,7 +879,8 @@ function App() {
                               className={day === i + 1 ? "selected" : ""}
                               onClick={() => setDay(i + 1)}
                             >
-                              Dia {i + 1}
+                              {tr("Dia")}
+                              {i + 1}
                             </button>
                           ),
                         )}
@@ -714,7 +960,7 @@ function App() {
                                 </button>
                                 <div className="activity-content">
                                   <small>
-                                    {a.time || "Sem horário"} · {a.kind}
+                                    {a.time || tr("Sem horário")} · {a.kind}
                                   </small>
                                   <h3>{a.title}</h3>
                                   {a.address && (
@@ -759,7 +1005,8 @@ function App() {
                                         },
                                         (_, i) => (
                                           <option key={i} value={i + 1}>
-                                            Dia {i + 1}
+                                            {tr("Dia")}
+                                            {i + 1}
                                           </option>
                                         ),
                                       )}
@@ -850,7 +1097,8 @@ function App() {
                           encodeURIComponent(trip.destination || "mundo")
                         }
                       >
-                        Abrir mapa <ExternalLink size={15} />
+                        {tr("Abrir mapa")}
+                        <ExternalLink size={15} />
                       </a>
                       {trip.activities.filter((a) => a.day === day && a.address)
                         .length >= 2 && (
@@ -874,26 +1122,31 @@ function App() {
                   </div>
                 )}
                 {tab === "Mapa" && (
-                  <section className="panel">
-                    <div className="section-head">
-                      <div>
-                        <h2>O destino no mapa</h2>
-                        <p>
-                          Toque para marcar a localização principal desta
-                          viagem.
-                        </p>
+                  <>
+                    <RoutePlanner trip={trip} day={day} onDayChange={setDay} />
+                    <section className="panel">
+                      <div className="section-head">
+                        <div>
+                          <h2>{tr("O destino no mapa")}</h2>
+                          <p>
+                            Toque para marcar a localização principal desta
+                            viagem.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <TravelMap
-                      trips={[trip]}
-                      selectable
-                      onPick={(point) => save({ ...trip, coordinates: point })}
-                    />
-                    <p className="subtle">
-                      Os trajetos por ruas continuam disponíveis no Google Maps,
-                      pelos endereços das atividades.
-                    </p>
-                  </section>
+                      <TravelMap
+                        trips={[trip]}
+                        selectable
+                        onPick={(point) =>
+                          save({ ...trip, coordinates: point })
+                        }
+                      />
+                      <p className="subtle">
+                        Os trajetos por ruas continuam disponíveis no Google
+                        Maps, pelos endereços das atividades.
+                      </p>
+                    </section>
+                  </>
                 )}
                 {tab === "Informações" && (
                   <form
@@ -911,7 +1164,7 @@ function App() {
                       if (
                         await save({
                           ...trip,
-                          title: field(f, "title") || "Nova viagem",
+                          title: field(f, "title") || tr("Nova viagem"),
                           destination: field(f, "destination"),
                           start,
                           end,
@@ -925,13 +1178,13 @@ function App() {
                     }}
                   >
                     <h2>Do seu jeito, no seu tempo</h2>
-                    <p>Todos os campos são opcionais.</p>
+                    <p>{tr("Todos os campos são opcionais.")}</p>
                     <label>
-                      Nome da viagem
+                      {tr("Nome da viagem")}
                       <input name="title" defaultValue={trip.title} />
                     </label>
                     <label>
-                      Destino ou destinos
+                      {tr("Destino ou destinos")}
                       <input
                         name="destination"
                         defaultValue={trip.destination}
@@ -939,7 +1192,7 @@ function App() {
                     </label>
                     <div className="form-grid">
                       <label>
-                        Ida
+                        {tr("Ida")}
                         <input
                           type="date"
                           name="start"
@@ -947,7 +1200,7 @@ function App() {
                         />
                       </label>
                       <label>
-                        Volta
+                        {tr("Volta")}
                         <input type="date" name="end" defaultValue={trip.end} />
                       </label>
                     </div>
@@ -961,7 +1214,7 @@ function App() {
                       />
                     </label>
                     <label>
-                      Anotações
+                      {tr("Anotações")}
                       <textarea
                         name="notes"
                         defaultValue={trip.notes}
@@ -978,7 +1231,7 @@ function App() {
                     </label>
                     <div className="section-head">
                       <button disabled={busy} className="primary">
-                        Salvar alterações
+                        {tr("Salvar alterações")}
                       </button>
                       <button
                         className="danger text-button"
@@ -990,6 +1243,17 @@ function App() {
                       </button>
                     </div>
                   </form>
+                )}
+                {tab === "Hospedagens" && (
+                  <StaysPanel trip={trip} onSave={save} busy={busy} />
+                )}
+                {tab === "Documentos" && (
+                  <DocumentsPanel
+                    trip={trip}
+                    onSave={save}
+                    busy={busy}
+                    userId={session?.user.id}
+                  />
                 )}
                 {tab === "Reservas" && (
                   <section className="panel">
@@ -1003,7 +1267,7 @@ function App() {
                         onClick={() => setModal("reservation")}
                       >
                         <Plus size={16} />
-                        Reserva
+                        {tr("Reserva")}
                       </button>
                     </div>
                     {!(trip.reservations || []).length ? (
@@ -1019,9 +1283,16 @@ function App() {
                           <div>
                             <h3>{r.title}</h3>
                             <p className="pre-wrap">{r.details}</p>
+                            <ReservationLinks
+                              trip={trip}
+                              reservationId={r.id}
+                              onSave={save}
+                              busy={busy}
+                            />
                             {r.url && (
                               <a href={r.url} target="_blank" rel="noreferrer">
-                                Abrir reserva <ExternalLink size={12} />
+                                {tr("Abrir reserva")}
+                                <ExternalLink size={12} />
                               </a>
                             )}
                           </div>
@@ -1029,6 +1300,7 @@ function App() {
                             className="icon-button"
                             aria-label="Excluir reserva"
                             onClick={() =>
+                              confirm("Excluir esta reserva?") &&
                               save({
                                 ...trip,
                                 reservations: trip.reservations.filter(
@@ -1077,7 +1349,7 @@ function App() {
                       />
                       <button className="primary" disabled={busy}>
                         <Plus size={17} />
-                        Adicionar
+                        {tr("Adicionar")}
                       </button>
                     </form>
                     {trip.checklist.map((c) => (
@@ -1118,59 +1390,13 @@ function App() {
                   </section>
                 )}
                 {tab === "Fotos" && (
-                  <section className="panel">
-                    <div className="section-head">
-                      <div>
-                        <h2>Os lugares pelos seus olhos</h2>
-                        <p>
-                          Imagens de até 5 MB.{" "}
-                          {session
-                            ? "Arquivos privados na sua conta."
-                            : "Salvas apenas neste navegador; exporte um backup."}
-                        </p>
-                      </div>
-                      <button
-                        className="primary small"
-                        disabled={busy}
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        <ImagePlus size={16} />
-                        Adicionar fotos
-                      </button>
-                      <input
-                        ref={fileRef}
-                        hidden
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => photos(e.target.files)}
-                      />
-                    </div>
-                    {!(trip.photos || []).length ? (
-                      <Empty
-                        icon={ImagePlus}
-                        title="Suas fotos vão morar aqui"
-                        text="Adicione quando quiser, antes ou depois da viagem."
-                      />
-                    ) : (
-                      <div className="photo-grid">
-                        {trip.photos.map((p) => (
-                          <Photo
-                            key={p.id}
-                            photo={p}
-                            onDelete={() =>
-                              save({
-                                ...trip,
-                                photos: trip.photos.filter(
-                                  (x) => x.id !== p.id,
-                                ),
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
+                  <PhotoGallery
+                    trip={trip}
+                    onSave={save}
+                    onFiles={photos}
+                    busy={busy}
+                    cloud={!!session}
+                  />
                 )}
                 {tab === "Despesas" && (
                   <section className="panel settings-form">
@@ -1184,7 +1410,7 @@ function App() {
                         <div key={c}>
                           <small>{c}</small>
                           <h2>
-                            {new Intl.NumberFormat("pt-BR", {
+                            {new Intl.NumberFormat(getLocale(), {
                               style: "currency",
                               currency: c,
                             }).format(
@@ -1284,7 +1510,7 @@ function App() {
                       ? `BEM-VINDO${firstName ? ", " + firstName.toUpperCase() : " À GOMES PELO MUNDO"}`
                       : "SEU MUNDO, SEM COMPLICAÇÃO"}
                   </p>
-                  <h1>{pageTitles[page]}</h1>
+                  <h1>{tr(pageTitles[page])}</h1>
                   <p>
                     {page === "home"
                       ? "Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho."
@@ -1294,7 +1520,7 @@ function App() {
                 {page !== "profile" && (
                   <button className="primary" onClick={() => setModal("trip")}>
                     <Plus size={18} />
-                    Nova viagem
+                    {tr("Nova viagem")}
                   </button>
                 )}
               </div>
@@ -1364,7 +1590,8 @@ function App() {
                       <p>Uma viagem de cada vez. Todas em um só lugar.</p>
                     </div>
                     <button className="text-button" onClick={() => go("trips")}>
-                      Ver todas <ArrowRight size={16} />
+                      {tr("Ver todas")}
+                      <ArrowRight size={16} />
                     </button>
                   </div>
                   {trips.some((t) => t.status !== "past") ? (
@@ -1433,7 +1660,7 @@ function App() {
                   <div
                     className="scope-switch"
                     role="group"
-                    aria-label="Tipo de viagem"
+                    aria-label={tr("Tipo de viagem")}
                   >
                     {(
                       [
@@ -1480,11 +1707,11 @@ function App() {
                       {(page === "history"
                         ? [["all", "Todas as anteriores"]]
                         : [
-                              ["all", "Todas"],
-                              ["planning", "Em planejamento"],
-                              ["upcoming", "Próximas"],
-                              ["active", "Em andamento"],
-                            ]
+                            ["all", "Todas"],
+                            ["planning", "Em planejamento"],
+                            ["upcoming", "Próximas"],
+                            ["active", "Em andamento"],
+                          ]
                       ).map(([k, v]) => (
                         <button
                           key={k}
@@ -1519,8 +1746,8 @@ function App() {
                               : scopeFilter === "international"
                                 ? "Nenhuma viagem internacional por aqui"
                                 : page === "history"
-                              ? "Seus caminhos anteriores, organizados"
-                              : "Espaço para o seu próximo destino"
+                                  ? "Seus caminhos anteriores, organizados"
+                                  : "Espaço para o seu próximo destino"
                         }
                         text={
                           search
@@ -1529,8 +1756,8 @@ function App() {
                                 scopeFilter === "international"
                               ? "Cadastre uma nova ou defina o tipo de uma viagem existente na aba Informações."
                               : page === "history"
-                              ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
-                              : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
+                                ? "Quando quiser, cadastre uma viagem antiga ou marque uma viagem como concluída."
+                                : "Comece sem datas, sem hotel e sem orçamento. Complete quando quiser."
                         }
                         action={
                           search
@@ -1546,82 +1773,7 @@ function App() {
                 </>
               )}
               {page === "explore" && (
-                <>
-                  <section className="explore-banner">
-                    <Compass size={35} />
-                    <div>
-                      <h2>A curiosidade é um ótimo ponto de partida.</h2>
-                      <p>
-                        Pesquise um destino e descubra lugares no Google Maps.
-                        Adicione seus favoritos no roteiro da viagem.
-                      </p>
-                    </div>
-                  </section>
-                  <form
-                    className="explore-search"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (search.trim())
-                        window.open(
-                          "https://www.google.com/maps/search/" +
-                            encodeURIComponent(search),
-                          "_blank",
-                          "noopener,noreferrer",
-                        );
-                    }}
-                  >
-                    <Search size={22} />
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Experimente: cafés em Lisboa"
-                      aria-label="Pesquisar lugares"
-                    />
-                    <button className="primary">
-                      Explorar <ArrowRight size={16} />
-                    </button>
-                  </form>
-                  <div className="inspiration-grid">
-                    {[
-                      {
-                        name: "Perto da natureza",
-                        query: "parques e trilhas",
-                        img: pictures.mountain,
-                      },
-                      {
-                        name: "Sabores pelo caminho",
-                        query: "restaurantes",
-                        img: pictures.city,
-                      },
-                      {
-                        name: "Uma pausa com vista",
-                        query: "mirantes",
-                        img: pictures.coast,
-                      },
-                    ].map((c) => (
-                      <button
-                        key={c.name}
-                        style={{
-                          backgroundImage: `linear-gradient(0deg,rgba(0,0,0,.65),transparent),url(${c.img})`,
-                        }}
-                        onClick={() => setSearch(c.query + " " + search)}
-                      >
-                        <span>IDEIAS PARA EXPLORAR</span>
-                        <h2>{c.name}</h2>
-                        <ArrowRight />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="tip">
-                    <Sparkles size={20} />
-                    <p>
-                      A busca integrada por cartões e sugestões com IA será
-                      conectada a um provedor de lugares. Nesta versão, a
-                      pesquisa abre o Google Maps; nenhum resultado fictício é
-                      apresentado como recomendação.
-                    </p>
-                  </div>
-                </>
+                <Catalog trips={trips} onSave={save} saving={busy} />
               )}
               {page === "map" && (
                 <section className="panel world-panel">
@@ -1654,7 +1806,7 @@ function App() {
                           );
                         }}
                       >
-                        <option value="">Selecione uma viagem</option>
+                        <option value="">{tr("Selecione uma viagem")}</option>
                         {trips.map((t) => (
                           <option value={t.id} key={t.id}>
                             {t.title}
@@ -1684,7 +1836,7 @@ function App() {
                       }}
                     >
                       <MapPin size={16} />
-                      Salvar ponto
+                      {tr("Salvar ponto")}
                     </button>
                   </div>
                   <div className="destination-list">
@@ -1695,7 +1847,7 @@ function App() {
                           <MapPin size={19} />
                           <span>
                             <b>{t.destination || t.title}</b>
-                            <small>{statusLabels[t.status]}</small>
+                            <small>{tLabel(statusLabels[t.status])}</small>
                           </span>
                           <ArrowRight size={16} />
                         </button>
@@ -1735,13 +1887,16 @@ function App() {
                       setNotice("Preferências salvas neste aparelho.");
                     }}
                   >
+                    <LanguagePicker />
                     <div className="profile-avatar">
                       <User size={30} />
                     </div>
-                    <h2>Seu perfil de explorador</h2>
-                    <p>Uma apresentação, se quiser. Nada obrigatório.</p>
+                    <h2>{tr("Seu perfil de explorador")}</h2>
+                    <p>
+                      {tr("Uma apresentação, se quiser. Nada obrigatório.")}
+                    </p>
                     <label>
-                      Como podemos chamar você?
+                      {tr("Como podemos chamar você?")}
                       <input
                         name="name"
                         defaultValue={profile.name}
@@ -1749,7 +1904,7 @@ function App() {
                       />
                     </label>
                     <label>
-                      Seu ritmo de viagem
+                      {tr("Seu ritmo de viagem")}
                       <select name="style" defaultValue={profile.style}>
                         <option>No meu ritmo</option>
                         <option>Quero explorar bastante</option>
@@ -1757,10 +1912,12 @@ function App() {
                         <option>Um pouco de cada</option>
                       </select>
                     </label>
-                    <button className="primary">Salvar preferências</button>
+                    <button className="primary">
+                      {tr("Salvar preferências")}
+                    </button>
                   </form>
                   <section className="panel">
-                    <h2>Seus dados, com você</h2>
+                    <h2>{tr("Seus dados, com você")}</h2>
                     <p>
                       {session
                         ? "Suas viagens são salvas na sua conta Supabase."
@@ -1768,11 +1925,11 @@ function App() {
                     </p>
                     <button className="secondary" onClick={exportData}>
                       <Download size={17} />
-                      Exportar backup das viagens
+                      {tr("Exportar backup das viagens")}
                     </button>
                     <p className="subtle">
-                      O arquivo JSON inclui informações e fotos locais. Fotos da
-                      nuvem permanecem na conta.
+                      O backup inclui informações, fotos e documentos, inclusive
+                      os arquivos baixados da conta. Guarde-o em local privado.
                     </p>
                     <input
                       ref={importRef}
@@ -1787,7 +1944,7 @@ function App() {
                       onClick={() => importRef.current?.click()}
                     >
                       <Plus size={17} />
-                      Importar backup
+                      {tr("Importar backup")}
                     </button>
                     <p className="subtle">
                       As viagens são adicionadas como novas cópias. Nenhuma
@@ -1796,11 +1953,46 @@ function App() {
                     {session ? (
                       <button
                         className="text-button"
-                        onClick={() => supabase!.auth.signOut()}
+                        onClick={async () => {
+                          clearAccountCaches();
+                          const { error } = await supabase!.auth.signOut();
+                          if (error)
+                            setNotice(
+                              friendlyError(
+                                error,
+                                "Não foi possível sair da conta.",
+                              ),
+                            );
+                        }}
                       >
                         <LogOut size={16} />
-                        Sair da conta
+                        {tr("Sair da conta")}
                       </button>
+                    ) : supabase ? (
+                      <div className="tip">
+                        <Cloud size={20} />
+                        <div>
+                          <p>
+                            Crie uma conta ou entre para acessar suas viagens em
+                            outros aparelhos. Você poderá enviar as viagens
+                            deste navegador para a conta.
+                          </p>
+                          <button
+                            className="secondary"
+                            onClick={() => {
+                              try {
+                                localStorage.removeItem(localModeKey);
+                              } catch {
+                                // Nothing stored.
+                              }
+                              setLocalChoice(false);
+                            }}
+                          >
+                            <LogIn size={17} />
+                            {tr("Entrar ou criar conta")}
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="tip">
                         <Cloud size={20} />
@@ -1827,7 +2019,7 @@ function App() {
                 onClick={() => go(n.id)}
               >
                 <n.icon size={21} />
-                <span>{n.label}</span>
+                <span>{tr(n.label)}</span>
               </button>
             ))}
           <button
@@ -1835,7 +2027,7 @@ function App() {
             className={page === "profile" ? "active" : ""}
           >
             <User size={21} />
-            <span>Perfil</span>
+            <span>{tr("Perfil")}</span>
           </button>
         </nav>
       </div>
@@ -1872,7 +2064,7 @@ function App() {
               <button
                 type="button"
                 className="icon-button"
-                aria-label="Fechar"
+                aria-label={tr("Fechar")}
                 onClick={() => setModal(null)}
               >
                 <X />
@@ -1891,7 +2083,7 @@ function App() {
                 : "Adicione os detalhes que forem úteis para você."}
             </p>
             <label>
-              {modal === "trip" ? "Nome da viagem" : "Nome"}
+              {modal === "trip" ? tr("Nome da viagem") : tr("Nome")}
               <input
                 name="title"
                 placeholder={
@@ -1906,7 +2098,7 @@ function App() {
             {modal === "trip" ? (
               <>
                 <label>
-                  Destino
+                  {tr("Destino")}
                   <input
                     name="destination"
                     placeholder="Para onde a vontade leva?"
@@ -1914,11 +2106,13 @@ function App() {
                 </label>
                 <div className="form-grid">
                   <label>
-                    Ida <small>opcional</small>
+                    {tr("Ida")}
+                    <small>opcional</small>
                     <input type="date" name="start" />
                   </label>
                   <label>
-                    Volta <small>opcional</small>
+                    {tr("Volta")}
+                    <small>opcional</small>
                     <input type="date" name="end" />
                   </label>
                 </div>
@@ -1928,7 +2122,7 @@ function App() {
                   }
                 />
                 <label>
-                  Momento da viagem
+                  {tr("Momento da viagem")}
                   <select
                     name="status"
                     defaultValue={page === "history" ? "past" : "planning"}
@@ -1941,7 +2135,7 @@ function App() {
                   </select>
                 </label>
                 <fieldset className="cover-picker">
-                  <legend>Uma capa para começar</legend>
+                  <legend>{tr("Uma capa para começar")}</legend>
                   {Object.entries(pictures).map(([k, v], i) => (
                     <label key={k} style={{ backgroundImage: `url(${v})` }}>
                       <input
@@ -1950,7 +2144,7 @@ function App() {
                         value={k}
                         defaultChecked={i === 0}
                       />
-                      <span>{coverLabels[k as keyof typeof pictures]}</span>
+                      <span>{tr(coverLabels[k as keyof typeof pictures])}</span>
                     </label>
                   ))}
                 </fieldset>
@@ -1959,7 +2153,7 @@ function App() {
               <>
                 <div className="form-grid">
                   <label>
-                    Dia
+                    {tr("Dia")}
                     <input
                       type="number"
                       name="day"
@@ -1969,29 +2163,38 @@ function App() {
                     />
                   </label>
                   <label>
-                    Horário
+                    {tr("Horário")}
                     <input name="time" type="time" />
                   </label>
                 </div>
                 <label>
-                  Categoria
+                  {tr("Período opcional")}
+                  <select name="period">
+                    <option value="any">{tr("Sem período")}</option>
+                    <option value="morning">{tr("Manhã")}</option>
+                    <option value="afternoon">{tr("Tarde")}</option>
+                    <option value="evening">{tr("Noite")}</option>
+                  </select>
+                </label>
+                <label>
+                  {tr("Categoria")}
                   <select name="kind">
                     <option>Passeio</option>
                     <option>Restaurante</option>
-                    <option>Transporte</option>
+                    <option>{tr("Transporte")}</option>
                     <option>Tempo livre</option>
                     <option>Outro</option>
                   </select>
                 </label>
                 <label>
-                  Endereço ou lugar
+                  {tr("Endereço ou lugar")}
                   <input name="address" placeholder="Para abrir no mapa" />
                 </label>
               </>
             ) : (
               <>
                 <label>
-                  Detalhes
+                  {tr("Detalhes")}
                   <textarea
                     name="details"
                     rows={3}
@@ -2009,7 +2212,7 @@ function App() {
                 ? "Salvando…"
                 : modal === "trip"
                   ? "Criar viagem"
-                  : "Adicionar"}
+                  : tr("Adicionar")}
               <ArrowRight size={17} />
             </button>
             <span className="form-footnote">
@@ -2032,7 +2235,8 @@ function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
   return (
     <fieldset className="scope-picker">
       <legend>
-        Tipo de viagem <small>opcional</small>
+        {tr("Tipo de viagem")}
+        <small>opcional</small>
       </legend>
       {options.map(([value, label, hint, mark]) => (
         <label key={value}>
@@ -2109,49 +2313,6 @@ function Empty({
     </div>
   );
 }
-function Photo({
-  photo,
-  onDelete,
-}: {
-  photo: { url: string; name: string };
-  onDelete: () => void;
-}) {
-  const [url, setUrl] = useState(
-    photo.url.startsWith("data:") ? photo.url : "",
-  );
-  useEffect(() => {
-    let active = true;
-    if (supabase && !photo.url.startsWith("data:"))
-      supabase.storage
-        .from("trip-photos")
-        .createSignedUrl(photo.url, 3600)
-        .then(({ data }) => {
-          if (active && data) setUrl(data.signedUrl);
-        });
-    return () => {
-      active = false;
-    };
-  }, [photo.url]);
-  return (
-    <figure>
-      {url ? (
-        <img src={url} alt={photo.name} />
-      ) : (
-        <span>Carregando imagem…</span>
-      )}
-      <figcaption>
-        {photo.name}
-        <button
-          aria-label="Remover foto da viagem"
-          className="icon-button"
-          onClick={onDelete}
-        >
-          <Trash2 size={15} />
-        </button>
-      </figcaption>
-    </figure>
-  );
-}
 function routeUrl(t: Trip, day: number) {
   const stops = t.activities
     .filter((a) => a.day === day && a.address)
@@ -2165,7 +2326,13 @@ function routeUrl(t: Trip, day: number) {
     encodeURIComponent(stops.slice(1, -1).join("|"))
   );
 }
-function Auth({ onNotice }: { onNotice: (s: string) => void }) {
+function Auth({
+  onNotice,
+  onContinueLocal,
+}: {
+  onNotice: (s: string) => void;
+  onContinueLocal: () => void;
+}) {
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false);
   return (
@@ -2180,16 +2347,26 @@ function Auth({ onNotice }: { onNotice: (s: string) => void }) {
             email: String(f.get("email")),
             password: String(f.get("password")),
           };
-          const { error } = signup
-            ? await supabase!.auth.signUp(credentials)
+          const { data, error } = signup
+            ? await supabase!.auth.signUp({
+                ...credentials,
+                options: { emailRedirectTo: window.location.origin },
+              })
             : await supabase!.auth.signInWithPassword(credentials);
           if (error) throw error;
-          if (signup)
+          if (signup && !data.session)
             onNotice(
-              "Conta criada. Confira seu e-mail para confirmar o cadastro.",
+              "Conta criada. Confira seu e-mail e abra o link de confirmação para entrar.",
             );
         } catch (e) {
-          onNotice(e instanceof Error ? e.message : "Não foi possível entrar.");
+          onNotice(
+            friendlyError(
+              e,
+              signup
+                ? "Não foi possível criar a conta. Tente novamente."
+                : "Não foi possível entrar. Tente novamente.",
+            ),
+          );
         } finally {
           setBusy(false);
         }
@@ -2205,11 +2382,11 @@ function Auth({ onNotice }: { onNotice: (s: string) => void }) {
           : "Entre para acessar suas viagens em qualquer aparelho."}
       </p>
       <label>
-        E-mail
+        {tr("E-mail")}
         <input name="email" type="email" required autoComplete="email" />
       </label>
       <label>
-        Senha
+        {tr("Senha")}
         <input
           name="password"
           type="password"
@@ -2228,6 +2405,20 @@ function Auth({ onNotice }: { onNotice: (s: string) => void }) {
       >
         {signup ? "Já tenho uma conta" : "Quero criar minha conta"}
       </button>
+      <div className="auth-local">
+        <button
+          className="secondary full"
+          type="button"
+          onClick={onContinueLocal}
+        >
+          <HardDrive size={17} />
+          {tr("Continuar sem conta")}
+        </button>
+        <p className="subtle">
+          Suas viagens ficam salvas só neste navegador. Você pode criar a conta
+          depois, pelo Perfil, e enviar essas viagens para ela.
+        </p>
+      </div>
     </form>
   );
 }

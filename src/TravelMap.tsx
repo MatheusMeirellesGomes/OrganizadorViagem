@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -8,11 +9,13 @@ export function TravelMap({
   selectable = false,
   onPick,
   focus,
+  focusZoom = 5,
 }: {
   trips: Trip[];
   selectable?: boolean;
   onPick?: (point: Coordinates) => void;
   focus?: Coordinates;
+  focusZoom?: number;
 }) {
   const container = useRef<HTMLDivElement>(null),
     mapRef = useRef<L.Map | null>(null),
@@ -85,11 +88,11 @@ export function TravelMap({
         fillOpacity: 0.8,
         weight: 3,
       }).addTo(markers);
-      map.setView([focus.lat, focus.lng], Math.max(map.getZoom(), 5));
+      map.setView([focus.lat, focus.lng], Math.max(map.getZoom(), focusZoom));
     } else if (points.length === 1) map.setView(points[0], 5);
     else if (points.length > 1)
       map.fitBounds(L.latLngBounds(points), { padding: [35, 35], maxZoom: 8 });
-  }, [trips, focus]);
+  }, [trips, focus, focusZoom]);
   return (
     <div className="travel-map-wrap">
       <div
@@ -105,7 +108,8 @@ export function TravelMap({
       <div className="map-caption">
         <span>
           <i />
-          Planejamento <i className="past" />
+          {tr("Planejamento")}
+          <i className="past" />
           Viagens anteriores
         </span>
         <a
