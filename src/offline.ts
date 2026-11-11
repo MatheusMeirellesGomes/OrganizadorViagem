@@ -1,6 +1,7 @@
 import { validTimeZone } from "./travel-clock";
 import { validDocumentData } from "./documents";
 import { newTrip, type Trip, dateLabel, pictures } from "./model";
+import { getLocale, t, translate } from "./i18n";
 export function escapeHtml(text: string) {
   return text.replace(
     /[&<>"']/g,
@@ -15,20 +16,20 @@ export function offlineDocument(trip: Trip) {
   const days = [...new Set(trip.activities.map((a) => a.day))].sort(
     (a, b) => a - b,
   );
-  return `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(trip.title)} — Gomes pelo Mundo offline</title><style>body{font:16px system-ui;color:#244f43;background:#f6f8f1;max-width:760px;margin:auto;padding:28px}h1{font-size:34px}small{color:#718067}section{background:white;border:1px solid #e0e7d8;border-radius:12px;padding:22px;margin:20px 0}article{padding:15px 0;border-bottom:1px solid #eee}h3{margin:5px 0}p{line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}button{padding:12px;border:0;border-radius:8px;background:#244f43;color:white}@media print{button{display:none}}</style><small>GOMES PELO MUNDO · CÓPIA OFFLINE</small><h1>${e(trip.title)}</h1><p>${e(trip.destination)} · ${e(dateLabel(trip))}</p><small>Exportado em ${e(new Date().toLocaleString("pt-BR"))}. Esta cópia não recebe alterações automaticamente.</small>${trip.hotel ? `<section><h2>Hospedagem</h2><p>${e(trip.hotel)}</p></section>` : ""}${(trip.stays || []).map((s) => `<section><h2>${e(s.name)}</h2><p>${e([s.address, s.city].filter(Boolean).join(", "))}</p><p>Entrada: ${e(s.start)} ${e(s.checkInTime)} · Saída: ${e(s.end)} ${e(s.checkOutTime)}</p><p>${e(s.confirmation)}</p><p>${e(s.notes)}</p></section>`).join("")}${days
+  return `<!doctype html><html lang="${getLocale()}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(trip.title)} — Gomes pelo Mundo offline</title><style>body{font:16px system-ui;color:#244f43;background:#f6f8f1;max-width:760px;margin:auto;padding:28px}h1{font-size:34px}small{color:#718067}section{background:white;border:1px solid #e0e7d8;border-radius:12px;padding:22px;margin:20px 0}article{padding:15px 0;border-bottom:1px solid #eee}h3{margin:5px 0}p{line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}button{padding:12px;border:0;border-radius:8px;background:#244f43;color:white}@media print{button{display:none}}</style><small>${e(t("GOMES PELO MUNDO · CÓPIA OFFLINE"))}</small><h1>${e(trip.title)}</h1><p>${e(trip.destination)} · ${e(t(dateLabel(trip)))}</p><small>${e(translate("Exportado em {date}. Esta cópia não recebe alterações automaticamente.", getLocale(), { date: new Date().toLocaleString(getLocale()) }))}</small>${trip.hotel ? `<section><h2>${e(t("Hospedagem"))}</h2><p>${e(trip.hotel)}</p></section>` : ""}${(trip.stays || []).map((s) => `<section><h2>${e(s.name)}</h2><p>${e([s.address, s.city].filter(Boolean).join(", "))}</p><p>${e(t("Entrada:"))} ${e(s.start)} ${e(s.checkInTime)} ${e(t("· Saída:"))} ${e(s.end)} ${e(s.checkOutTime)}</p><p>${e(s.confirmation)}</p><p>${e(s.notes)}</p></section>`).join("")}${days
     .map(
       (day) =>
-        `<section><h2>Dia ${day}</h2>${trip.activities
+        `<section><h2>${e(translate("Dia {number}", getLocale(), { number: day }))}</h2>${trip.activities
           .filter((a) => a.day === day)
           .map(
             (a) =>
-              `<article><small>${e(a.time || "Sem horário")} · ${e(a.kind)}</small><h3>${a.done ? "✓ " : ""}${e(a.title)}</h3><p>${e(a.address)}</p></article>`,
+              `<article><small>${e(a.time || t("Sem horário"))} · ${e(t(a.kind))}</small><h3>${a.done ? "✓ " : ""}${e(a.title)}</h3><p>${e(a.address)}</p></article>`,
           )
           .join("")}</section>`,
     )
     .join(
       "",
-    )}${trip.notes ? `<section><h2>Anotações</h2><p>${e(trip.notes)}</p></section>` : ""}<section><h2>Reservas</h2>${trip.reservations.map((r) => `<article><h3>${e(r.title)}</h3><p>${e(r.details)}</p>${/^https?:\/\//i.test(r.url) ? `<a href="${e(r.url)}" rel="noreferrer">Abrir link (precisa de internet)</a>` : ""}</article>`).join("") || "<p>Nenhuma reserva cadastrada.</p>"}</section><section><h2>Checklist</h2>${trip.checklist.map((c) => `<p>${c.done ? "☑" : "☐"} ${e(c.title)}</p>`).join("") || "<p>Nenhuma tarefa cadastrada.</p>"}</section><p>Guarde este arquivo em um lugar privado: ele pode conter dados de reservas.</p></html>`;
+    )}${trip.notes ? `<section><h2>${e(t("Anotações"))}</h2><p>${e(trip.notes)}</p></section>` : ""}<section><h2>${e(t("Reservas"))}</h2>${trip.reservations.map((r) => `<article><h3>${e(r.title)}</h3><p>${e(r.details)}</p>${/^https?:\/\//i.test(r.url) ? `<a href="${e(r.url)}" rel="noreferrer">${e(t("Abrir link (precisa de internet)"))}</a>` : ""}</article>`).join("") || `<p>${e(t("Nenhuma reserva cadastrada."))}</p>`}</section><section><h2>Checklist</h2>${trip.checklist.map((c) => `<p>${c.done ? "☑" : "☐"} ${e(c.title)}</p>`).join("") || `<p>${e(t("Nenhuma tarefa cadastrada."))}</p>`}</section><p>${e(t("Guarde este arquivo em um lugar privado: ele pode conter dados de reservas."))}</p></html>`;
 }
 export function downloadOffline(trip: Trip) {
   const url = URL.createObjectURL(
