@@ -79,7 +79,7 @@
   gap: 5px;
 }
 .tm-days button span {
-  font-size: 10px;
+  font-size: 11px;
   color: #63725a;
 }
 .tm-days button b {
@@ -152,7 +152,7 @@
   min-width: 0;
 }
 .tm-next small {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.4px;
   color: #5a7049;
 }
@@ -164,7 +164,7 @@
 .tm-next p,
 .tm-complete p {
   font-size: 11px;
-  color: #627754;
+  color: #56694a;
 }
 .tm-next-icon {
   display: grid;
@@ -217,7 +217,7 @@
   background: #e9eedf;
   border: 1px solid #ccd9bf;
   color: #5c7449;
-  font-size: 10px;
+  font-size: 11px;
 }
 .is-visited .tm-stop {
   background: #244f43;
@@ -307,7 +307,7 @@
 }
 .tm-activity-details dt {
   color: #6d795f;
-  font-size: 10px;
+  font-size: 11px;
   margin-top: 12px;
 }
 .tm-activity-details dd {
@@ -419,7 +419,7 @@
   background: #fbfcf8;
 }
 .tm-empty > svg {
-  color: #7b9461;
+  color: #5c6f49;
   margin-bottom: 15px;
 }
 .tm-empty h3 {
@@ -452,7 +452,7 @@
 .tm-footnote {
   font-size: 11px;
   text-align: center;
-  color: #6b795e;
+  color: #5d6a52;
   padding: 20px 5px 0;
 }
 .tm-feedback {
@@ -498,7 +498,7 @@
   font-weight: 600;
 }
 .tm-bottom > span {
-  font-size: 10px;
+  font-size: 11px;
   color: #68755b;
 }
 .travel-mode summary:focus-visible {
@@ -540,7 +540,7 @@
     font-size: 16px;
   }
   .tm-day-heading > span {
-    font-size: 10px;
+    font-size: 11px;
   }
   .tm-bottom {
     justify-content: space-between;
