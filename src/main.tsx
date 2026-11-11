@@ -58,6 +58,9 @@ const localModeKey = "gomes-modo-local";
 const repository = supabase ? supabaseRepository(supabase) : null;
 import { localKey, readLocal, saveLocal, supabase } from "./store";
 import "./style.css";
+// Shared by the catalog, saved places, itinerary builder and route planner.
+// Loaded eagerly so those screens are styled even before the catalog chunk.
+import "./catalog.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { ConflictError, friendlyError } from "./errors";
 import {
