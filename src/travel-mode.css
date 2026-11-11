@@ -561,3 +561,13 @@
     scroll-behavior: auto !important;
   }
 }
+/* Real photo instead of the compass drawing for an empty day. */
+.tm-empty-photo {
+  display: block;
+  width: min(100%, 320px);
+  height: 140px;
+  margin: 0 auto 18px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #e7ede1;
+}

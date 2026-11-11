@@ -63,6 +63,7 @@ import "./style.css";
 import "./catalog.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney } from "./i18n";
+import { decor, hideOnError } from "./decor";
 import { ConflictError, friendlyError } from "./errors";
 import {
   clearAccountCaches,
@@ -611,10 +612,14 @@ function App() {
           ))}
         </nav>
         <div className="sidebar-note">
-          <div className="note-icon">
-            <Plane size={22} />
-            <span>✦</span>
-          </div>
+          <img
+            className="note-photo"
+            src={decor.wing}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={hideOnError}
+          />
           <h4>{tr("Menos abas abertas.")}<br />{tr("Mais mundo lá fora.")}</h4>
           <p>{tr("Um lugar para todos os seus caminhos.")}</p>
         </div>
@@ -714,7 +719,8 @@ function App() {
                 icon={Cloud}
                 title={tr("Não conseguimos abrir suas viagens")}
                 text={tr(loadError)}
-                action="Tentar novamente"
+                action={tr("Tentar novamente")}
+                photo={decor.window}
                 onAction={() => loadAccount(session.user.id)}
               />
             </section>
@@ -928,8 +934,9 @@ function App() {
                           <Empty
                             icon={MapPin}
                             title={tr("O dia está aberto a possibilidades")}
-                            text="Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer."
-                            action="Adicionar atividade"
+                            text={tr("Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer.")}
+                            action={tr("Adicionar atividade")}
+                            photo={decor.calm}
                             onAction={() => setModal("activity")}
                           />
                         ) : (
@@ -1267,7 +1274,8 @@ function App() {
                       <Empty
                         icon={Plane}
                         title={tr("Uma viagem sem papelada espalhada")}
-                        text="Guarde os detalhes e links das suas reservas aqui."
+                        text={tr("Guarde os detalhes e links das suas reservas aqui.")}
+                        photo={decor.windowAlt}
                       />
                     ) : (
                       trip.reservations.map((r) => (
@@ -1591,6 +1599,14 @@ function App() {
                         className="create-card"
                         onClick={() => setModal("trip")}
                       >
+                        <img
+                          className="create-photo"
+                          src={decor.family}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          onError={hideOnError}
+                        />
                         <span className="dashed-icon">
                           <Plus size={25} />
                         </span>
@@ -1607,9 +1623,14 @@ function App() {
                           </h3>
                           <p>{tr("Sem formulários intermináveis.")}<br />{tr("Sem orçamento obrigatório.")}<br />{tr("Só o que faz sentido para você.")}</p>
                         </div>
-                        <div className="editorial-compass">
-                          <Compass size={105} strokeWidth={0.65} />
-                        </div>
+                        <img
+                          className="editorial-photo"
+                          src={decor.compass}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          onError={hideOnError}
+                        />
                       </div>
                     </div>
                   )}
@@ -1703,6 +1724,7 @@ function App() {
                     <section className="panel">
                       <Empty
                         icon={page === "history" ? BookOpen : Compass}
+                        photo={page === "history" ? decor.compassAlt : decor.roadAlt}
                         title={
                           search
                             ? tr("Nenhuma viagem encontrada")
@@ -1747,7 +1769,13 @@ function App() {
                       <h2>{tr("Todos os seus caminhos no mapa")}</h2>
                       <p>{tr("Marque os destinos das suas viagens. Os pontos ficam salvos com cada viagem.")}</p>
                     </div>
-                    <Globe2 size={26} />
+                    <img
+                      className="head-photo"
+                      src={decor.map}
+                      alt=""
+                      loading="lazy"
+                      onError={hideOnError}
+                    />
                   </div>
                   <TravelMap
                     trips={trips}
@@ -2229,17 +2257,22 @@ function Empty({
   text,
   action,
   onAction,
+  photo = decor.road,
 }: {
   icon: typeof Compass;
   title: string;
   text: string;
   action?: string;
+  photo?: string;
   onAction?: () => void;
 }) {
   return (
     <div className="empty">
-      <span className="empty-icon">
-        <Icon size={29} strokeWidth={1.4} />
+      <span className="empty-photo" aria-hidden="true">
+        <img src={photo} alt="" loading="lazy" onError={hideOnError} />
+        <span className="empty-badge">
+          <Icon size={18} />
+        </span>
       </span>
       <h3>{title}</h3>
       <p>{text}</p>
