@@ -54,42 +54,53 @@ describe("catálogo de lugares", () => {
     );
   });
   it("reusa cache sem requisição extra e deixa resultados disponíveis sem cota", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ elements: [node] }),
-      });
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ elements: [node] }),
+    });
     const storage = memoryStorage();
-    await searchCatalog(
-      { lat: 40, lng: -3 },
-      3000,
-      "attractions",
+    const options = {
       storage,
       fetcher,
-      "https://example.com",
-    );
+      endpoints: ["https://example.com/a"],
+    };
+    await searchCatalog({ lat: 40, lng: -3 }, 3000, "food", options);
     const result = await searchCatalog(
       { lat: 40, lng: -3 },
       3000,
-      "attractions",
-      storage,
-      fetcher,
-      "https://example.com",
+      "food",
+      options,
     );
     expect(result.cached).toBe(true);
+    expect(result.provider).toBe("openstreetmap");
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it("sem provedor não simula catálogo de produção", async () => {
-    await expect(
-      searchCatalog(
-        { lat: 1, lng: 1 },
-        500,
-        "attractions",
-        memoryStorage(),
-        vi.fn(),
-        "",
-      ),
-    ).rejects.toThrow("provedor");
+  it("sem servidor próprio usa o Nominatim para restaurantes", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          osm_type: "node",
+          osm_id: 9,
+          lat: "40.0001",
+          lon: "-3.0001",
+          name: "Casa Lucio",
+          category: "amenity",
+          type: "restaurant",
+          extratags: { cuisine: "spanish" },
+          address: { road: "Calle Cava Baja", city: "Madrid" },
+        },
+      ],
+    });
+    const result = await searchCatalog({ lat: 40, lng: -3 }, 1000, "food", {
+      storage: memoryStorage(),
+      fetcher,
+      endpoints: [],
+      gapMs: 0,
+    });
+    expect(result.places).toHaveLength(1);
+    expect(result.places[0].category).toBe("restaurant");
+    expect(result.places[0].tags.cuisine).toBe("spanish");
+    expect(String(fetcher.mock.calls[0][0])).toContain("nominatim");
   });
 });
