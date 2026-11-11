@@ -163,21 +163,33 @@ try {
       .insert({ id, user_id: A.id, data: trip(randomUUID(), "id diferente") });
     check("Documento com id diferente é recusado", !!error);
   }
-  // 7. Fotos privadas por usuário
-  {
+  // 7. Fotos e documentos privados por usuário (buckets das migrações 001 e 002)
+  for (const [bucket, label, migration] of [
+    ["trip-photos", "foto", "202611090001_initial.sql"],
+    ["trip-documents", "documento", "002_private_documents.sql"],
+  ]) {
     const file = new Blob([new Uint8Array([137, 80, 78, 71])], { type: "image/png" });
     const own = `${A.id}/${tripA.id}/teste.png`;
-    const up = await A.c.storage.from("trip-photos").upload(own, file, { contentType: "image/png" });
-    check("Conta A envia foto para a própria pasta", !up.error, up.error?.message);
+    const up = await A.c.storage.from(bucket).upload(own, file, { contentType: "image/png" });
+    if (up.error && /bucket not found/i.test(up.error.message)) {
+      check(`Bucket ${bucket} existe`, false, `execute supabase/migrations/${migration}`);
+      continue;
+    }
+    check(`Conta A envia ${label} para a própria pasta`, !up.error, up.error?.message);
     const other = await A.c.storage
-      .from("trip-photos")
+      .from(bucket)
       .upload(`${B.id}/${tripA.id}/teste.png`, file, { contentType: "image/png" });
-    check("Conta A não envia foto para a pasta da B", !!other.error);
-    const peek = await B.c.storage.from("trip-photos").createSignedUrl(own, 60);
-    check("Conta B não abre a foto da A", !!peek.error || !peek.data?.signedUrl);
-    const pub = await anon.storage.from("trip-photos").createSignedUrl(own, 60);
-    check("Visitante sem login não abre a foto", !!pub.error || !pub.data?.signedUrl);
-    await A.c.storage.from("trip-photos").remove([own]);
+    check(`Conta A não envia ${label} para a pasta da B`, !!other.error);
+    const peek = await B.c.storage.from(bucket).createSignedUrl(own, 60);
+    check(`Conta B não abre ${label} da A`, !!peek.error || !peek.data?.signedUrl);
+    const steal = await B.c.storage.from(bucket).download(own);
+    check(`Conta B não baixa ${label} da A`, !!steal.error || !steal.data);
+    const pub = await anon.storage.from(bucket).createSignedUrl(own, 60);
+    check(`Visitante sem login não abre ${label}`, !!pub.error || !pub.data?.signedUrl);
+    await B.c.storage.from(bucket).remove([own]);
+    const still = await A.c.storage.from(bucket).download(own);
+    check(`Conta B não apaga ${label} da A`, !still.error && !!still.data, still.error?.message);
+    await A.c.storage.from(bucket).remove([own]);
   }
 } finally {
   await A.c.from("trips").delete().eq("id", tripA.id);
