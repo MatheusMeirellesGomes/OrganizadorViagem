@@ -56,3 +56,11 @@ export const formatNumber = (value: number, digits = 0) =>
 /** Translates and fills {placeholders} in the current language. */
 export const tf = (key: string, values: Record<string, string | number>) =>
   translate(key, language, values);
+/** Money in the current language, e.g. "R$ 12,00", "€12.00", "12,00 €". */
+export function formatMoney(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat(language, { style: "currency", currency }).format(value);
+  } catch {
+    return `${currency} ${formatNumber(value, 2)}`;
+  }
+}

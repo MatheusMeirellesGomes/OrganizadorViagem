@@ -244,8 +244,7 @@ export function ItineraryBuilder({
           {draft.activities.map((a, index) => (
             <article className="stay-card" key={a.id}>
               <label>
-                {tr("Atividade")}
-                {index + 1}
+                {tf("Atividade {number}", { number: index + 1 })}
                 <input
                   value={a.title}
                   onChange={(e) =>

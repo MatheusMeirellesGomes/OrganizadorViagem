@@ -204,8 +204,7 @@ export function TripCalendar({
                 onClick={() => onDayChange(n)}
                 className={n === day ? "selected" : ""}
               >
-                {tr("Dia")}
-                {n}
+                {tf("Dia {number}", { number: n })}
               </button>
             ))}
           </div>

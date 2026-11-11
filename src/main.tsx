@@ -62,6 +62,7 @@ import "./style.css";
 // Loaded eagerly so those screens are styled even before the catalog chunk.
 import "./catalog.css";
 import { downloadOffline, parseBackup } from "./offline";
+import { formatMoney } from "./i18n";
 import { ConflictError, friendlyError } from "./errors";
 import {
   clearAccountCaches,
@@ -889,8 +890,7 @@ function App() {
                               className={day === i + 1 ? "selected" : ""}
                               onClick={() => setDay(i + 1)}
                             >
-                              {tr("Dia")}
-                              {i + 1}
+                              {tf("Dia {number}", { number: i + 1 })}
                             </button>
                           ),
                         )}
@@ -1015,8 +1015,7 @@ function App() {
                                         },
                                         (_, i) => (
                                           <option key={i} value={i + 1}>
-                                            {tr("Dia")}
-                                            {i + 1}
+                                            {tf("Dia {number}", { number: i + 1 })}
                                           </option>
                                         ),
                                       )}
@@ -1473,7 +1472,7 @@ function App() {
                         <Wallet size={20} />
                         <span>{x.title}</span>
                         <b>
-                          {x.currency} {x.amount.toFixed(2)}
+                          {formatMoney(x.amount, x.currency)}
                         </b>
                         <button
                           className="icon-button"

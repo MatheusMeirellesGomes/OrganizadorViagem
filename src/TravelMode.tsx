@@ -165,8 +165,7 @@ export function TravelMode({
             onClick={() => onDayChange(number)}
           >
             <span>
-              {tr("Dia")}
-              {number}
+              {tf("Dia {number}", { number })}
               {today === number ? tr(" · Hoje") : ""}
             </span>
             <b>{trip.start ? dayLabel(trip, number).short : tr("Sem data")}</b>

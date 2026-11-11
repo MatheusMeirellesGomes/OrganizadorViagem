@@ -1,3 +1,4 @@
+import { tf } from "./i18n";
 import { t as tr } from "./i18n";
 import { useState } from "react";
 import { BedDouble, MapPin, Plus } from "lucide-react";
@@ -266,8 +267,7 @@ export function ReservationLinks({
           <option value="">{tr("Sem vínculo")}</option>
           {trip.activities.map((a) => (
             <option key={a.id} value={a.id}>
-              {tr("Dia")}
-              {a.day} · {a.title}
+              {tf("Dia {number}", { number: a.day })} · {a.title}
             </option>
           ))}
         </select>
