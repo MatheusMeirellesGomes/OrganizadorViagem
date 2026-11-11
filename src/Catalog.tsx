@@ -1,5 +1,5 @@
 import { getLocale } from "./i18n";
-import { t as tr } from "./i18n";
+import { t as tr, tf, formatNumber } from "./i18n";
 import { ChoiceButtons } from "./ChoiceButtons";
 import { choosePlace } from "./choices";
 import { useState } from "react";
@@ -19,13 +19,86 @@ import {
 import {
   searchCatalog,
   locateDestination,
+  complementAttractions,
   type CatalogResult,
 } from "./catalog-service";
 import "./catalog.css";
-export function PlaceDetails({ place: p }: { place: Place }) {
+const isWiki = (p: Place) => p.tags.provider === "wikipedia";
+export function PhotoCredit({ place: p }: { place: Place }) {
+  const file = p.tags.image_file;
+  if (!file) return null;
+  const page =
+    "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(file);
+  const license = safeExternalUrl(p.tags.image_license_url || "");
+  return (
+    <p className="photo-credit">
+      {tr("Foto")}:{" "}
+      <a href={page} target="_blank" rel="noreferrer">
+        {p.tags.image_artist || tr("Wikimedia Commons")}
+      </a>
+      {p.tags.image_license && (
+        <>
+          {" · "}
+          {license ? (
+            <a href={license} target="_blank" rel="noreferrer">
+              {p.tags.image_license}
+            </a>
+          ) : (
+            p.tags.image_license
+          )}
+        </>
+      )}
+    </p>
+  );
+}
+function WikiDetails({ place: p }: { place: Place }) {
   return (
     <details>
-      <summary>Conhecer o lugar</summary>
+      <summary>{tr("Conhecer o lugar")}</summary>
+      <dl className="place-details">
+        <dt>{tr("Ingressos e horários")}</dt>
+        <dd>
+          {p.website
+            ? tr("Confira no site oficial antes de ir.")
+            : tr("Não informados pela fonte. Confira antes de ir.")}
+        </dd>
+        {p.tags.heritage && (
+          <>
+            <dt>{tr("Proteção")}</dt>
+            <dd>{tr("Bem tombado ou classificado como patrimônio")}</dd>
+          </>
+        )}
+      </dl>
+      <div className="tm-actions">
+        {p.website && (
+          <a href={p.website} target="_blank" rel="noreferrer">
+            {tr("Site oficial")}
+          </a>
+        )}
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${p.coordinates.lat},${p.coordinates.lng}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {tr("Como chegar")}
+        </a>
+        <a href={p.source} target="_blank" rel="noreferrer">
+          {tr("Ler na Wikipédia")}
+        </a>
+      </div>
+      <p className="subtle">
+        {tf("Consultado em {date}. Dados podem mudar.", {
+          date: new Date(p.retrievedAt).toLocaleString(getLocale()),
+        })}
+      </p>
+    </details>
+  );
+}
+export function PlaceDetails({ place: p }: { place: Place }) {
+  if (isWiki(p)) return <WikiDetails place={p} />;
+  return (
+    <details>
+      <summary>{tr("Conhecer o lugar")}</summary>
       <dl className="place-details">
         <dt>{tr("Endereço")}</dt>
         <dd>
@@ -131,9 +204,14 @@ export function Catalog({
     [category, setCategory] = useState("all"),
     [query, setQuery] = useState(""),
     [fee, setFee] = useState("all"),
-    [limit, setLimit] = useState(24);
+    [limit, setLimit] = useState(24),
+    [onlyTourist, setOnlyTourist] = useState(true);
+  const unclassified = (result?.places || []).filter(
+    (p) => p.tags.unclassified === "yes",
+  ).length;
   const filtered = (result?.places || []).filter(
     (p) =>
+      (!onlyTourist || p.tags.unclassified !== "yes") &&
       (category === "all" || p.category === category) &&
       (!query ||
         p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())) &&
@@ -148,7 +226,7 @@ export function Catalog({
     try {
       const d = await locateDestination(destination);
       setPoint(d.point);
-      setLocated(d.name + " · localização pela Wikipédia");
+      setLocated(tf("{name} · localização pela Wikipédia", { name: d.name }));
       setResult(undefined);
     } catch (e) {
       setMessage(
@@ -252,10 +330,20 @@ export function Catalog({
               setBusy(true);
               setMessage("");
               try {
-                const r = await searchCatalog(point, radius, kind);
+                const r = await searchCatalog(point, radius, kind, {
+                  onProgress: (done, total) =>
+                    setMessage(
+                      tf("Consultando o OpenStreetMap… {done} de {total}", {
+                        done,
+                        total,
+                      }),
+                    ),
+                });
+                setMessage("");
                 setResult(r);
                 setLimit(24);
                 setCategory("all");
+                setSort(kind === "food" ? "name" : "distance");
               } catch (e) {
                 setMessage(
                   e instanceof Error ? e.message : "Consulta indisponível.",
@@ -273,9 +361,16 @@ export function Catalog({
           </button>
         </div>
         <p className="subtle">
-          A consulta envia apenas a região selecionada à fonte. Cobertura
-          colaborativa: nenhum catálogo reúne todos os lugares. Amplie ou mude a
-          região para explorar mais.
+          {kind === "food"
+            ? tr(
+                "Restaurantes vêm do OpenStreetMap (busca Nominatim): até 40 por tipo, com culinária, horário e site quando cadastrados.",
+              )
+            : tr(
+                "Atrações vêm da Wikipédia e do Wikidata: até 100 lugares com artigo, do mais próximo ao mais distante.",
+              )}{" "}
+          {tr(
+            "A consulta envia apenas a região escolhida. Nenhum catálogo reúne todos os lugares.",
+          )}
         </p>
         <p role="status">{message}</p>
         <a
@@ -303,6 +398,54 @@ export function Catalog({
               </p>
             </div>
           </div>
+          {result.provider === "wikipedia" && !result.complemented && (
+            <div className="catalog-complement panel">
+              <p>
+                {result.places.filter((p) => p.tags.unclassified !== "yes")
+                  .length < 10
+                  ? tr(
+                      "Poucos artigos da Wikipédia nesta região. Complete com museus, parques, mirantes e cachoeiras do OpenStreetMap.",
+                    )
+                  : tr(
+                      "Quer mais opções? Complete com museus, parques, mirantes e cachoeiras do OpenStreetMap.",
+                    )}
+              </p>
+              <button
+                className="secondary"
+                disabled={busy || !point}
+                onClick={async () => {
+                  if (!point) return;
+                  setBusy(true);
+                  try {
+                    const r = await complementAttractions(point, radius, result, {
+                      onProgress: (done, total) =>
+                        setMessage(
+                          tf("Consultando o OpenStreetMap… {done} de {total}", {
+                            done,
+                            total,
+                          }),
+                        ),
+                    });
+                    const added = r.places.length - result.places.length;
+                    setResult(r);
+                    setMessage(
+                      tf("{count} lugares do OpenStreetMap adicionados.", {
+                        count: added,
+                      }),
+                    );
+                  } catch (e) {
+                    setMessage(
+                      e instanceof Error ? e.message : tr("Consulta indisponível."),
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? tr("Consultando…") : tr("Completar com OpenStreetMap")}
+              </button>
+            </div>
+          )}
           <div className="catalog-filters">
             <label>
               {tr("Filtrar por nome")}
@@ -335,6 +478,7 @@ export function Catalog({
                   ))}
               </select>
             </label>
+            {result.places.some((p) => p.tags.fee) && (
             <label>
               {tr("Entrada")}
               <select
@@ -349,6 +493,22 @@ export function Catalog({
                 <option value="yes">Pagas cadastradas</option>
               </select>
             </label>
+            )}
+            {unclassified > 0 && (
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={onlyTourist}
+                  onChange={(e) => {
+                    setOnlyTourist(e.target.checked);
+                    setLimit(24);
+                  }}
+                />
+                {tf("Só pontos turísticos ({count} outros lugares ocultos)", {
+                  count: unclassified,
+                })}
+              </label>
+            )}
           </div>
           {kind === "food" && (
             <>
@@ -440,15 +600,38 @@ export function Catalog({
           <div className="catalog-grid">
             {places.slice(0, limit).map((p) => (
               <article className="panel place-card" key={p.id}>
-                <span className="eyebrow">{tr(categories[p.category])}</span>
+                {p.tags.image && (
+                  <figure className="place-photo">
+                    <img
+                      src={p.tags.image}
+                      alt=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <figcaption>
+                      <PhotoCredit place={p} />
+                    </figcaption>
+                  </figure>
+                )}
+                <span className="eyebrow">
+                  {tr(categories[p.category])}
+                  {p.tags.heritage && " · " + tr("Patrimônio")}
+                </span>
                 <h3>{p.name}</h3>
-                <p>
-                  {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
-                </p>
+                {isWiki(p) ? (
+                  p.tags.description && (
+                    <p className="place-description">{p.tags.description}</p>
+                  )
+                ) : (
+                  <p>
+                    {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
+                  </p>
+                )}
                 {point && (
                   <p>
-                    {distanceKm(point, p.coordinates).toFixed(1)} km em linha
-                    reta do ponto escolhido
+                    {tf("{km} km em linha reta do ponto escolhido", {
+                      km: formatNumber(distanceKm(point, p.coordinates), 1),
+                    })}
                   </p>
                 )}
                 <PlaceDetails place={p} />
@@ -507,15 +690,41 @@ export function Catalog({
             </button>
           )}
           <p className="subtle">
-            ©{" "}
-            <a
-              href="https://www.openstreetmap.org/copyright"
-              target="_blank"
-              rel="noreferrer"
-            >
-              OpenStreetMap contributors · ODbL
-            </a>
-            . Sem preços, avaliações ou horários gerados por IA.
+            {result.provider === "wikipedia" && (
+              <>
+                {tr("Textos")}:{" "}
+                <a
+                  href="https://creativecommons.org/licenses/by-sa/4.0/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Wikipédia · CC BY-SA
+                </a>
+                {" · "}
+                <a
+                  href="https://www.wikidata.org/wiki/Wikidata:Licensing"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Wikidata · CC0
+                </a>
+                {" · "}
+                {tr("Fotos: Wikimedia Commons, com autor e licença em cada foto.")}
+              </>
+            )}
+            {(result.provider === "openstreetmap" || result.complemented) && (
+              <>
+                {" "}©{" "}
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  OpenStreetMap contributors · ODbL
+                </a>
+              </>
+            )}{" "}
+            {tr("Sem preços, avaliações ou horários gerados por IA.")}
           </p>
         </section>
       )}
