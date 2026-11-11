@@ -1,3 +1,5 @@
+import { getLocale } from "./i18n";
+import { t as tr } from "./i18n";
 import { validTimeZone } from "./travel-clock";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, CalendarDays, Users } from "lucide-react";
@@ -35,7 +37,7 @@ export function TripCalendar({
   return (
     <div className="extension-grid">
       <section className="panel">
-        <h2>Fuso horário opcional</h2>
+        <h2>{tr("Fuso horário opcional")}</h2>
         <p>
           Usado para identificar o dia atual no Modo Viagem. Sem configuração,
           usamos o fuso do aparelho. Os horários que você cadastrou continuam
@@ -58,7 +60,7 @@ export function TripCalendar({
           }}
         >
           <label>
-            Fuso da viagem
+            {tr("Fuso da viagem")}
             <input
               name="timeZone"
               list="trip-time-zones"
@@ -79,7 +81,7 @@ export function TripCalendar({
             ))}
           </datalist>
           <button className="secondary" disabled={busy}>
-            Salvar fuso
+            {tr("Salvar fuso")}
           </button>
         </form>
       </section>
@@ -112,16 +114,16 @@ export function TripCalendar({
         >
           <div className="form-grid">
             <label>
-              Ida
+              {tr("Ida")}
               <input name="start" type="date" defaultValue={trip.start} />
             </label>
             <label>
-              Volta
+              {tr("Volta")}
               <input name="end" type="date" defaultValue={trip.end} />
             </label>
           </div>
           <button className="secondary" disabled={busy}>
-            Salvar datas
+            {tr("Salvar datas")}
           </button>
         </form>
         {trip.start ? (
@@ -145,7 +147,7 @@ export function TripCalendar({
                 <ArrowLeft size={18} />
               </button>
               <h3>
-                {month.toLocaleDateString("pt-BR", {
+                {month.toLocaleDateString(getLocale(), {
                   month: "long",
                   year: "numeric",
                   timeZone: "UTC",
@@ -205,7 +207,8 @@ export function TripCalendar({
                 onClick={() => onDayChange(n)}
                 className={n === day ? "selected" : ""}
               >
-                Dia {n}
+                {tr("Dia")}
+                {n}
               </button>
             ))}
           </div>
@@ -215,10 +218,10 @@ export function TripCalendar({
           const items = activities.filter((a) => activityPeriod(a) === period);
           return items.length ? (
             <section className="period-list" key={period}>
-              <h4>{periods[period]}</h4>
+              <h4>{tr(periods[period])}</h4>
               {items.map((a) => (
                 <p key={a.id}>
-                  {a.time || "Sem horário"} · {a.title}
+                  {a.time || tr("Sem horário")} · {a.title}
                 </p>
               ))}
             </section>
@@ -265,7 +268,7 @@ export function TripCalendar({
         >
           <div className="form-grid">
             <label>
-              Adultos
+              {tr("Adultos")}
               <input
                 type="number"
                 min="0"
@@ -275,7 +278,7 @@ export function TripCalendar({
               />
             </label>
             <label>
-              Crianças
+              {tr("Crianças")}
               <input
                 type="number"
                 min="0"
@@ -302,7 +305,7 @@ export function TripCalendar({
             />
           </label>
           <button className="primary full" disabled={busy}>
-            Salvar grupo
+            {tr("Salvar grupo")}
           </button>
         </form>
       </section>

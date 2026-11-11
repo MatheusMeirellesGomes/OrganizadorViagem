@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { ItineraryBuilder } from "./ItineraryBuilder";
 import { useRef, useState } from "react";
 import { uid, type Trip } from "./model";
@@ -51,7 +52,7 @@ export function SavedPlaces({
           mesmo.
         </p>
         <details>
-          <summary>Adicionar um lugar por conta própria</summary>
+          <summary>{tr("Adicionar um lugar por conta própria")}</summary>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -86,20 +87,20 @@ export function SavedPlaces({
             }}
           >
             <label>
-              Nome
+              {tr("Nome")}
               <input name="name" />
             </label>
             <label>
-              Endereço
+              {tr("Endereço")}
               <input name="address" />
             </label>
             <div className="form-grid">
               <label>
-                Latitude opcional
+                {tr("Latitude opcional")}
                 <input type="number" step="any" min="-90" max="90" name="lat" />
               </label>
               <label>
-                Longitude opcional
+                {tr("Longitude opcional")}
                 <input
                   type="number"
                   step="any"
@@ -110,15 +111,15 @@ export function SavedPlaces({
               </label>
             </div>
             <button className="secondary" disabled={busy || pending}>
-              Salvar lugar
+              {tr("Salvar lugar")}
             </button>
           </form>
         </details>
         <div className="catalog-filters">
           <label>
-            Mostrar
+            {tr("Mostrar")}
             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="all">Todas as decisões</option>
+              <option value="all">{tr("Todas as decisões")}</option>
               {Object.entries(decisionLabels).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
@@ -127,7 +128,7 @@ export function SavedPlaces({
             </select>
           </label>
           <label>
-            Adicionar ao dia
+            {tr("Adicionar ao dia")}
             <input
               type="number"
               min="1"
@@ -167,7 +168,7 @@ export function SavedPlaces({
                 );
             }}
           >
-            <span className="eyebrow">{decisionLabels[c.decision]}</span>
+            <span className="eyebrow">{tr(decisionLabels[c.decision])}</span>
             <h3>{c.place.name}</h3>
             <p>{c.place.address || "Endereço em aberto"}</p>
             <ChoiceButtons
@@ -197,7 +198,7 @@ export function SavedPlaces({
                   }
                 }}
               >
-                Adicionar ao roteiro
+                {tr("Adicionar ao roteiro")}
               </button>
               <button
                 className="text-button"
@@ -214,7 +215,7 @@ export function SavedPlaces({
                     );
                 }}
               >
-                Desfazer decisão
+                {tr("Desfazer decisão")}
               </button>
             </div>
           </article>
@@ -227,7 +228,7 @@ export function SavedPlaces({
         </p>
       )}
       <section className="panel">
-        <h2>Lugares no mapa</h2>
+        <h2>{tr("Lugares no mapa")}</h2>
         <TravelMap
           trips={choices
             .filter((c) => c.decision !== "skip" && c.place.coordinates)

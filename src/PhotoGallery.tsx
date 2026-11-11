@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Trip } from "./model";
 import { chronologicalPhotos, removePhoto, type TripPhoto } from "./photos";
@@ -91,7 +92,7 @@ export function PhotoGallery({
           </p>
         </div>
         <label className="secondary photo-upload">
-          Adicionar fotos
+          {tr("Adicionar fotos")}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -106,9 +107,9 @@ export function PhotoGallery({
         </label>
       </div>
       <label>
-        Álbum
+        {tr("Álbum")}
         <select value={album} onChange={(e) => setAlbum(e.target.value)}>
-          <option value="">Todas as fotos</option>
+          <option value="">{tr("Todas as fotos")}</option>
           {[...new Set(trip.photos.map((p) => p.album || "Sem álbum"))].map(
             (a) => (
               <option key={a} value={a}>
@@ -139,7 +140,7 @@ export function PhotoGallery({
                   disabled={busy}
                   onClick={() => setEditing(p)}
                 >
-                  Editar detalhes
+                  {tr("Editar detalhes")}
                 </button>
                 <button
                   className="text-button"
@@ -166,7 +167,7 @@ export function PhotoGallery({
                       setMessage("Foto removida da viagem.");
                   }}
                 >
-                  Remover
+                  {tr("Remover")}
                 </button>
               </div>
             </figcaption>
@@ -187,10 +188,10 @@ export function PhotoGallery({
       </button>
       <p role="status">{message}</p>
       <details className="retrospective">
-        <summary>Retrospectiva da viagem</summary>
+        <summary>{tr("Retrospectiva da viagem")}</summary>
         <h2>{trip.title}</h2>
         <p>
-          {trip.destination || "Destino em aberto"} · {dateLabel(trip)}
+          {trip.destination || tr("Destino em aberto")} · {dateLabel(trip)}
         </p>
         <p>
           {trip.photos.length} fotos ·{" "}
@@ -235,7 +236,7 @@ export function PhotoGallery({
               autoFocus
               onClick={() => setExpanded(undefined)}
             >
-              Fechar foto
+              {tr("Fechar foto")}
             </button>
             <PrivatePhoto photo={expanded} />
             <p>{expanded.caption || expanded.name}</p>
@@ -276,11 +277,11 @@ export function PhotoGallery({
           >
             <h2>Detalhes da foto</h2>
             <label>
-              Legenda
+              {tr("Legenda")}
               <input autoFocus name="caption" defaultValue={editing.caption} />
             </label>
             <label>
-              Data opcional
+              {tr("Data opcional")}
               <input
                 name="takenAt"
                 type="date"
@@ -288,11 +289,11 @@ export function PhotoGallery({
               />
             </label>
             <label>
-              Local opcional
+              {tr("Local opcional")}
               <input name="location" defaultValue={editing.location} />
             </label>
             <label>
-              Álbum
+              {tr("Álbum")}
               <input
                 name="album"
                 defaultValue={editing.album}
@@ -300,9 +301,9 @@ export function PhotoGallery({
               />
             </label>
             <label>
-              Passeio vinculado
+              {tr("Passeio vinculado")}
               <select name="activityId" defaultValue={editing.activityId || ""}>
-                <option value="">Sem vínculo</option>
+                <option value="">{tr("Sem vínculo")}</option>
                 {trip.activities.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.title}
@@ -312,14 +313,14 @@ export function PhotoGallery({
             </label>
             <div className="tm-actions">
               <button className="primary" disabled={busy}>
-                Salvar detalhes
+                {tr("Salvar detalhes")}
               </button>
               <button
                 type="button"
                 className="secondary"
                 onClick={() => setEditing(undefined)}
               >
-                Cancelar
+                {tr("Cancelar")}
               </button>
             </div>
           </form>

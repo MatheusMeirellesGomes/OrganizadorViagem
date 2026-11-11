@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useState } from "react";
 import { BedDouble, MapPin, Plus } from "lucide-react";
 import { type Trip, type Stay, uid } from "./model";
@@ -54,7 +55,7 @@ export function StaysPanel({
           onClick={() => setEditing({})}
         >
           <Plus size={16} />
-          Hospedagem
+          {tr("Hospedagem")}
         </button>
       </div>
       {trip.hotel && (
@@ -83,7 +84,7 @@ export function StaysPanel({
           {s.notes && <p className="pre-wrap">{s.notes}</p>}
           {s.confirmation && (
             <details>
-              <summary>Código de confirmação</summary>
+              <summary>{tr("Código de confirmação")}</summary>
               <p>{s.confirmation}</p>
             </details>
           )}
@@ -96,7 +97,7 @@ export function StaysPanel({
                 rel="noreferrer"
               >
                 <MapPin size={16} />
-                Como chegar
+                {tr("Como chegar")}
               </a>
             )}
             {safeExternalUrl(s.url) && (
@@ -106,7 +107,7 @@ export function StaysPanel({
                 target="_blank"
                 rel="noreferrer"
               >
-                Abrir reserva
+                {tr("Abrir reserva")}
               </a>
             )}
             <button
@@ -114,7 +115,7 @@ export function StaysPanel({
               disabled={busy || pending}
               onClick={() => setEditing(s)}
             >
-              Editar
+              {tr("Editar")}
             </button>
             <button
               className="secondary"
@@ -137,7 +138,7 @@ export function StaysPanel({
                 }
               }}
             >
-              Excluir
+              {tr("Excluir")}
             </button>
           </div>
         </article>
@@ -189,7 +190,7 @@ export function StaysPanel({
               </label>
             ))}
             <label>
-              Latitude
+              {tr("Latitude")}
               <input
                 name="lat"
                 type="number"
@@ -200,7 +201,7 @@ export function StaysPanel({
               />
             </label>
             <label>
-              Longitude
+              {tr("Longitude")}
               <input
                 name="lng"
                 type="number"
@@ -212,12 +213,12 @@ export function StaysPanel({
             </label>
           </div>
           <label>
-            Observações
+            {tr("Observações")}
             <textarea name="notes" defaultValue={editing.notes} />
           </label>
           <div className="tm-actions">
             <button className="primary" disabled={busy || pending}>
-              Salvar hospedagem
+              {tr("Salvar hospedagem")}
             </button>
             <button
               type="button"
@@ -225,7 +226,7 @@ export function StaysPanel({
               disabled={pending}
               onClick={() => setEditing(null)}
             >
-              Cancelar
+              {tr("Cancelar")}
             </button>
           </div>
         </form>
@@ -249,7 +250,7 @@ export function ReservationLinks({
   return (
     <div className="form-grid reservation-links">
       <label>
-        Atividade vinculada
+        {tr("Atividade vinculada")}
         <select
           aria-label={"Atividade de " + r.title}
           value={r.activityId || ""}
@@ -265,16 +266,17 @@ export function ReservationLinks({
             })
           }
         >
-          <option value="">Sem vínculo</option>
+          <option value="">{tr("Sem vínculo")}</option>
           {trip.activities.map((a) => (
             <option key={a.id} value={a.id}>
-              Dia {a.day} · {a.title}
+              {tr("Dia")}
+              {a.day} · {a.title}
             </option>
           ))}
         </select>
       </label>
       <label>
-        Hospedagem vinculada
+        {tr("Hospedagem vinculada")}
         <select
           aria-label={"Hospedagem de " + r.title}
           value={r.stayId || ""}
@@ -290,7 +292,7 @@ export function ReservationLinks({
             })
           }
         >
-          <option value="">Sem vínculo</option>
+          <option value="">{tr("Sem vínculo")}</option>
           {(trip.stays || []).map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}

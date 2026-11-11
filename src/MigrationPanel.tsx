@@ -1,5 +1,11 @@
+import { t as tr } from "./i18n";
 import { useState } from "react";
-import { CheckCircle2, CloudUpload, HardDrive, TriangleAlert } from "lucide-react";
+import {
+  CheckCircle2,
+  CloudUpload,
+  HardDrive,
+  TriangleAlert,
+} from "lucide-react";
 import type { Trip } from "./model";
 import type { TripRepository } from "./remote";
 import { friendlyError } from "./errors";
@@ -28,7 +34,8 @@ type Report = {
 };
 
 const postponedKey = (userId: string) => "gomes-migracao-adiada:" + userId;
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
 const tripName = (t: Trip) => t.title || "Viagem sem nome";
 
 export function MigrationPanel({ userId, repo, online, onSent }: Props) {
@@ -61,7 +68,9 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
         userId,
         Object.fromEntries(plan.alreadyInAccount.map((t) => [t.id, t.id])),
       );
-      const result = await runMigration(repo, userId, plan.toSend, { asCopies });
+      const result = await runMigration(repo, userId, plan.toSend, {
+        asCopies,
+      });
       setReport({
         sent:
           Object.keys(result.confirmed).length + plan.alreadyInAccount.length,
@@ -71,7 +80,10 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
       await onSent();
     } catch (e) {
       setError(
-        friendlyError(e, "Não foi possível enviar as viagens. Nada foi alterado."),
+        friendlyError(
+          e,
+          "Não foi possível enviar as viagens. Nada foi alterado.",
+        ),
       );
     } finally {
       setBusy(false);
@@ -80,7 +92,10 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
 
   function keepAccountVersion(trips: Trip[]) {
     // The account copy stays as it is; the local version is left untouched.
-    rememberMigrated(userId, Object.fromEntries(trips.map((t) => [t.id, t.id])));
+    rememberMigrated(
+      userId,
+      Object.fromEntries(trips.map((t) => [t.id, t.id])),
+    );
     setReport((r) => (r ? { ...r, conflicts: [] } : r));
   }
 
@@ -89,9 +104,15 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
     setError("");
     try {
       // Fresh read: only trips confirmed in the account right now are removed.
-      const ids = removableLocalIds(local, readMigrated(userId), await repo.list());
+      const ids = removableLocalIds(
+        local,
+        readMigrated(userId),
+        await repo.list(),
+      );
       if (!ids.length) {
-        setError("Nenhuma viagem pôde ser confirmada na conta agora. Nada foi removido.");
+        setError(
+          "Nenhuma viagem pôde ser confirmada na conta agora. Nada foi removido.",
+        );
         return;
       }
       if (
@@ -106,7 +127,12 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
       setLocal(remaining);
       setReport(null);
     } catch (e) {
-      setError(friendlyError(e, "Não foi possível confirmar as viagens na conta. Nada foi removido."));
+      setError(
+        friendlyError(
+          e,
+          "Não foi possível confirmar as viagens na conta. Nada foi removido.",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -137,10 +163,17 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
           {report.failed.length > 0 && (
             <>
               <p>
-                {plural(report.failed.length, "viagem não pôde", "viagens não puderam")} ser
+                {plural(
+                  report.failed.length,
+                  "viagem não pôde",
+                  "viagens não puderam",
+                )}{" "}
+                ser
                 {report.failed.length === 1 ? " enviada" : " enviadas"} e{" "}
-                {report.failed.length === 1 ? "continua salva" : "continuam salvas"} neste
-                navegador:
+                {report.failed.length === 1
+                  ? "continua salva"
+                  : "continuam salvas"}{" "}
+                neste navegador:
               </p>
               <ul>
                 {report.failed.map((f) => (
@@ -155,7 +188,7 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
                   disabled={busy || !online}
                   onClick={() => send(report.failed.map((f) => f.trip))}
                 >
-                  Tentar novamente
+                  {tr("Tentar novamente")}
                 </button>
               </div>
             </>
@@ -163,8 +196,12 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
           {report.conflicts.length > 0 && (
             <>
               <p>
-                {plural(report.conflicts.length, "viagem já existe", "viagens já existem")} na
-                conta com outro conteúdo. Nada foi substituído:{" "}
+                {plural(
+                  report.conflicts.length,
+                  "viagem já existe",
+                  "viagens já existem",
+                )}{" "}
+                na conta com outro conteúdo. Nada foi substituído:{" "}
                 {report.conflicts.map(tripName).join(", ")}.
               </p>
               <div className="migration-actions">
@@ -208,7 +245,7 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
           )}
           {done && !confirmedLocal.length && (
             <button className="text-button" onClick={() => setReport(null)}>
-              Fechar
+              {tr("Fechar")}
             </button>
           )}
           {error && <p className="migration-error">{error}</p>}

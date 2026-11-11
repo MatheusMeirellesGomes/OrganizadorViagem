@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useMemo, useState } from "react";
 import type { Trip } from "./model";
 import { RouteMap } from "./RouteMap";
@@ -30,9 +31,9 @@ export function RoutePlanner({
     url = selected && directionsLink(selected, mode, from);
   return (
     <section className="panel">
-      <h2>O caminho do dia</h2>
+      <h2>{tr("O caminho do dia")}</h2>
       <label>
-        Dia no mapa
+        {tr("Dia no mapa")}
         <select
           value={day}
           onChange={(e) => onDayChange(Number(e.target.value))}
@@ -53,9 +54,11 @@ export function RoutePlanner({
       )}
       <div className="catalog-filters">
         <label>
-          Sair de
+          {tr("Sair de")}
           <select value={origin} onChange={(e) => setOrigin(e.target.value)}>
-            <option value="">Localização escolhida no Google Maps</option>
+            <option value="">
+              {tr("Localização escolhida no Google Maps")}
+            </option>
             {locations.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.title}
@@ -64,12 +67,12 @@ export function RoutePlanner({
           </select>
         </label>
         <label>
-          Ir para
+          {tr("Ir para")}
           <select
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
           >
-            <option value="">Selecione um lugar</option>
+            <option value="">{tr("Selecione um lugar")}</option>
             {locations.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.title}
@@ -78,7 +81,7 @@ export function RoutePlanner({
           </select>
         </label>
         <label>
-          Transporte
+          {tr("Transporte")}
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as Transport)}
@@ -93,7 +96,7 @@ export function RoutePlanner({
       </div>
       {url ? (
         <a className="primary" href={url} target="_blank" rel="noreferrer">
-          Calcular trajeto no Google Maps
+          {tr("Calcular trajeto no Google Maps")}
         </a>
       ) : (
         <p className="subtle">
@@ -119,7 +122,7 @@ export function RoutePlanner({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Como chegar · {transportLabels[mode]}
+                    Como chegar · {tr(transportLabels[mode])}
                   </a>
                 </p>
               )}

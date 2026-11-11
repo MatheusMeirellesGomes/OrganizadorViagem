@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { decisionLabels, type Decision } from "./choices";
 export function ChoiceButtons({
   value,
@@ -18,7 +19,7 @@ export function ChoiceButtons({
           disabled={disabled}
           onClick={() => onChoose(d)}
         >
-          {decisionLabels[d]}
+          {tr(decisionLabels[d])}
         </button>
       ))}
     </div>

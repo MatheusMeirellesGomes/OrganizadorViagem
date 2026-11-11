@@ -1,3 +1,5 @@
+import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
+import { LanguagePicker } from "./LanguagePicker";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -98,6 +100,7 @@ const pageTitles = {
   profile: "Uma experiência com a sua cara.",
 };
 function App() {
+  useLanguage();
   const [travelMode, setTravelMode] = useState(false);
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
@@ -196,7 +199,7 @@ function App() {
         setAccountSource("cache");
         setNotice(
           "Sem conexão com a conta. Mostrando a cópia salva neste aparelho em " +
-            new Date(cache.savedAt).toLocaleString("pt-BR") +
+            new Date(cache.savedAt).toLocaleString(getLocale()) +
             ". Para editar, conecte-se à internet.",
         );
       } else
@@ -438,7 +441,8 @@ function App() {
         return;
       }
       const t = newTrip({
-        title: field(f, "title") || field(f, "destination") || "Nova viagem",
+        title:
+          field(f, "title") || field(f, "destination") || tr("Nova viagem"),
         destination: field(f, "destination"),
         start,
         end,
@@ -536,11 +540,11 @@ function App() {
               photo={t.photos.find((p) => p.id === t.coverPhotoId)!}
             />
           )}
-          <span className="tag">{statusLabels[t.status]}</span>
+          <span className="tag">{tLabel(statusLabels[t.status])}</span>
           {tripScope(t) !== "undecided" && (
             <span className={"tag scope-tag scope-tag-" + tripScope(t)}>
               {tripScope(t) === "national" ? "BR " : ""}
-              {scopeLabels[tripScope(t)]}
+              {tLabel(scopeLabels[tripScope(t)])}
             </span>
           )}
           <span className="card-arrow">
@@ -551,7 +555,7 @@ function App() {
           <h3>{t.title}</h3>
           <p>
             <MapPin size={14} />
-            {t.destination || "Destino em aberto"}
+            {t.destination || tr("Destino em aberto")}
           </p>
           <footer>
             <CalendarDays size={14} />
@@ -580,7 +584,7 @@ function App() {
             gomes<span>PELO MUNDO</span>
           </span>
         </a>
-        <p className="nav-caption">SEU ESPAÇO</p>
+        <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
         <nav>
           {nav.map((n) => (
             <button
@@ -589,7 +593,7 @@ function App() {
               onClick={() => go(n.id)}
             >
               <n.icon size={20} />
-              {n.label}
+              {tr(n.label)}
               {n.id === "trips" &&
                 trips.filter((t) => t.status !== "past").length > 0 && (
                   <small>
@@ -644,11 +648,12 @@ function App() {
             <Menu />
           </button>
           <div className="breadcrumb">
-            Meu espaço <ChevronRight size={13} />
+            {tr("Meu espaço")}
+            <ChevronRight size={13} />
             <b>
               {trip
                 ? trip.title
-                : nav.find((n) => n.id === page)?.label || "Perfil"}
+                : nav.find((n) => n.id === page)?.label || tr("Perfil")}
             </b>
           </div>
           <div className="top-actions">
@@ -685,7 +690,7 @@ function App() {
                 className="secondary small"
                 onClick={() => loadAccount(session.user.id)}
               >
-                Recarregar viagens
+                {tr("Recarregar viagens")}
               </button>
             </div>
           )}
@@ -745,7 +750,7 @@ function App() {
               <>
                 <button className="back" onClick={() => setSelected(null)}>
                   <ArrowLeft size={16} />
-                  Todas as viagens
+                  {tr("Todas as viagens")}
                 </button>
                 <div
                   className="detail-hero"
@@ -761,11 +766,13 @@ function App() {
                       )!}
                     />
                   )}
-                  <span className="eyebrow light">SEU PRÓXIMO CAPÍTULO</span>
+                  <span className="eyebrow light">
+                    {tr("SEU PRÓXIMO CAPÍTULO")}
+                  </span>
                   <h1>{trip.title}</h1>
                   <p>
                     <MapPin size={16} />
-                    {trip.destination || "Destino em aberto"}
+                    {trip.destination || tr("Destino em aberto")}
                     <span>·</span>
                     <CalendarDays size={16} />
                     {dateLabel(trip)}
@@ -778,7 +785,7 @@ function App() {
                     onClick={() => setTravelMode(true)}
                   >
                     <Compass size={18} />
-                    Modo Viagem
+                    {tr("Modo Viagem")}
                   </button>
                   <select
                     aria-label="Status da viagem"
@@ -802,7 +809,7 @@ function App() {
                     onClick={() => downloadOffline(trip)}
                   >
                     <Download size={16} />
-                    Baixar roteiro offline
+                    {tr("Baixar roteiro offline")}
                   </button>
                 </div>
                 <div className="tabs detail-tabs">
@@ -824,7 +831,7 @@ function App() {
                       className={tab === v ? "selected" : ""}
                       onClick={() => setTab(v)}
                     >
-                      {v}
+                      {tr(v)}
                     </button>
                   ))}
                 </div>
@@ -854,7 +861,7 @@ function App() {
                           onClick={() => setModal("activity")}
                         >
                           <Plus size={16} />
-                          Atividade
+                          {tr("Atividade")}
                         </button>
                       </div>
                       <div className="days">
@@ -872,7 +879,8 @@ function App() {
                               className={day === i + 1 ? "selected" : ""}
                               onClick={() => setDay(i + 1)}
                             >
-                              Dia {i + 1}
+                              {tr("Dia")}
+                              {i + 1}
                             </button>
                           ),
                         )}
@@ -952,7 +960,7 @@ function App() {
                                 </button>
                                 <div className="activity-content">
                                   <small>
-                                    {a.time || "Sem horário"} · {a.kind}
+                                    {a.time || tr("Sem horário")} · {a.kind}
                                   </small>
                                   <h3>{a.title}</h3>
                                   {a.address && (
@@ -997,7 +1005,8 @@ function App() {
                                         },
                                         (_, i) => (
                                           <option key={i} value={i + 1}>
-                                            Dia {i + 1}
+                                            {tr("Dia")}
+                                            {i + 1}
                                           </option>
                                         ),
                                       )}
@@ -1088,7 +1097,8 @@ function App() {
                           encodeURIComponent(trip.destination || "mundo")
                         }
                       >
-                        Abrir mapa <ExternalLink size={15} />
+                        {tr("Abrir mapa")}
+                        <ExternalLink size={15} />
                       </a>
                       {trip.activities.filter((a) => a.day === day && a.address)
                         .length >= 2 && (
@@ -1117,7 +1127,7 @@ function App() {
                     <section className="panel">
                       <div className="section-head">
                         <div>
-                          <h2>O destino no mapa</h2>
+                          <h2>{tr("O destino no mapa")}</h2>
                           <p>
                             Toque para marcar a localização principal desta
                             viagem.
@@ -1154,7 +1164,7 @@ function App() {
                       if (
                         await save({
                           ...trip,
-                          title: field(f, "title") || "Nova viagem",
+                          title: field(f, "title") || tr("Nova viagem"),
                           destination: field(f, "destination"),
                           start,
                           end,
@@ -1168,13 +1178,13 @@ function App() {
                     }}
                   >
                     <h2>Do seu jeito, no seu tempo</h2>
-                    <p>Todos os campos são opcionais.</p>
+                    <p>{tr("Todos os campos são opcionais.")}</p>
                     <label>
-                      Nome da viagem
+                      {tr("Nome da viagem")}
                       <input name="title" defaultValue={trip.title} />
                     </label>
                     <label>
-                      Destino ou destinos
+                      {tr("Destino ou destinos")}
                       <input
                         name="destination"
                         defaultValue={trip.destination}
@@ -1182,7 +1192,7 @@ function App() {
                     </label>
                     <div className="form-grid">
                       <label>
-                        Ida
+                        {tr("Ida")}
                         <input
                           type="date"
                           name="start"
@@ -1190,7 +1200,7 @@ function App() {
                         />
                       </label>
                       <label>
-                        Volta
+                        {tr("Volta")}
                         <input type="date" name="end" defaultValue={trip.end} />
                       </label>
                     </div>
@@ -1204,7 +1214,7 @@ function App() {
                       />
                     </label>
                     <label>
-                      Anotações
+                      {tr("Anotações")}
                       <textarea
                         name="notes"
                         defaultValue={trip.notes}
@@ -1221,7 +1231,7 @@ function App() {
                     </label>
                     <div className="section-head">
                       <button disabled={busy} className="primary">
-                        Salvar alterações
+                        {tr("Salvar alterações")}
                       </button>
                       <button
                         className="danger text-button"
@@ -1257,7 +1267,7 @@ function App() {
                         onClick={() => setModal("reservation")}
                       >
                         <Plus size={16} />
-                        Reserva
+                        {tr("Reserva")}
                       </button>
                     </div>
                     {!(trip.reservations || []).length ? (
@@ -1281,7 +1291,8 @@ function App() {
                             />
                             {r.url && (
                               <a href={r.url} target="_blank" rel="noreferrer">
-                                Abrir reserva <ExternalLink size={12} />
+                                {tr("Abrir reserva")}
+                                <ExternalLink size={12} />
                               </a>
                             )}
                           </div>
@@ -1338,7 +1349,7 @@ function App() {
                       />
                       <button className="primary" disabled={busy}>
                         <Plus size={17} />
-                        Adicionar
+                        {tr("Adicionar")}
                       </button>
                     </form>
                     {trip.checklist.map((c) => (
@@ -1399,7 +1410,7 @@ function App() {
                         <div key={c}>
                           <small>{c}</small>
                           <h2>
-                            {new Intl.NumberFormat("pt-BR", {
+                            {new Intl.NumberFormat(getLocale(), {
                               style: "currency",
                               currency: c,
                             }).format(
@@ -1499,7 +1510,7 @@ function App() {
                       ? `BEM-VINDO${firstName ? ", " + firstName.toUpperCase() : " À GOMES PELO MUNDO"}`
                       : "SEU MUNDO, SEM COMPLICAÇÃO"}
                   </p>
-                  <h1>{pageTitles[page]}</h1>
+                  <h1>{tr(pageTitles[page])}</h1>
                   <p>
                     {page === "home"
                       ? "Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho."
@@ -1509,7 +1520,7 @@ function App() {
                 {page !== "profile" && (
                   <button className="primary" onClick={() => setModal("trip")}>
                     <Plus size={18} />
-                    Nova viagem
+                    {tr("Nova viagem")}
                   </button>
                 )}
               </div>
@@ -1579,7 +1590,8 @@ function App() {
                       <p>Uma viagem de cada vez. Todas em um só lugar.</p>
                     </div>
                     <button className="text-button" onClick={() => go("trips")}>
-                      Ver todas <ArrowRight size={16} />
+                      {tr("Ver todas")}
+                      <ArrowRight size={16} />
                     </button>
                   </div>
                   {trips.some((t) => t.status !== "past") ? (
@@ -1648,7 +1660,7 @@ function App() {
                   <div
                     className="scope-switch"
                     role="group"
-                    aria-label="Tipo de viagem"
+                    aria-label={tr("Tipo de viagem")}
                   >
                     {(
                       [
@@ -1794,7 +1806,7 @@ function App() {
                           );
                         }}
                       >
-                        <option value="">Selecione uma viagem</option>
+                        <option value="">{tr("Selecione uma viagem")}</option>
                         {trips.map((t) => (
                           <option value={t.id} key={t.id}>
                             {t.title}
@@ -1824,7 +1836,7 @@ function App() {
                       }}
                     >
                       <MapPin size={16} />
-                      Salvar ponto
+                      {tr("Salvar ponto")}
                     </button>
                   </div>
                   <div className="destination-list">
@@ -1835,7 +1847,7 @@ function App() {
                           <MapPin size={19} />
                           <span>
                             <b>{t.destination || t.title}</b>
-                            <small>{statusLabels[t.status]}</small>
+                            <small>{tLabel(statusLabels[t.status])}</small>
                           </span>
                           <ArrowRight size={16} />
                         </button>
@@ -1875,13 +1887,16 @@ function App() {
                       setNotice("Preferências salvas neste aparelho.");
                     }}
                   >
+                    <LanguagePicker />
                     <div className="profile-avatar">
                       <User size={30} />
                     </div>
-                    <h2>Seu perfil de explorador</h2>
-                    <p>Uma apresentação, se quiser. Nada obrigatório.</p>
+                    <h2>{tr("Seu perfil de explorador")}</h2>
+                    <p>
+                      {tr("Uma apresentação, se quiser. Nada obrigatório.")}
+                    </p>
                     <label>
-                      Como podemos chamar você?
+                      {tr("Como podemos chamar você?")}
                       <input
                         name="name"
                         defaultValue={profile.name}
@@ -1889,7 +1904,7 @@ function App() {
                       />
                     </label>
                     <label>
-                      Seu ritmo de viagem
+                      {tr("Seu ritmo de viagem")}
                       <select name="style" defaultValue={profile.style}>
                         <option>No meu ritmo</option>
                         <option>Quero explorar bastante</option>
@@ -1897,10 +1912,12 @@ function App() {
                         <option>Um pouco de cada</option>
                       </select>
                     </label>
-                    <button className="primary">Salvar preferências</button>
+                    <button className="primary">
+                      {tr("Salvar preferências")}
+                    </button>
                   </form>
                   <section className="panel">
-                    <h2>Seus dados, com você</h2>
+                    <h2>{tr("Seus dados, com você")}</h2>
                     <p>
                       {session
                         ? "Suas viagens são salvas na sua conta Supabase."
@@ -1908,11 +1925,11 @@ function App() {
                     </p>
                     <button className="secondary" onClick={exportData}>
                       <Download size={17} />
-                      Exportar backup das viagens
+                      {tr("Exportar backup das viagens")}
                     </button>
                     <p className="subtle">
-                      O arquivo JSON inclui informações e fotos locais. Fotos da
-                      nuvem permanecem na conta.
+                      O backup inclui informações, fotos e documentos, inclusive
+                      os arquivos baixados da conta. Guarde-o em local privado.
                     </p>
                     <input
                       ref={importRef}
@@ -1927,7 +1944,7 @@ function App() {
                       onClick={() => importRef.current?.click()}
                     >
                       <Plus size={17} />
-                      Importar backup
+                      {tr("Importar backup")}
                     </button>
                     <p className="subtle">
                       As viagens são adicionadas como novas cópias. Nenhuma
@@ -1949,7 +1966,7 @@ function App() {
                         }}
                       >
                         <LogOut size={16} />
-                        Sair da conta
+                        {tr("Sair da conta")}
                       </button>
                     ) : supabase ? (
                       <div className="tip">
@@ -1972,7 +1989,7 @@ function App() {
                             }}
                           >
                             <LogIn size={17} />
-                            Entrar ou criar conta
+                            {tr("Entrar ou criar conta")}
                           </button>
                         </div>
                       </div>
@@ -2002,7 +2019,7 @@ function App() {
                 onClick={() => go(n.id)}
               >
                 <n.icon size={21} />
-                <span>{n.label}</span>
+                <span>{tr(n.label)}</span>
               </button>
             ))}
           <button
@@ -2010,7 +2027,7 @@ function App() {
             className={page === "profile" ? "active" : ""}
           >
             <User size={21} />
-            <span>Perfil</span>
+            <span>{tr("Perfil")}</span>
           </button>
         </nav>
       </div>
@@ -2047,7 +2064,7 @@ function App() {
               <button
                 type="button"
                 className="icon-button"
-                aria-label="Fechar"
+                aria-label={tr("Fechar")}
                 onClick={() => setModal(null)}
               >
                 <X />
@@ -2066,7 +2083,7 @@ function App() {
                 : "Adicione os detalhes que forem úteis para você."}
             </p>
             <label>
-              {modal === "trip" ? "Nome da viagem" : "Nome"}
+              {modal === "trip" ? tr("Nome da viagem") : tr("Nome")}
               <input
                 name="title"
                 placeholder={
@@ -2081,7 +2098,7 @@ function App() {
             {modal === "trip" ? (
               <>
                 <label>
-                  Destino
+                  {tr("Destino")}
                   <input
                     name="destination"
                     placeholder="Para onde a vontade leva?"
@@ -2089,11 +2106,13 @@ function App() {
                 </label>
                 <div className="form-grid">
                   <label>
-                    Ida <small>opcional</small>
+                    {tr("Ida")}
+                    <small>opcional</small>
                     <input type="date" name="start" />
                   </label>
                   <label>
-                    Volta <small>opcional</small>
+                    {tr("Volta")}
+                    <small>opcional</small>
                     <input type="date" name="end" />
                   </label>
                 </div>
@@ -2103,7 +2122,7 @@ function App() {
                   }
                 />
                 <label>
-                  Momento da viagem
+                  {tr("Momento da viagem")}
                   <select
                     name="status"
                     defaultValue={page === "history" ? "past" : "planning"}
@@ -2116,7 +2135,7 @@ function App() {
                   </select>
                 </label>
                 <fieldset className="cover-picker">
-                  <legend>Uma capa para começar</legend>
+                  <legend>{tr("Uma capa para começar")}</legend>
                   {Object.entries(pictures).map(([k, v], i) => (
                     <label key={k} style={{ backgroundImage: `url(${v})` }}>
                       <input
@@ -2125,7 +2144,7 @@ function App() {
                         value={k}
                         defaultChecked={i === 0}
                       />
-                      <span>{coverLabels[k as keyof typeof pictures]}</span>
+                      <span>{tr(coverLabels[k as keyof typeof pictures])}</span>
                     </label>
                   ))}
                 </fieldset>
@@ -2134,7 +2153,7 @@ function App() {
               <>
                 <div className="form-grid">
                   <label>
-                    Dia
+                    {tr("Dia")}
                     <input
                       type="number"
                       name="day"
@@ -2144,38 +2163,38 @@ function App() {
                     />
                   </label>
                   <label>
-                    Horário
+                    {tr("Horário")}
                     <input name="time" type="time" />
                   </label>
                 </div>
                 <label>
-                  Período opcional
+                  {tr("Período opcional")}
                   <select name="period">
-                    <option value="any">Sem período</option>
-                    <option value="morning">Manhã</option>
-                    <option value="afternoon">Tarde</option>
-                    <option value="evening">Noite</option>
+                    <option value="any">{tr("Sem período")}</option>
+                    <option value="morning">{tr("Manhã")}</option>
+                    <option value="afternoon">{tr("Tarde")}</option>
+                    <option value="evening">{tr("Noite")}</option>
                   </select>
                 </label>
                 <label>
-                  Categoria
+                  {tr("Categoria")}
                   <select name="kind">
                     <option>Passeio</option>
                     <option>Restaurante</option>
-                    <option>Transporte</option>
+                    <option>{tr("Transporte")}</option>
                     <option>Tempo livre</option>
                     <option>Outro</option>
                   </select>
                 </label>
                 <label>
-                  Endereço ou lugar
+                  {tr("Endereço ou lugar")}
                   <input name="address" placeholder="Para abrir no mapa" />
                 </label>
               </>
             ) : (
               <>
                 <label>
-                  Detalhes
+                  {tr("Detalhes")}
                   <textarea
                     name="details"
                     rows={3}
@@ -2193,7 +2212,7 @@ function App() {
                 ? "Salvando…"
                 : modal === "trip"
                   ? "Criar viagem"
-                  : "Adicionar"}
+                  : tr("Adicionar")}
               <ArrowRight size={17} />
             </button>
             <span className="form-footnote">
@@ -2216,7 +2235,8 @@ function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
   return (
     <fieldset className="scope-picker">
       <legend>
-        Tipo de viagem <small>opcional</small>
+        {tr("Tipo de viagem")}
+        <small>opcional</small>
       </legend>
       {options.map(([value, label, hint, mark]) => (
         <label key={value}>
@@ -2362,11 +2382,11 @@ function Auth({
           : "Entre para acessar suas viagens em qualquer aparelho."}
       </p>
       <label>
-        E-mail
+        {tr("E-mail")}
         <input name="email" type="email" required autoComplete="email" />
       </label>
       <label>
-        Senha
+        {tr("Senha")}
         <input
           name="password"
           type="password"
@@ -2392,7 +2412,7 @@ function Auth({
           onClick={onContinueLocal}
         >
           <HardDrive size={17} />
-          Continuar sem conta
+          {tr("Continuar sem conta")}
         </button>
         <p className="subtle">
           Suas viagens ficam salvas só neste navegador. Você pode criar a conta

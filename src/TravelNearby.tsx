@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useState } from "react";
 import type { Trip } from "./model";
 import { nearbySavedPlaces } from "./travel-clock";
@@ -27,14 +28,14 @@ export function TravelNearby({
   const nearby = point ? nearbySavedPlaces(trip, point) : [];
   return (
     <details className="tm-information">
-      <summary>Perto de você · lugares salvos</summary>
+      <summary>{tr("Perto de você · lugares salvos")}</summary>
       <div className="tm-information-content">
         <p>
           Escolha uma referência ou consulte sua posição uma vez. A posição do
           aparelho não é salva na viagem.
         </p>
         <label>
-          Ponto de referência
+          {tr("Ponto de referência")}
           <select
             value={origin}
             onChange={(e) => {
@@ -44,7 +45,7 @@ export function TravelNearby({
               );
             }}
           >
-            <option value="">Selecione um lugar</option>
+            <option value="">{tr("Selecione um lugar")}</option>
             {origins.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.title}
@@ -95,7 +96,7 @@ export function TravelNearby({
                 setMessage("Referência removida.");
               }}
             >
-              Limpar referência
+              {tr("Limpar referência")}
             </button>
             {nearby.length ? (
               nearby.map((p) => (
@@ -111,7 +112,7 @@ export function TravelNearby({
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Como chegar
+                      {tr("Como chegar")}
                     </a>
                   )}
                 </article>

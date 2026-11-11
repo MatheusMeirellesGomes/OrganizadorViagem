@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useState } from "react";
 import type { Trip } from "./model";
 import {
@@ -33,14 +34,14 @@ export function ItineraryBuilder({
   const distance = draft ? straightLineLength(draft.activities) : undefined;
   return (
     <section className="panel itinerary-builder">
-      <h2>Gerar roteiro</h2>
+      <h2>{tr("Gerar roteiro")}</h2>
       <p>
         Organize os lugares da sua lista Quero ir. Você revisa a proposta antes
         de salvar.
       </p>
       <div className="catalog-filters">
         <label>
-          Dias disponíveis
+          {tr("Dias disponíveis")}
           <input
             type="number"
             min="1"
@@ -50,16 +51,20 @@ export function ItineraryBuilder({
           />
         </label>
         <label>
-          Ritmo
+          {tr("Ritmo")}
           <select
             value={pace}
             onChange={(e) => setPace(e.target.value as PlanOptions["pace"])}
           >
-            <option value="relaxed">Tranquilo · até 3 lugares por dia</option>
-            <option value="balanced">
-              Equilibrado · até 5 lugares por dia
+            <option value="relaxed">
+              {tr("Tranquilo · até 3 lugares por dia")}
             </option>
-            <option value="intense">Intenso · até 7 lugares por dia</option>
+            <option value="balanced">
+              {tr("Equilibrado · até 5 lugares por dia")}
+            </option>
+            <option value="intense">
+              {tr("Intenso · até 7 lugares por dia")}
+            </option>
           </select>
         </label>
         <label className="check-label">
@@ -68,7 +73,7 @@ export function ItineraryBuilder({
             checked={maybe}
             onChange={(e) => setMaybe(e.target.checked)}
           />
-          Incluir Talvez
+          {tr("Incluir Talvez")}
         </label>
       </div>
       <button
@@ -94,7 +99,7 @@ export function ItineraryBuilder({
           }
         }}
       >
-        Criar prévia
+        {tr("Criar prévia")}
       </button>
       {draft && (
         <div className="itinerary-preview">
@@ -113,7 +118,8 @@ export function ItineraryBuilder({
           {draft.activities.map((a, index) => (
             <article className="stay-card" key={a.id}>
               <label>
-                Atividade {index + 1}
+                {tr("Atividade")}
+                {index + 1}
                 <input
                   value={a.title}
                   onChange={(e) =>
@@ -128,7 +134,7 @@ export function ItineraryBuilder({
               </label>
               <div className="form-grid">
                 <label>
-                  Dia
+                  {tr("Dia")}
                   <input
                     type="number"
                     min="1"
@@ -147,7 +153,7 @@ export function ItineraryBuilder({
                   />
                 </label>
                 <label>
-                  Horário opcional
+                  {tr("Horário opcional")}
                   <input
                     type="time"
                     value={a.time}
@@ -162,7 +168,7 @@ export function ItineraryBuilder({
                   />
                 </label>
                 <label>
-                  Período
+                  {tr("Período")}
                   <select
                     value={a.period || "any"}
                     onChange={(e) =>
@@ -197,7 +203,7 @@ export function ItineraryBuilder({
                     setDraft({ ...draft, activities: items });
                   }}
                 >
-                  Subir
+                  {tr("Subir")}
                 </button>
                 <button
                   className="secondary"
@@ -211,7 +217,7 @@ export function ItineraryBuilder({
                     setDraft({ ...draft, activities: items });
                   }}
                 >
-                  Descer
+                  {tr("Descer")}
                 </button>
                 <button
                   className="text-button"
@@ -222,7 +228,7 @@ export function ItineraryBuilder({
                     })
                   }
                 >
-                  Retirar da prévia
+                  {tr("Retirar da prévia")}
                 </button>
               </div>
             </article>
@@ -265,7 +271,7 @@ export function ItineraryBuilder({
                 }
               }}
             >
-              Aceitar e adicionar ao roteiro
+              {tr("Aceitar e adicionar ao roteiro")}
             </button>
             <button
               className="secondary"
@@ -275,7 +281,7 @@ export function ItineraryBuilder({
                 setMessage("Prévia descartada. Roteiro preservado.");
               }}
             >
-              Descartar prévia
+              {tr("Descartar prévia")}
             </button>
           </div>
         </div>

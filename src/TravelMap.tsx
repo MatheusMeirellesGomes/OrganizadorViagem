@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -107,7 +108,8 @@ export function TravelMap({
       <div className="map-caption">
         <span>
           <i />
-          Planejamento <i className="past" />
+          {tr("Planejamento")}
+          <i className="past" />
           Viagens anteriores
         </span>
         <a

@@ -1,3 +1,4 @@
+import { getLocale } from "./i18n";
 export type Activity = {
   placeId?: string;
   source?: string;
@@ -94,7 +95,7 @@ export function newTrip(input: Partial<Trip> = {}): Trip {
 }
 export function dateLabel(t: Trip) {
   const fmt = (s: string) =>
-    new Date(s + "T12:00:00").toLocaleDateString("pt-BR", {
+    new Date(s + "T12:00:00").toLocaleDateString(getLocale(), {
       day: "numeric",
       month: "short",
     });

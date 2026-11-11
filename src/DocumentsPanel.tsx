@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useRef, useState } from "react";
 import type { Trip } from "./model";
 import { uid } from "./model";
@@ -19,7 +20,7 @@ export function DocumentsPanel({
   const input = useRef<HTMLInputElement>(null);
   return (
     <section className="panel">
-      <h2>Documentos da viagem</h2>
+      <h2>{tr("Documentos da viagem")}</h2>
       <p>
         Ingressos e comprovantes em PDF, JPG, PNG ou WebP. Até 1 MB por arquivo.
       </p>
@@ -85,7 +86,7 @@ export function DocumentsPanel({
         }}
       >
         <label>
-          Arquivo
+          {tr("Arquivo")}
           <input
             ref={input}
             type="file"
@@ -94,12 +95,12 @@ export function DocumentsPanel({
           />
         </label>
         <label>
-          Reserva vinculada
+          {tr("Reserva vinculada")}
           <select name="reservation" disabled={pending || busy}>
-            <option value="">Documento geral</option>
+            <option value="">{tr("Documento geral")}</option>
             {trip.reservations.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.title || "Reserva"}
+                {r.title || tr("Reserva")}
               </option>
             ))}
           </select>
@@ -116,7 +117,7 @@ export function DocumentsPanel({
             {d.reservationId
               ? trip.reservations.find((r) => r.id === d.reservationId)
                   ?.title || "Reserva não disponível"
-              : "Documento geral"}
+              : tr("Documento geral")}
           </p>
           <div className="tm-actions">
             <button
@@ -152,7 +153,7 @@ export function DocumentsPanel({
                 }
               }}
             >
-              Baixar
+              {tr("Baixar")}
             </button>
             <button
               className="secondary"
@@ -180,7 +181,7 @@ export function DocumentsPanel({
                 }
               }}
             >
-              Remover
+              {tr("Remover")}
             </button>
           </div>
         </article>

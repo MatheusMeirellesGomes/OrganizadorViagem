@@ -1,3 +1,5 @@
+import { getLocale } from "./i18n";
+import { t as tr } from "./i18n";
 import { ChoiceButtons } from "./ChoiceButtons";
 import { choosePlace } from "./choices";
 import { useState } from "react";
@@ -25,23 +27,23 @@ export function PlaceDetails({ place: p }: { place: Place }) {
     <details>
       <summary>Conhecer o lugar</summary>
       <dl className="place-details">
-        <dt>Endereço</dt>
+        <dt>{tr("Endereço")}</dt>
         <dd>
           {[p.address, p.city, p.country].filter(Boolean).join(" · ") ||
             "Não informado"}
         </dd>
-        <dt>{isFood(p) ? "Preço" : "Entrada"}</dt>
+        <dt>{isFood(p) ? "Preço" : tr("Entrada")}</dt>
         <dd>
           {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
           {p.tags.charge && (
             <p>Valor cadastrado (confirme na fonte): {p.tags.charge}</p>
           )}
         </dd>
-        <dt>Horários</dt>
+        <dt>{tr("Horários")}</dt>
         <dd>
           {p.tags.opening_hours
             ? `${p.tags.opening_hours} · Cadastro colaborativo, confirme antes de ir.`
-            : "Consultar site oficial"}
+            : tr("Consultar site oficial")}
         </dd>
         {[
           ["Descrição", p.tags["description:pt"] || p.tags.description],
@@ -73,12 +75,12 @@ export function PlaceDetails({ place: p }: { place: Place }) {
             target="_blank"
             rel="noreferrer"
           >
-            Cardápio cadastrado
+            {tr("Cardápio cadastrado")}
           </a>
         )}
         {p.website && (
           <a href={p.website} target="_blank" rel="noreferrer">
-            Site cadastrado
+            {tr("Site cadastrado")}
           </a>
         )}
         <a
@@ -86,17 +88,17 @@ export function PlaceDetails({ place: p }: { place: Place }) {
           target="_blank"
           rel="noreferrer"
         >
-          Como chegar
+          {tr("Como chegar")}
         </a>
         <a href={p.source} target="_blank" rel="noreferrer">
-          Ver fonte
+          {tr("Ver fonte")}
         </a>
       </div>
       <p className="subtle">
-        Consultado em {new Date(p.retrievedAt).toLocaleString("pt-BR")}
+        Consultado em {new Date(p.retrievedAt).toLocaleString(getLocale())}
         {p.updatedAt
           ? " · Registro editado em " +
-            new Date(p.updatedAt).toLocaleDateString("pt-BR")
+            new Date(p.updatedAt).toLocaleDateString(getLocale())
           : ""}
         . Dados podem mudar.
       </p>
@@ -181,7 +183,9 @@ export function Catalog({
                 setCategory("all");
               }}
             >
-              {k === "food" ? "Restaurantes e cafés" : "Atrações e passeios"}
+              {k === "food"
+                ? tr("Restaurantes e cafés")
+                : tr("Atrações e passeios")}
             </button>
           ))}
         </div>
@@ -193,7 +197,7 @@ export function Catalog({
           }}
         >
           <label>
-            Cidade ou destino
+            {tr("Cidade ou destino")}
             <input
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
@@ -202,7 +206,7 @@ export function Catalog({
           </label>
           <button className="secondary" disabled={busy}>
             <Search size={17} />
-            Localizar
+            {tr("Localizar")}
           </button>
         </form>
         <TravelMap
@@ -224,7 +228,7 @@ export function Catalog({
         )}
         <div className="catalog-search">
           <label>
-            Raio da busca
+            {tr("Raio da busca")}
             <select
               value={radius}
               disabled={busy}
@@ -295,13 +299,13 @@ export function Catalog({
               <h2>{places.length} lugares encontrados</h2>
               <p>
                 {result.cached ? "Consulta salva" : "Consulta recebida"} em{" "}
-                {new Date(result.retrievedAt).toLocaleString("pt-BR")}
+                {new Date(result.retrievedAt).toLocaleString(getLocale())}
               </p>
             </div>
           </div>
           <div className="catalog-filters">
             <label>
-              Filtrar por nome
+              {tr("Filtrar por nome")}
               <input
                 value={query}
                 onChange={(e) => {
@@ -311,7 +315,7 @@ export function Catalog({
               />
             </label>
             <label>
-              Categoria
+              {tr("Categoria")}
               <select
                 value={category}
                 onChange={(e) => {
@@ -319,7 +323,7 @@ export function Catalog({
                   setLimit(24);
                 }}
               >
-                <option value="all">Todas as categorias</option>
+                <option value="all">{tr("Todas as categorias")}</option>
                 {Object.entries(categories)
                   .filter(([key]) =>
                     result.places.some((p) => p.category === key),
@@ -332,7 +336,7 @@ export function Catalog({
               </select>
             </label>
             <label>
-              Entrada
+              {tr("Entrada")}
               <select
                 value={fee}
                 onChange={(e) => {
@@ -350,7 +354,7 @@ export function Catalog({
             <>
               <div className="catalog-filters">
                 <label>
-                  Culinária
+                  {tr("Culinária")}
                   <input
                     placeholder="Ex.: italian, brazilian"
                     value={cuisine}
@@ -361,7 +365,7 @@ export function Catalog({
                   />
                 </label>
                 <label>
-                  Preferência alimentar
+                  {tr("Preferência alimentar")}
                   <select
                     value={diet}
                     onChange={(e) => {
@@ -370,12 +374,14 @@ export function Catalog({
                     }}
                   >
                     <option value="">Todas · inclusive sem informação</option>
-                    <option value="vegetarian">Vegetariana informada</option>
-                    <option value="vegan">Vegana informada</option>
+                    <option value="vegetarian">
+                      {tr("Vegetariana informada")}
+                    </option>
+                    <option value="vegan">{tr("Vegana informada")}</option>
                   </select>
                 </label>
                 <label>
-                  Refeição cadastrada
+                  {tr("Refeição cadastrada")}
                   <select
                     value={meal}
                     onChange={(e) => {
@@ -383,10 +389,10 @@ export function Catalog({
                       setLimit(24);
                     }}
                   >
-                    <option value="">Todas</option>
-                    <option value="breakfast">Café da manhã</option>
-                    <option value="lunch">Almoço</option>
-                    <option value="dinner">Jantar</option>
+                    <option value="">{tr("Todas")}</option>
+                    <option value="breakfast">{tr("Café da manhã")}</option>
+                    <option value="lunch">{tr("Almoço")}</option>
+                    <option value="dinner">{tr("Jantar")}</option>
                   </select>
                 </label>
               </div>
@@ -398,19 +404,21 @@ export function Catalog({
           )}
           <div className="catalog-filters">
             <label>
-              Ordenar
+              {tr("Ordenar")}
               <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option value="name">Nome</option>
-                <option value="distance">Proximidade do ponto escolhido</option>
+                <option value="name">{tr("Nome")}</option>
+                <option value="distance">
+                  {tr("Proximidade do ponto escolhido")}
+                </option>
               </select>
             </label>
             <label>
-              Adicionar à viagem
+              {tr("Adicionar à viagem")}
               <select
                 value={targetTrip}
                 onChange={(e) => setTargetTrip(e.target.value)}
               >
-                <option value="">Escolha uma viagem</option>
+                <option value="">{tr("Escolha uma viagem")}</option>
                 {trips.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.title}
@@ -419,7 +427,7 @@ export function Catalog({
               </select>
             </label>
             <label>
-              Dia do roteiro
+              {tr("Dia do roteiro")}
               <input
                 type="number"
                 min="1"
@@ -432,7 +440,7 @@ export function Catalog({
           <div className="catalog-grid">
             {places.slice(0, limit).map((p) => (
               <article className="panel place-card" key={p.id}>
-                <span className="eyebrow">{categories[p.category]}</span>
+                <span className="eyebrow">{tr(categories[p.category])}</span>
                 <h3>{p.name}</h3>
                 <p>
                   {isFood(p) ? "Faixa de preço não informada" : feeLabel(p)}
@@ -479,7 +487,7 @@ export function Catalog({
                     }
                   }}
                 >
-                  Adicionar ao roteiro
+                  {tr("Adicionar ao roteiro")}
                 </button>
               </article>
             ))}
