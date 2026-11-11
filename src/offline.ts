@@ -1,3 +1,4 @@
+import { validTimeZone } from "./travel-clock";
 import { validDocumentData } from "./documents";
 import { newTrip, type Trip, dateLabel, pictures } from "./model";
 export function escapeHtml(text: string) {
@@ -56,6 +57,9 @@ export function parseBackup(raw: string): Trip[] {
     const v = object(value);
     const trip = newTrip({
       title: text(v.title, "Nova viagem"),
+      timeZone: validTimeZone(text(v.timeZone))
+        ? text(v.timeZone) || undefined
+        : undefined,
       destination: text(v.destination),
       scope: ["national", "international"].includes(text(v.scope))
         ? (v.scope as Trip["scope"])

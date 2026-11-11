@@ -1,3 +1,5 @@
+import { TravelNearby } from "./TravelNearby";
+import { currentTripDay } from "./travel-clock";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -45,6 +47,12 @@ export function TravelMode({
   online,
   busy,
 }: Props) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const today = currentTripDay(trip, now);
   const [transport, setTransport] = useState<Transport>("walking");
   const heading = useRef<HTMLHeadingElement>(null),
     daysRef = useRef<HTMLElement>(null),
@@ -158,11 +166,22 @@ export function TravelMode({
             aria-label={`Dia ${number}: ${dayLabel(trip, number).full}`}
             onClick={() => onDayChange(number)}
           >
-            <span>Dia {number}</span>
+            <span>
+              Dia {number}
+              {today === number ? " · Hoje" : ""}
+            </span>
             <b>{trip.start ? dayLabel(trip, number).short : "Sem data"}</b>
           </button>
         ))}
       </nav>
+      <div className="tm-actions">
+        <small>Dia atual pelo fuso {trip.timeZone || "do aparelho"}.</small>
+        {today && today !== day && (
+          <button className="secondary" onClick={() => onDayChange(today)}>
+            Ir para hoje · Dia {today}
+          </button>
+        )}
+      </div>
       <div className="tm-day-heading">
         <div>
           <h2>{label.full}</h2>
@@ -339,6 +358,7 @@ export function TravelMode({
           ))}
         </ol>
       )}
+      <TravelNearby trip={trip} online={online} transport={transport} />
       {hasTravelInformation(trip) && (
         <details className="tm-information">
           <summary>
