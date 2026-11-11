@@ -67,6 +67,10 @@ import {
 } from "./remote";
 import { TravelMap, type Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
+import { PhotoGallery } from "./PhotoGallery";
+import { PrivatePhoto } from "./PrivatePhoto";
+import { compressPhoto } from "./photos";
+import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
 import { SavedPlaces } from "./SavedPlaces";
 import { Catalog } from "./Catalog";
@@ -135,7 +139,6 @@ function App() {
     });
   const versions = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
   const firstName = profile.name.trim().split(" ")[0];
   useEffect(() => {
@@ -491,35 +494,31 @@ function App() {
     try {
       const additions = [];
       for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024)
-          throw new Error("Escolha imagens de até 5 MB.");
+        const compressed = await compressPhoto(file);
         const id = uid();
         let url = "";
         if (supabase && session) {
           const path = `${session.user.id}/${trip.id}/${id}`;
           const { error } = await supabase.storage
             .from("trip-photos")
-            .upload(path, file, { contentType: file.type });
+            .upload(path, compressed, { contentType: compressed.type });
           if (error) throw error;
           url = path;
         } else {
-          url = await new Promise<string>((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(String(r.result));
-            r.onerror = reject;
-            r.readAsDataURL(file);
-          });
+          url = await blobDataUrl(compressed);
         }
         additions.push({ id, url, name: file.name });
       }
-      await save({ ...trip, photos: [...(trip.photos || []), ...additions] });
+      if (
+        await save({ ...trip, photos: [...(trip.photos || []), ...additions] })
+      )
+        setNotice("Fotos comprimidas e salvas. Guarde os originais com você.");
     } catch (e) {
       setNotice(
         e instanceof Error ? e.message : "Não foi possível adicionar as fotos.",
       );
     } finally {
       setBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
   function card(t: Trip) {
@@ -531,6 +530,12 @@ function App() {
             backgroundImage: `url(${pictures[t.cover as keyof typeof pictures] || pictures.coast})`,
           }}
         >
+          {t.photos.find((p) => p.id === t.coverPhotoId) && (
+            <PrivatePhoto
+              className="personal-cover"
+              photo={t.photos.find((p) => p.id === t.coverPhotoId)!}
+            />
+          )}
           <span className="tag">{statusLabels[t.status]}</span>
           {tripScope(t) !== "undecided" && (
             <span className={"tag scope-tag scope-tag-" + tripScope(t)}>
@@ -748,6 +753,14 @@ function App() {
                     backgroundImage: `linear-gradient(90deg,rgba(15,36,32,.8),rgba(15,36,32,.1)),url(${pictures[trip.cover as keyof typeof pictures] || pictures.coast})`,
                   }}
                 >
+                  {trip.photos.find((p) => p.id === trip.coverPhotoId) && (
+                    <PrivatePhoto
+                      className="personal-cover"
+                      photo={trip.photos.find(
+                        (p) => p.id === trip.coverPhotoId,
+                      )!}
+                    />
+                  )}
                   <span className="eyebrow light">SEU PRÓXIMO CAPÍTULO</span>
                   <h1>{trip.title}</h1>
                   <p>
@@ -1366,59 +1379,13 @@ function App() {
                   </section>
                 )}
                 {tab === "Fotos" && (
-                  <section className="panel">
-                    <div className="section-head">
-                      <div>
-                        <h2>Os lugares pelos seus olhos</h2>
-                        <p>
-                          Imagens de até 5 MB.{" "}
-                          {session
-                            ? "Arquivos privados na sua conta."
-                            : "Salvas apenas neste navegador; exporte um backup."}
-                        </p>
-                      </div>
-                      <button
-                        className="primary small"
-                        disabled={busy}
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        <ImagePlus size={16} />
-                        Adicionar fotos
-                      </button>
-                      <input
-                        ref={fileRef}
-                        hidden
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => photos(e.target.files)}
-                      />
-                    </div>
-                    {!(trip.photos || []).length ? (
-                      <Empty
-                        icon={ImagePlus}
-                        title="Suas fotos vão morar aqui"
-                        text="Adicione quando quiser, antes ou depois da viagem."
-                      />
-                    ) : (
-                      <div className="photo-grid">
-                        {trip.photos.map((p) => (
-                          <Photo
-                            key={p.id}
-                            photo={p}
-                            onDelete={() =>
-                              save({
-                                ...trip,
-                                photos: trip.photos.filter(
-                                  (x) => x.id !== p.id,
-                                ),
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
+                  <PhotoGallery
+                    trip={trip}
+                    onSave={save}
+                    onFiles={photos}
+                    busy={busy}
+                    cloud={!!session}
+                  />
                 )}
                 {tab === "Despesas" && (
                   <section className="panel settings-form">
@@ -2324,49 +2291,6 @@ function Empty({
         </button>
       )}
     </div>
-  );
-}
-function Photo({
-  photo,
-  onDelete,
-}: {
-  photo: { url: string; name: string };
-  onDelete: () => void;
-}) {
-  const [url, setUrl] = useState(
-    photo.url.startsWith("data:") ? photo.url : "",
-  );
-  useEffect(() => {
-    let active = true;
-    if (supabase && !photo.url.startsWith("data:"))
-      supabase.storage
-        .from("trip-photos")
-        .createSignedUrl(photo.url, 3600)
-        .then(({ data }) => {
-          if (active && data) setUrl(data.signedUrl);
-        });
-    return () => {
-      active = false;
-    };
-  }, [photo.url]);
-  return (
-    <figure>
-      {url ? (
-        <img src={url} alt={photo.name} />
-      ) : (
-        <span>Carregando imagem…</span>
-      )}
-      <figcaption>
-        {photo.name}
-        <button
-          aria-label="Remover foto da viagem"
-          className="icon-button"
-          onClick={onDelete}
-        >
-          <Trash2 size={15} />
-        </button>
-      </figcaption>
-    </figure>
   );
 }
 function routeUrl(t: Trip, day: number) {

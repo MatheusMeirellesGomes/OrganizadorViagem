@@ -252,16 +252,27 @@ export function parseBackup(raw: string): Trip[] {
         url: text(d.url),
         reservationId: reservationIds.get(text(d.reservationId)),
       }));
+    const photoIds = new Map<string, string>();
     trip.photos = list(v.photos)
       .map(object)
       .filter((p) =>
         /^data:image\/(png|jpeg|webp|gif);base64,/i.test(text(p.url)),
       )
-      .map((p) => ({
-        id: crypto.randomUUID(),
-        url: text(p.url),
-        name: text(p.name),
-      }));
+      .map((p) => {
+        const id = crypto.randomUUID();
+        if (text(p.id)) photoIds.set(text(p.id), id);
+        return {
+          id,
+          caption: text(p.caption),
+          takenAt: text(p.takenAt),
+          location: text(p.location),
+          album: text(p.album),
+          activityId: activityIds.get(text(p.activityId)),
+          url: text(p.url),
+          name: text(p.name),
+        };
+      });
+    trip.coverPhotoId = photoIds.get(text(v.coverPhotoId));
     return trip;
   });
 }

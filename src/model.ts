@@ -59,7 +59,8 @@ export type Trip = {
   checklist: { id: string; title: string; done: boolean }[];
   expenses: { id: string; title: string; amount: number; currency: string }[];
   budgetEnabled: boolean;
-  photos: { id: string; url: string; name: string }[];
+  photos: import("./photos").TripPhoto[];
+  coverPhotoId?: string;
   reservations: {
     id: string;
     title: string;
