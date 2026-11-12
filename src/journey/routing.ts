@@ -10,7 +10,7 @@ import type { RoadRoute } from "./types";
 
 type Fetcher = typeof fetch;
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
-export const routingBase = (env.VITE_ROTAS_URL ?? "https://router.project-osrm.org").replace(/\/+$/, "");
+export const routingBase = (env.VITE_ROTAS_URL || "https://router.project-osrm.org").replace(/\/+$/, "");
 export const routingEnabled = routingBase !== "off" && /^https:\/\//.test(routingBase);
 export const routingCredit = "OSRM · © OpenStreetMap contributors";
 

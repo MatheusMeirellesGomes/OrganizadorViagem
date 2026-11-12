@@ -205,3 +205,55 @@ Fora do ar, as edições da conta vão para uma fila (`src/outbox.ts`) e sincron
 **Assistente:** a função `supabase/functions/assistente` guarda a `ANTHROPIC_API_KEY` no servidor e tem limite diário por pessoa. O contexto enviado não inclui códigos de reserva, notas, despesas nem nomes. As sugestões só entram no roteiro com clique. O painel fica desligado sem `VITE_ASSISTENTE=on`.
 
 **Testado** com um Supabase simulado: convite, aceite depois do login, viagem visível para a convidada, código não reutilizável, e assistente recebendo só o id da viagem e a pergunta. Ainda **não foi testado** com o projeto Supabase real. Falta aplicar a migração 003, publicar a função e cadastrar os segredos.
+
+## Etapa 16 — refinamento visual, transportes, perfil e viagem completa (Claude)
+
+Branch `feature/transportes-perfil-refinamento`. Nada foi recriado: os módulos novos ficam em `src/home`, `src/profile` e `src/journey` e usam os registros que já existiam (viagem, hospedagens, atividades, reservas, documentos e despesas).
+
+**Visão Geral.** A foto principal, os textos e o botão "Planejar uma viagem" continuam iguais. Embaixo, a faixa com ícones virou quatro cards com foto, número, nome e descrição. Os números vêm das viagens. Quando há um lugar do roteiro com foto verificada (Wikidata/Commons), o card usa essa foto e diz de onde ela é; senão, mostra uma foto do Unsplash marcada como "Imagem ilustrativa". Cada card leva a Minhas viagens ou ao Histórico.
+
+**Nova viagem.** Janela com a foto da capa escolhida no topo. Só o nome aparece de início; datas, tipo, momento e capa ficam em "Mais detalhes (opcional)".
+
+**Meu Espaço.** Perfil com foto, nome, cidade de origem, apresentação, idioma, ritmo e estilo, mais as seções Preferências, Minha conta, Meus dados, Privacidade e Configurações, e estatísticas pessoais. A foto:
+- aceita só JPG, PNG ou WebP de até 10 MB, conferidos pelo conteúdo;
+- é cortada em quadrado, reduzida para 320 px e comprimida (até 120 KB) no próprio navegador.
+
+Sem conta, foto e preferências ficam no navegador. Com conta, as preferências vão para os metadados do usuário (sem os bytes da foto) e a foto para `trip-photos/<id>/perfil/`, uma pasta já protegida pelas políticas existentes.
+
+**Transportes.** Avião, carro próprio, carro alugado, trem, ônibus, barco, transporte público, táxi e outros, na mesma viagem.
+- Cada registro tem trechos com origem, destino, datas, horários, fuso IANA, empresa, número, terminal, portão, classe e assento.
+- Os voos também têm escalas, bagagem e check-in. A abertura do check-in é a informada pela companhia; o app não confirma status de voo.
+- A duração considera o fuso de cada ponta: São Paulo 17:30 → Lisboa 07:05 = 10 h 35.
+- A linha do tempo junta partidas, chegadas em outro dia, check-in e check-out e atividades.
+
+**Localizador (PNR) e números de reserva.** Nunca entram nos dados da viagem, então ficam fora de backups, links, cópias offline, participantes e assistente.
+- No modo local, ficam cifrados (AES-GCM) com uma chave do navegador não exportável guardada no IndexedDB.
+- Com conta, ficam na tabela `booking_secrets` (migração 004). Só quem guardou o código o vê; outra pessoa só se for autorizada explicitamente e enquanto participar da viagem.
+- O código aparece oculto e só é mostrado com clique, por 30 segundos.
+
+**Carros.**
+- Cadastro de carro próprio ou alugado, com locadora, retirada, devolução, seguro, franquia, caução, motoristas e países.
+- Combustível: litros = distância ÷ consumo e custo = litros × preço. Aceita km/L, L/100 km e kWh/100 km. Exemplo: 500 km a 12,5 km/L com €1,70 o litro dá 40 L e €68.
+- Rota por estrada só com clique (OSRM, `VITE_ROTAS_URL`), com alternativas e links para Google Maps e Apple Maps. Sem rota calculada, a pessoa digita a quilometragem; a linha reta nunca é usada como distância por estrada.
+- O comparador soma aluguel, combustível, pedágios e estacionamento por carro e confere lugares, malas e motoristas. Um valor desconhecido deixa a opção "incompleta", em vez de valer zero.
+
+**Custos.** Passagem, aluguel, combustível, pedágios e estacionamento viram despesas ligadas ao transporte ou ao carro, sempre uma por tipo de custo. Editar atualiza a mesma despesa. Nada fica "pago" sem a pessoa informar. Remover um transporte mantém as despesas no orçamento.
+
+**Carteira.** A aba Documentos virou Carteira. Ela reúne passagens, hotéis, locações, ingressos, reservas de restaurante, seguros, comprovantes e outros documentos, sem copiar registros. Tem busca sem acento, filtros por categoria, data e "só arquivos", pré-visualização, download, exclusão e organização por categoria, dia, transporte, hospedagem, veículo ou reserva.
+
+**Preparação.** A aba Checklist virou Preparação e mantém o checklist antigo. Também tem:
+- **lembretes** escolhidos pela pessoa (check-in, embarque, retirada e devolução do carro, hospedagem, ingressos com horário, pagamentos), mostrados no topo do app. A notificação do navegador só aparece com permissão e com o app aberto;
+- **bagagem** por grupo, por viajante e por lista, com quantidades, sugestões pela duração, pelo tipo de viagem e pelos transportes (sem supor o clima) e reaproveitamento de listas de outras viagens;
+- **preparação internacional** informativa: situação, link da fonte oficial e data da consulta. Não guarda números de documentos.
+
+**Mapa da viagem inteira.** Voos aparecem como linha reta pontilhada (rotulada assim), estradas pela rota calculada (ou pontilhadas e com a distância digitada) e trem e barco com estilos próprios. Há filtros por dia e por trecho, e cada trecho mostra distância, tempo e custos.
+
+**Integração.** O calendário e o Modo Viagem mostram os deslocamentos do dia; a Carteira, os lembretes, o mapa e o orçamento usam os mesmos ids. O backup leva tudo, com ids novos e vínculos refeitos. A opção "Exportar sem documentos" deixa os arquivos de fora, e arquivos de viagens compartilhadas com você não entram no backup.
+
+**Testes.**
+- Vitest: 250 aprovados, incluindo o cenário com cinco viajantes, voo com escala, dois carros, viagem até Madrid e custos em R$ e €.
+- Playwright em 1280 px e 390 px: Visão Geral, nova viagem, perfil local e com conta (Supabase simulado), transportes, carteira, preparação, mapa e calendário.
+- axe: 0 violações em pt, en e es.
+- RLS da migração 004 executada num PostgreSQL embutido (PGlite): o dono vê o código; o participante e um estranho não veem; a autorização explícita funciona e acaba quando a pessoa sai da viagem.
+
+**Ainda não testado com o Supabase real.** Aplique a migração 004 e rode `npm run verificar:supabase`.
