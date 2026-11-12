@@ -160,3 +160,48 @@ Testes com as fontes reais: `npm run testar:explorar`.
 - avaliações, tempo de visita, cardápio e reserva de mesa não existem nas fontes livres;
 - poucos restaurantes têm faixa de preço cadastrada;
 - a primeira busca grande (Paris, 10 km) pode levar até ~35 s; as seguintes usam o cache.
+
+## Fase 2 — roteiro inteligente por proximidade (Claude)
+
+`src/planner.ts` monta o roteiro sem IA e sem custo. Ele:
+
+- agrupa por hospedagem de cada data;
+- ordena por vizinho mais próximo + 2-opt;
+- considera horários de funcionamento, duração por categoria, refeições, compromissos fixos e ritmo.
+
+Deslocamentos são estimativas (linha reta × desvio ÷ velocidade) e aparecem assim na tela. Antes de salvar, a pessoa vê a prévia e compara três estratégias, e pode desfazer depois. Atividades existentes nunca são alteradas. Testado com o cenário Lisboa → Mérida → Madrid → Segóvia → Salamanca → Covilhã → Coimbra → Nazaré.
+
+## Fase 3 — restaurantes no roteiro (Claude)
+
+Para cada refeição, `src/meals.ts` busca restaurantes perto da visita anterior, da seguinte, da hospedagem ou no caminho. Os resultados podem ser filtrados por culinária, preço e horário. A pessoa pode adicionar ou substituir sem duplicar, e lançar um gasto previsto opcional.
+
+## Fase 4 — orçamento (Claude)
+
+`src/budget.ts` faz as contas em centavos inteiros e cobre:
+
+- previsto e pago;
+- status das despesas;
+- divisão igual, por partes, por valor ou por porcentagem;
+- saldos e acertos sugeridos;
+- qualquer moeda ISO, com taxa, data e fonte da conversão registradas.
+
+A cotação do BCE (frankfurter.app) só é buscada com clique.
+
+## Fase 5 — Modo Viagem avançado (Claude)
+
+`src/travel-day.ts` cuida do dia da viagem:
+
+- painel do dia;
+- iniciar, concluir, pular, adiar, reagendar, observação e gasto, com histórico;
+- links do Google Maps e do Apple Maps;
+- "Estou atrasado" com opções que nunca movem reservas fixas.
+
+Fora do ar, as edições da conta vão para uma fila (`src/outbox.ts`) e sincronizam depois. Em caso de conflito, fica a versão remota e a pessoa é avisada.
+
+## Etapa 15 — colaboração e assistente opcional (Claude)
+
+**Compartilhamento** (migração `003`): papéis editor e leitor, e convites de uso único que valem 7 dias. No banco fica só o SHA-256 do código. O aceite é feito pela função `accept_trip_invite` e o RLS é verificado por `trip_role()`. Só o dono exclui a viagem.
+
+**Assistente:** a função `supabase/functions/assistente` guarda a `ANTHROPIC_API_KEY` no servidor e tem limite diário por pessoa. O contexto enviado não inclui códigos de reserva, notas, despesas nem nomes. As sugestões só entram no roteiro com clique. O painel fica desligado sem `VITE_ASSISTENTE=on`.
+
+**Testado** com um Supabase simulado: convite, aceite depois do login, viagem visível para a convidada, código não reutilizável, e assistente recebendo só o id da viagem e a pergunta. Ainda **não foi testado** com o projeto Supabase real. Falta aplicar a migração 003, publicar a função e cadastrar os segredos.
