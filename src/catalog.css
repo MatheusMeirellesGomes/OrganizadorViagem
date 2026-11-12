@@ -724,3 +724,16 @@
   height: 28px;
   margin-right: -8px;
 }
+
+/* Etapa 15: pessoas da viagem e assistente */
+.share-panel, .assistant-panel { display: grid; gap: 12px; }
+.share-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line, #e5e5e5); }
+.share-list li:last-child { border-bottom: 0; }
+.share-invite { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.share-role { width: auto; min-width: 140px; }
+.share-link { display: flex; gap: 8px; }
+.share-link input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 13px; }
+.assistant-answer { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--soft, rgba(0,0,0,.04)); white-space: pre-wrap; }
+.assistant-answer ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.assistant-answer li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+@media (max-width: 480px) { .share-link { flex-direction: column; } .share-invite > * { flex: 1 1 100%; } }

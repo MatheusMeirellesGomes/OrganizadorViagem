@@ -86,6 +86,8 @@ import { RoutePlanner } from "./RoutePlanner";
 import { DayMeals } from "./DayMeals";
 import { BudgetPanel } from "./BudgetPanel";
 import { applyOps, diffOps, onlyQueueable, readOutbox, writeOutbox } from "./outbox";
+import { SharePanel, AssistantPanel } from "./SharePanel";
+import { acceptInvite, takeInviteFromUrl } from "./sharing";
 import { MealFinder } from "./LazyMaps";
 import type { MealRequest } from "./explore/MealFinder";
 import { isMealActivity, mealTime } from "./meals";
@@ -158,6 +160,8 @@ function App() {
       }
     });
   const versions = useRef<Record<string, string>>({});
+  // Owner of each account trip (shared trips belong to someone else).
+  const owners = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
   const firstName = profile.name.trim().split(" ")[0];
@@ -186,6 +190,7 @@ function App() {
     versions.current = Object.fromEntries(
       rows.map((r) => [r.id, r.updated_at]),
     );
+    owners.current = Object.fromEntries(rows.map((r) => [r.id, r.user_id ?? ""]));
     setTrips(rows.map((r) => r.data));
   };
   const cacheTrips = (userId: string, list: Trip[]) =>
@@ -253,6 +258,20 @@ function App() {
   useEffect(() => {
     if (session) loadAccount(session.user.id);
   }, [session?.user.id, loadAccount]);
+  useEffect(() => {
+    // Invite link (?convite=...): kept until the person signs in, then accepted.
+    const fromUrl = takeInviteFromUrl();
+    if (fromUrl) sessionStorage.setItem("gomes-convite", fromUrl);
+    const token = sessionStorage.getItem("gomes-convite");
+    if (!token || !session || !supabase) return;
+    sessionStorage.removeItem("gomes-convite");
+    acceptInvite(supabase, token)
+      .then(() => {
+        setNotice(tr("Convite aceito. A viagem compartilhada está em Minhas viagens."));
+        return loadAccount(session.user.id);
+      })
+      .catch((e) => setNotice(e instanceof Error ? tr(e.message) : tr("Não foi possível aceitar o convite agora.")));
+  }, [session?.user.id]);
   useEffect(() => {
     // Back online after showing the offline copy: refresh from the account.
     if (online && session && (accountSource === "cache" || readOutbox(session.user.id).length))
@@ -1479,6 +1498,12 @@ function App() {
                   />
                 )}
                 {tab === "Despesas" && <BudgetPanel trip={trip} onSave={save} busy={busy} />}
+                {tab === "Informações" && session && supabase && (
+                  <SharePanel client={supabase} trip={trip} userId={session.user.id} ownerId={owners.current[trip.id] || undefined} />
+                )}
+                {tab === "Roteiro" && session && supabase && (
+                  <AssistantPanel client={supabase} trip={trip} onSave={save} busy={busy} />
+                )}
               </>
             )
           ) : (

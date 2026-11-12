@@ -1,5 +1,5 @@
 import { uid, type Trip } from "../model";
-import type { Place } from "../places";
+import type { SavedPlace } from "../choices";
 import { categories } from "../places";
 import { choosePlace, type Decision } from "../choices";
 
@@ -13,7 +13,7 @@ export type AddOptions = {
 };
 
 /** Day where the place already is in the itinerary, if any. */
-export function dayOf(trip: Trip, place: Pick<Place, "id">): number | undefined {
+export function dayOf(trip: Trip, place: Pick<SavedPlace, "id">): number | undefined {
   return trip.activities.find((a) => a.placeId === place.id)?.day;
 }
 
@@ -22,7 +22,7 @@ export function dayOf(trip: Trip, place: Pick<Place, "id">): number | undefined 
  * The same place is never added twice to one trip. The saved place keeps its
  * stable id, name, coordinates, category, address, validated photo and source.
  */
-export function addToItinerary(trip: Trip, place: Place, options: AddOptions): Trip {
+export function addToItinerary(trip: Trip, place: SavedPlace, options: AddOptions): Trip {
   const { day, time = "", notes = "", stayId, decision = "want" } = options;
   if (!Number.isInteger(day) || day < 1 || day > 3660) throw new Error("Escolha um dia válido.");
   if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new Error("Horário inválido.");
