@@ -40,6 +40,10 @@ describe("equivalência de categorias", () => {
     // Uma estação que também é museu continua como museu.
     expect(classifyWikidata(["Q55488", "Q33506"], {}, false)).toBe("museum");
   });
+  it("bairros antigos tombados viram centro histórico; bairros comuns ficam fora", () => {
+    expect(classifyWikidata(["Q2983893"], { Q2983893: ["Q123705", "Q486972"] }, true)).toBe("historic_center");
+    expect(classifyWikidata(["Q2983893"], { Q2983893: ["Q123705", "Q486972"] }, false)).toBeUndefined();
+  });
   it("lugares demolidos e obras de acervo de museu ficam fora", () => {
     expect(classifyWikidata(["Q23413"], {}, true, { demolished: true })).toBeUndefined();
     expect(classifyWikidata(["Q179700"], {}, false, { inCollection: true })).toBeUndefined();

@@ -84,6 +84,20 @@ describe("Wikidata por raio real", () => {
   });
 });
 
+describe("Wikidata ocupado", () => {
+  it("espera e tenta de novo quando o Wikidata responde 429", async () => {
+    let calls = 0;
+    const fetcher = (async () => {
+      calls++;
+      if (calls === 1) return new Response("busy", { status: 429, headers: { "Retry-After": "0" } });
+      return sparqlRows([{ item: uri("Q1") }]);
+    }) as typeof fetch;
+    const { sparql } = await import("./wikidata");
+    expect(await sparql("SELECT 1", fetcher)).toHaveLength(1);
+    expect(calls).toBe(2);
+  });
+});
+
 describe("serviço do Explorar", () => {
   it("guarda em cache, pagina e mantém ids estáveis", async () => {
     const many = Array.from({ length: PAGE + 5 }, (_, i) => ({ qid: "Q" + (1000 + i), sl: 500 - i, lat: 40.41, lng: -3.70, cls: ["Q33506"], label: "Museo " + i }));

@@ -31,26 +31,35 @@ export async function sparql(
   fetcher: Fetcher = fetch,
   signal?: AbortSignal,
 ): Promise<Binding[]> {
-  const response = await fetcher(sparqlEndpoint, {
-    method: "POST",
-    headers: {
-      Accept: "application/sparql-results+json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ query }),
-    signal: signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(45000)])
-      : AbortSignal.timeout(45000),
-  });
-  if (!response.ok) throw new Error("Wikidata HTTP " + response.status);
-  const json = await response.json();
-  return json?.results?.bindings ?? [];
+  // Wikidata answers 429 (too many requests) or 5xx when busy: wait and retry twice.
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetcher(sparqlEndpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/sparql-results+json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ query }),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(45000)])
+        : AbortSignal.timeout(45000),
+    });
+    if (response.ok) {
+      const json = await response.json();
+      return json?.results?.bindings ?? [];
+    }
+    if (attempt >= 2 || !(response.status === 429 || response.status >= 500))
+      throw new Error("Wikidata HTTP " + response.status);
+    const wait = Math.min(8000, (Number(response.headers?.get?.("Retry-After")) || 1 + attempt * 2) * 1000);
+    await new Promise((r) => setTimeout(r, wait));
+    if (signal?.aborted) throw new Error("cancelled");
+  }
 }
 
 const values = (qids: string[]) =>
   qids.filter((q) => /^Q\d+$/.test(q)).map((q) => "wd:" + q).join(" ");
 
-export function aroundQuery(point: Point, radiusKm: number, limit = 3000) {
+export function aroundQuery(point: Point, radiusKm: number, limit = 2000) {
   if (!validPoint(point) || !(radiusKm > 0 && radiusKm <= 20))
     throw new Error("Escolha uma região válida e raio entre 1 e 20 km.");
   return `SELECT DISTINCT ?item ?sl ?c WHERE { SERVICE wikibase:around { ?item wdt:P625 ?c. bd:serviceParam wikibase:center "Point(${point.lng.toFixed(5)} ${point.lat.toFixed(5)})"^^geo:wktLiteral; wikibase:radius "${radiusKm}". } ?item wikibase:sitelinks ?sl. FILTER(?sl >= 1) } ORDER BY DESC(?sl) LIMIT ${limit}`;
@@ -118,10 +127,12 @@ export async function resolveParents(
 export async function findAttractions(
   point: Point,
   radiusMeters: number,
-  options: { fetcher?: Fetcher; signal?: AbortSignal; storage?: Storage } = {},
+  options: { fetcher?: Fetcher; signal?: AbortSignal; storage?: Storage; onStage?: (stage: string) => void } = {},
 ): Promise<Candidate[]> {
-  const { fetcher = fetch, signal, storage } = options;
+  const { fetcher = fetch, signal, storage, onStage } = options;
+  onStage?.("Procurando lugares no raio escolhido…");
   const rows = await sparql(aroundQuery(point, radiusMeters / 1000), fetcher, signal);
+  onStage?.("Separando atrações de ruas, estações e prédios comuns…");
   const items = new Map<string, { sitelinks: number; coordinates: Point }>();
   for (const row of rows) {
     const qid = id(row.item?.value);

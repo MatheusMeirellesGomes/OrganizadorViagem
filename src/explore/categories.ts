@@ -128,6 +128,7 @@ export const excludedRoots: Record<string, string> = {
   Q4830453: "business",
   Q13226383: "facility",
   Q7075: "library",
+  Q123705: "neighbourhood",
 };
 /** Weak categories: given only by broad classes, so an exclusion wins over them. */
 const weakCategories = new Set(["historic", "attraction", "marketplace", "monument", "memorial"]);
@@ -152,13 +153,17 @@ export function classifyWikidata(
   // are not places to visit.
   if (flags.demolished || flags.inCollection) return;
   const found: string[] = [];
-  let excluded = false;
+  let excluded = false,
+    neighbourhood = false;
   for (const c of classes) {
     for (const root of [c, ...(parents[c] ?? [])]) {
       if (wikidataRoots[root]) found.push(wikidataRoots[root]);
       if (excludedRoots[root]) excluded = true;
+      if (root === "Q123705") neighbourhood = true;
     }
   }
+  // Heritage-listed old quarters (Alfama, Baixa...) are visited as historic centers.
+  if (neighbourhood && heritage) return "historic_center";
   const best = bestCategory(found) ?? (heritage ? "historic" : undefined);
   if (excluded && (!best || weakCategories.has(best))) return;
   return best;
@@ -166,15 +171,15 @@ export function classifyWikidata(
 
 /** Category from OpenStreetMap tags, using the same app categories. */
 export function osmCategory(tags: Record<string, string>): string {
-  const t = (k: string) => tags[k] ?? "";
+  const tag = (k: string) => tags[k] ?? "";
   const found: string[] = [];
-  const historic = t("historic"),
-    building = t("building"),
-    tourism = t("tourism"),
-    leisure = t("leisure"),
-    natural = t("natural"),
-    amenity = t("amenity");
-  if (historic === "palace" || building === "palace" || t("castle_type") === "palace" || t("castle_type") === "stately")
+  const historic = tag("historic"),
+    building = tag("building"),
+    tourism = tag("tourism"),
+    leisure = tag("leisure"),
+    natural = tag("natural"),
+    amenity = tag("amenity");
+  if (historic === "palace" || building === "palace" || tag("castle_type") === "palace" || tag("castle_type") === "stately")
     found.push("palace");
   if (["castle", "fort", "citywalls", "city_gate"].includes(historic) || building === "castle")
     found.push(historic === "city_gate" ? "monument" : "castle");
@@ -186,13 +191,13 @@ export function osmCategory(tags: Record<string, string>): string {
   if (tourism === "theme_park" || leisure === "water_park") found.push("theme_park");
   if (tourism === "museum") found.push("museum");
   if (tourism === "gallery") found.push("gallery");
-  if (t("place") === "square" || (t("highway") === "pedestrian" && t("area") === "yes" && tags.name?.match(/^(pra[cç]a|plaza|place|piazza|square|largo)/i)))
+  if (tag("place") === "square" || (tag("highway") === "pedestrian" && tag("area") === "yes" && tags.name?.match(/^(pra[cç]a|plaza|place|piazza|square|largo)/i)))
     found.push("square");
   if (leisure === "park") found.push("park");
   if (leisure === "garden") found.push("garden");
   if (tourism === "viewpoint") found.push("viewpoint");
   if (natural === "beach") found.push("beach");
-  if (["waterfall", "cave_entrance", "spring"].includes(natural) || t("waterway") === "waterfall" || leisure === "nature_reserve")
+  if (["waterfall", "cave_entrance", "spring"].includes(natural) || tag("waterway") === "waterfall" || leisure === "nature_reserve")
     found.push("nature");
   if (["peak", "volcano", "hill"].includes(natural)) found.push("mountain");
   if (amenity === "marketplace") found.push("marketplace");
@@ -207,9 +212,9 @@ export function osmCategory(tags: Record<string, string>): string {
   if (amenity === "cafe") found.push("cafe");
   if (amenity === "fast_food") found.push("fast_food");
   if (amenity === "food_court") found.push("food_court");
-  if (amenity === "ice_cream" || t("shop") === "ice_cream") found.push("ice_cream");
-  if (t("shop") === "bakery") found.push("bakery");
-  if (t("shop") === "pastry" || t("shop") === "confectionery") found.push("pastry");
+  if (amenity === "ice_cream" || tag("shop") === "ice_cream") found.push("ice_cream");
+  if (tag("shop") === "bakery") found.push("bakery");
+  if (tag("shop") === "pastry" || tag("shop") === "confectionery") found.push("pastry");
   return bestCategory(found) ?? found[found.length - 1] ?? "other";
 }
 

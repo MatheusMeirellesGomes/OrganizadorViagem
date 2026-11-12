@@ -14,7 +14,7 @@ import { phrasesFor, type Meal } from "./restaurants";
 
 type Fetcher = typeof fetch;
 export const PAGE = 120;
-const KEY = "gomes-explorar-cache-v1";
+const KEY = "gomes-explorar-cache-v2";
 const DAY = 86400000;
 
 export type ExploreResult = {
@@ -33,7 +33,7 @@ export type ExploreResult = {
 
 export class ExploreError extends Error {}
 
-type Options = { fetcher?: Fetcher; signal?: AbortSignal; storage?: Storage; lang: string; gapMs?: number; onProgress?: (done: number, total: number) => void };
+type Options = { fetcher?: Fetcher; signal?: AbortSignal; storage?: Storage; lang: string; gapMs?: number; onProgress?: (done: number, total: number) => void; onStage?: (stage: string) => void };
 
 const keyFor = (kind: string, p: Point, radius: number, extra = "") =>
   `${kind}|${p.lat.toFixed(4)},${p.lng.toFixed(4)}|${radius}|${extra}`;
@@ -100,6 +100,7 @@ export async function searchAttractions(point: Point, radius: number, options: O
   }
   const retrievedAt = new Date().toISOString();
   let places: Place[] = [];
+  options.onStage?.("Carregando nomes, fotos e preços…");
   try {
     places = await detailsPage(candidates.slice(0, PAGE), options, retrievedAt);
   } catch (e) {
