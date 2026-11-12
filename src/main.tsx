@@ -21,7 +21,6 @@ import {
   Map,
   MapPin,
   Menu,
-  Mountain,
   Plus,
   Search,
   Settings2,
@@ -680,11 +679,9 @@ function App() {
             go("home");
           }}
         >
-          <span className="brand-mark">
-            <Mountain size={25} />
-          </span>
+          <img className="brand-landscape" src="/gomes-landscape-g.png" alt="" width="60" height="60" />
           <span className="brand-words">
-            gomes<span>{tr("PELO MUNDO")}</span>
+            GOMES<span>PELO MUNDO</span>
           </span>
         </a>
         <p className="nav-caption">{tr("SEU ESPAÇO")}</p>

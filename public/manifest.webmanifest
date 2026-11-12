@@ -1,5 +1,5 @@
 {
-  "name": "Gomes pelo Mundo — organizador de viagens",
+  "name": "GOMES PELO MUNDO — organizador de viagens",
   "short_name": "Gomes",
   "start_url": "/",
   "display": "standalone",
@@ -10,6 +10,12 @@
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/gomes-landscape-g.png",
+      "sizes": "any",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

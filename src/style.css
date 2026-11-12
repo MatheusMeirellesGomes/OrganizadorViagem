@@ -2511,3 +2511,9 @@ input[type="date"]::-webkit-date-and-time-value {
   color: #4e6352;
   overflow-wrap: anywhere;
 }
+
+/* Identidade Gomes pelo Mundo: monograma de paisagens e nome legível. */
+.brand { padding-left: 0; padding-right: 0; gap: 8px; }
+.brand-landscape { width: 60px; height: 60px; object-fit: contain; flex: 0 0 60px; }
+.brand .brand-words { font-size: 25px; letter-spacing: -.8px; line-height: 1.1; }
+.brand .brand-words > span { font-size: 9px; letter-spacing: 2px; margin: 6px 0 0; color: var(--green); white-space: nowrap; }
