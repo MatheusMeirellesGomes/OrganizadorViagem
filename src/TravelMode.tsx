@@ -32,6 +32,7 @@ import {
 } from "./travel-mode";
 import "./travel-mode.css";
 import { decor, hideOnError } from "./decor";
+import { TravelDayPanel, ActivityActions } from "./TravelDay";
 type Props = {
   trip: Trip;
   day: number;
@@ -207,11 +208,12 @@ export function TravelMode({
         >
           {Object.entries(transportLabels).map(([value, label]) => (
             <option key={value} value={value}>
-              {label}
+              {tr(label)}
             </option>
           ))}
         </select>
       </label>
+      <TravelDayPanel trip={trip} day={day} mode={transport} online={online} onApply={(t, m) => update(t, m)} />
       {next ? (
         <aside className="tm-next">
           <span className="tm-next-icon">
@@ -261,7 +263,7 @@ export function TravelMode({
             <li
               id={"tm-activity-" + activity.id}
               key={activity.id}
-              className={activity.done ? "is-visited" : ""}
+              className={activity.done ? "is-visited" : activity.status === "skipped" ? "is-skipped" : activity.status === "started" ? "is-started" : ""}
             >
               <span className="tm-stop" aria-hidden="true">
                 {activity.done ? <Check size={15} /> : index + 1}
@@ -279,6 +281,8 @@ export function TravelMode({
                   {activity.done && (
                     <span className="tm-visited">{tr("Visitada")}</span>
                   )}
+                  {activity.status === "skipped" && <span className="tm-visited">{tr("Pulada")}</span>}
+                  {activity.status === "started" && <span className="tm-visited">{tr("Em andamento")}</span>}
                 </div>
                 <h3>{activity.title || tr("Atividade")}</h3>
                 {activity.address?.trim() && (
@@ -311,6 +315,7 @@ export function TravelMode({
                     {activity.done ? tr("Visitado") : tr("Marcar visita")}
                   </button>
                 </div>
+                <ActivityActions trip={trip} activity={activity} mode={transport} online={online} busy={saving} onApply={(t, m) => update(t, m)} />
                 <details className="tm-activity-details">
                   <summary>
                     {tr("Ver detalhes")}
