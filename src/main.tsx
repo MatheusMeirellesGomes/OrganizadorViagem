@@ -1,7 +1,7 @@
 import { tf } from "./i18n";
 import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown,
@@ -64,7 +64,7 @@ import "./catalog.css";
 // Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
 import "./explore/explore.css";
 import { downloadOffline, parseBackup } from "./offline";
-import { formatMoney } from "./i18n";
+import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
 import { ConflictError, friendlyError } from "./errors";
 import {
@@ -83,6 +83,11 @@ import { PrivatePhoto } from "./PrivatePhoto";
 import { compressPhoto } from "./photos";
 import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
+import { DayMeals } from "./DayMeals";
+import { MealFinder } from "./LazyMaps";
+import type { MealRequest } from "./explore/MealFinder";
+import { isMealActivity, mealTime } from "./meals";
+import { estimateTravel } from "./planner";
 import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
@@ -124,6 +129,7 @@ function App() {
     }),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
+    [mealRequest, setMealRequest] = useState<MealRequest>(),
     [modal, setModal] = useState<Modal>(null),
     [notice, setNotice] = useState(""),
     [search, setSearch] = useState(""),
@@ -944,7 +950,16 @@ function App() {
                         ) : (
                           trip.activities
                             .filter((a) => a.day === day)
-                            .map((a) => (
+                            .map((a, i, list) => (
+                              <Fragment key={a.id}>
+                              {i > 0 && list[i - 1].coordinates && a.coordinates && (() => {
+                                const est = estimateTravel(list[i - 1].coordinates!, a.coordinates!, "transit");
+                                return est.minutes > 0 ? (
+                                  <p className="activity-travel">
+                                    {tf("≈ {minutes} min · {km} km · {mode} (estimativa)", { minutes: est.minutes, km: formatNumber(est.km, 1), mode: tr(est.mode === "walking" ? "A pé" : "Transporte público") })}
+                                  </p>
+                                ) : null;
+                              })()}
                               <article
                                 className={"activity " + (a.done ? "done" : "")}
                                 key={a.id}
@@ -1035,6 +1050,23 @@ function App() {
                                         ),
                                       )}
                                     </select>
+                                    {isMealActivity(a) && a.coordinates && (
+                                      <button
+                                        className="text-button"
+                                        onClick={() =>
+                                          setMealRequest({
+                                            day: a.day,
+                                            meal: a.meal ?? "lunch",
+                                            time: a.time || mealTime(trip, a.meal ?? "lunch"),
+                                            near: a.coordinates!,
+                                            nearName: a.title,
+                                            replaceId: a.id,
+                                          })
+                                        }
+                                      >
+                                        {tr("Substituir restaurante")}
+                                      </button>
+                                    )}
                                     <button
                                       aria-label={tr("Mover para cima")}
                                       className="icon-button"
@@ -1098,9 +1130,14 @@ function App() {
                                   <X size={16} />
                                 </button>
                               </article>
+                              </Fragment>
                             ))
                         )}
                       </div>
+                      <DayMeals trip={trip} day={day} onSave={save} busy={busy} />
+                      {mealRequest && (
+                        <MealFinder trip={trip} request={mealRequest} onSave={save} busy={busy} onClose={() => setMealRequest(undefined)} />
+                      )}
                     </section>
                     <aside className="panel route-panel">
                       <div className="section-head">

@@ -404,3 +404,109 @@
     gap: 2px;
   }
 }
+
+/* Refeições no roteiro (Fase 3) */
+.activity-travel {
+  margin: 2px 0 2px 46px;
+  font-size: 13px;
+  color: #4e6352;
+}
+.day-meals {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+}
+.day-meals h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.day-meals-more summary {
+  list-style: none;
+  cursor: pointer;
+}
+.day-meals-more[open] {
+  flex-basis: 100%;
+}
+.day-meals-more summary::-webkit-details-marker {
+  display: none;
+}
+.meal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.meal-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+.meal-card > div {
+  padding: 12px 14px 14px 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.meal-card h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.meal-card p {
+  margin: 0;
+}
+.meal-card .place-photo {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 140px;
+}
+.meal-links {
+  display: flex;
+  gap: 14px;
+}
+.meal-links a {
+  color: var(--green);
+  font-weight: 600;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.meal-cost {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.meal-cost span {
+  display: flex;
+  gap: 8px;
+}
+.meal-cost input {
+  width: 110px;
+}
+.meal-cost select {
+  width: auto;
+}
+.meal-card .primary {
+  justify-self: start;
+  margin-top: 6px;
+}
+@media (max-width: 560px) {
+  .meal-card {
+    grid-template-columns: 1fr;
+  }
+  .meal-card > div {
+    padding: 0 14px 14px;
+  }
+  .meal-card .place-photo {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+}

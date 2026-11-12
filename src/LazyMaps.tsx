@@ -17,6 +17,7 @@ const loaders = {
   map: () => import("./TravelMap"),
   route: () => import("./RouteMap"),
   catalog: () => import("./Catalog"),
+  meals: () => import("./explore/MealFinder"),
 };
 
 export function preloadHeavyParts() {
@@ -28,6 +29,9 @@ const TravelMapLazy = lazy(() =>
 );
 const RouteMapLazy = lazy(() =>
   loaders.route().then((m) => ({ default: m.RouteMap })),
+);
+const MealFinderLazy = lazy(() =>
+  loaders.meals().then((m) => ({ default: m.MealFinder })),
 );
 const CatalogLazy = lazy(() =>
   loaders.catalog().then((m) => ({ default: m.Catalog })),
@@ -102,6 +106,18 @@ export function Catalog(
     <LoadBoundary>
       <Suspense fallback={<Loading />}>
         <CatalogLazy {...props} />
+      </Suspense>
+    </LoadBoundary>
+  );
+}
+
+export function MealFinder(
+  props: ComponentProps<typeof import("./explore/MealFinder").MealFinder>,
+) {
+  return (
+    <LoadBoundary>
+      <Suspense fallback={<Loading />}>
+        <MealFinderLazy {...props} />
       </Suspense>
     </LoadBoundary>
   );
