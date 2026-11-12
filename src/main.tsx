@@ -97,6 +97,7 @@ import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
 import { HomeMetrics } from "./home/HomeMetrics";
+import { NewTripForm } from "./home/NewTripForm";
 import { DocumentsPanel } from "./DocumentsPanel";
 import { prepareTripAssets } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
@@ -1993,21 +1994,26 @@ function App() {
       )}
       {modal && (
         <dialog
+          className={modal === "trip" ? "dialog-trip" : undefined}
           onCancel={() => setModal(null)}
           onClick={(e) => {
             if (e.target === e.currentTarget) setModal(null);
           }}
         >
+          {modal === "trip" ? (
+            <NewTripForm
+              onSubmit={handleSubmit}
+              onClose={() => setModal(null)}
+              busy={busy}
+              scope={scopeFilter === "all" ? "undecided" : scopeFilter}
+              status={page === "history" ? "past" : "planning"}
+              scopePicker={(v) => <ScopePicker defaultValue={v} />}
+            />
+          ) : (
           <form onSubmit={handleSubmit}>
             <div className="section-head">
               <span className="modal-icon">
-                {modal === "trip" ? (
-                  <Compass />
-                ) : modal === "activity" ? (
-                  <MapPin />
-                ) : (
-                  <Plane />
-                )}
+                {modal === "activity" ? <MapPin /> : <Plane />}
               </span>
               <button
                 type="button"
@@ -2019,85 +2025,25 @@ function App() {
               </button>
             </div>
             <h2>
-              {modal === "trip"
-                ? tr("Todo caminho começa com uma ideia.")
-                : modal === "activity"
-                  ? tr("O que vamos fazer?")
-                  : tr("Uma reserva, tudo organizado.")}
+              {modal === "activity"
+                ? tr("O que vamos fazer?")
+                : tr("Uma reserva, tudo organizado.")}
             </h2>
             <p>
-              {modal === "trip"
-                ? tr("Preencha só o que já sabe. O resto pode esperar.")
-                : tr("Adicione os detalhes que forem úteis para você.")}
+              {tr("Adicione os detalhes que forem úteis para você.")}
             </p>
             <label>
-              {modal === "trip" ? tr("Nome da viagem") : tr("Nome")}
+              {tr("Nome")}
               <input
                 name="title"
                 placeholder={
-                  modal === "trip"
-                    ? tr("Uma nova aventura")
-                    : modal === "activity"
-                      ? tr("Um café, um museu, uma caminhada…")
-                      : tr("Hotel, voo, ingresso…")
+                  modal === "activity"
+                    ? tr("Um café, um museu, uma caminhada…")
+                    : tr("Hotel, voo, ingresso…")
                 }
               />
             </label>
-            {modal === "trip" ? (
-              <>
-                <label>
-                  {tr("Destino")}
-                  <input
-                    name="destination"
-                    placeholder={tr("Para onde a vontade leva?")}
-                  />
-                </label>
-                <div className="form-grid">
-                  <label>
-                    {tr("Ida")}
-                    <small>opcional</small>
-                    <input type="date" name="start" />
-                  </label>
-                  <label>
-                    {tr("Volta")}
-                    <small>opcional</small>
-                    <input type="date" name="end" />
-                  </label>
-                </div>
-                <ScopePicker
-                  defaultValue={
-                    scopeFilter === "all" ? "undecided" : scopeFilter
-                  }
-                />
-                <label>
-                  {tr("Momento da viagem")}
-                  <select
-                    name="status"
-                    defaultValue={page === "history" ? "past" : "planning"}
-                  >
-                    {Object.entries(statusLabels).map(([k, v]) => (
-                      <option value={k} key={k}>
-                        {tr(v)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <fieldset className="cover-picker">
-                  <legend>{tr("Uma capa para começar")}</legend>
-                  {Object.entries(pictures).map(([k, v], i) => (
-                    <label key={k} style={{ backgroundImage: `url(${v})` }}>
-                      <input
-                        type="radio"
-                        name="cover"
-                        value={k}
-                        defaultChecked={i === 0}
-                      />
-                      <span>{tr(coverLabels[k as keyof typeof pictures])}</span>
-                    </label>
-                  ))}
-                </fieldset>
-              </>
-            ) : modal === "activity" ? (
+            {modal === "activity" ? (
               <>
                 <div className="form-grid">
                   <label>
@@ -2154,19 +2100,14 @@ function App() {
               </>
             )}
             <button className="primary full" disabled={busy}>
-              {busy
-                ? tr("Salvando…")
-                : modal === "trip"
-                  ? tr("Criar viagem")
-                  : tr("Adicionar")}
+              {busy ? tr("Salvando…") : tr("Adicionar")}
               <ArrowRight size={17} />
             </button>
             <span className="form-footnote">
-              {modal === "trip"
-                ? tr("Sem orçamento obrigatório. Sem pressa.")
-                : tr("Você pode reorganizar depois.")}
+              {tr("Você pode reorganizar depois.")}
             </span>
           </form>
+          )}
         </dialog>
       )}
     </div>

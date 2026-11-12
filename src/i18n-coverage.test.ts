@@ -7,6 +7,7 @@ import { expenseCategories, statusLabels } from "./budget";
 import { mealNames } from "./meals";
 import { modeLabels } from "./planner";
 import { overviewMetrics } from "./home/metrics";
+import { laterItems } from "./home/NewTripForm";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -89,6 +90,7 @@ describe("traduções", () => {
       ...Object.values(mealNames),
       ...Object.values(modeLabels),
       ...overviewMetrics([]).flatMap((m) => [m.label, m.text]),
+      ...laterItems,
     ];
     expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });
