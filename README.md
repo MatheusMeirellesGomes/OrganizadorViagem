@@ -27,7 +27,11 @@ npm run preview
 - Roteiro por dia, atividades, visita concluída, reordenação e mudança de dia.
 - Hospedagem, anotações, reservas com links e checklist.
 - Fotos locais ou arquivos privados no Supabase.
-- Despesas opcionais, com totais separados por moeda.
+- Orçamento com previsto e pago, status, divisão entre pessoas, saldos e acertos, em qualquer moeda e com conversão registrada.
+- Roteiro inteligente por proximidade, com prévia, comparação de estratégias e desfazer (sem IA).
+- Restaurantes por refeição perto das visitas do dia, com troca e gasto previsto.
+- Modo Viagem com painel do dia, histórico, navegação no Google/Apple Maps, "Estou atrasado" e fila de edições fora do ar.
+- Compartilhamento de viagem com convites de uso único (editor ou leitor) e assistente de roteiro opcional com IA, ambos dependentes do Supabase.
 - Exportação/importação de backup JSON sem sobrescrever viagens.
 - Download HTML offline com todos os dias, hospedagem, reservas e checklist.
 - PWA com cache da interface em produção; dados locais acessíveis sem rede após a primeira visita.
@@ -36,10 +40,16 @@ npm run preview
 - Escolha visual de viagem Nacional, Internacional ou "Ainda não sei" no cadastro e na edição. O tipo é opcional; viagens e backups antigos sem tipo continuam válidos.
 - Selo Nacional/Internacional nos cartões das viagens.
 - Pesquisa e trajetos com links para Google Maps.
-- Calendário, participantes opcionais, várias hospedagens, reservas vinculadas, documentos privados, álbuns de fotos e gerador de roteiro sem IA (veja `docs/ETAPAS.md`).
-- **Explorar lugares reais:** atrações da Wikipédia e do Wikidata com fotos livres creditadas (autor e licença), patrimônio e site oficial; complemento e restaurantes do OpenStreetMap via Nominatim, dentro da política de uso. Nada de preço, nota ou horário inventado. Detalhes em `docs/CATALOGO.md`.
-- **Idiomas:** português, inglês e espanhol, com datas e números no formato de cada idioma, inclusive mensagens de erro e o HTML offline. Um teste automático falha se algum texto novo ficar sem tradução.
-- Mapas e catálogo carregados sob demanda, com aviso em vez de travar se faltar conexão.
+- **Explorar mundial** (detalhes em `docs/EXPLORAR.md`):
+  - busca de cidades, bairros, endereços, atrações, coordenadas e localização atual, com sugestões em português, inglês, espanhol e nomes locais;
+  - raio real de 1 a 20 km, mostrado no mapa, com o centro na cidade, no hotel cadastrado, numa atração, num ponto do mapa ou na sua localização;
+  - atrações do Wikidata (palácios, castelos, praças, museus, igrejas, parques, mirantes, zoológicos, mercados, ruínas, natureza, estádios…);
+  - restaurantes do OpenStreetMap por refeição (café da manhã, almoço, jantar…), culinária, faixa de preço e "aberto agora";
+  - fotos sempre ligadas ao próprio lugar, com autor e licença;
+  - cards, mapa ou cards + mapa, com marcadores agrupados;
+  - painel de detalhes com galeria, horários, preços, transporte próximo e atrações vizinhas;
+  - adicionar ao roteiro com dia, horário, observação e hospedagem, sem duplicar;
+  - filtros combinados, filtros salvos e buscas recentes guardados só no aparelho.
 - Login e cadastro com Supabase quando configurado.
 
 ## Conectar Supabase
@@ -56,7 +66,7 @@ Nunca use a `service_role` nem a `sb_secret_...` no frontend. O aplicativo recus
 ### Passo a passo
 
 1. Crie um projeto Supabase dedicado.
-2. Abra o **SQL Editor** e execute `supabase/migrations/202611090001_initial.sql`. Ele cria a tabela `trips`, as políticas RLS e o bucket privado `trip-photos`.
+2. Abra o **SQL Editor** e execute, nesta ordem, `supabase/migrations/202611090001_initial.sql` (tabela `trips`, RLS e bucket privado `trip-photos`), `002_private_documents.sql` e `003_colaboracao_e_assistente.sql` (pessoas da viagem, convites e limite do assistente).
 3. Em **Authentication → URL Configuration**, defina a **Site URL** (em desenvolvimento, `http://localhost:5173`; em produção, o domínio publicado) e inclua a mesma URL em **Redirect URLs**. O link de confirmação de e-mail volta para ela.
 4. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O `.env.local` não é enviado ao Git.
 5. Reinicie `npm run dev`.
@@ -80,18 +90,26 @@ npm run verificar:supabase
 
 O script usa só a chave pública, como o navegador, e confere: visitante sem login não lê nem cria viagens; cada conta só vê, altera e apaga as próprias viagens; ninguém cria viagem em nome de outra conta nem transfere viagens; uma versão desatualizada não sobrescreve outra; documento com id diferente é recusado; fotos ficam restritas à pasta do dono. Os dados de teste são apagados no final.
 
+### Assistente de roteiro (opcional)
+
+1. Publique a função: `supabase functions deploy assistente`.
+2. Cadastre os segredos no servidor: `supabase secrets set ANTHROPIC_API_KEY=... ASSISTENTE_ORIGENS=https://seu-dominio`. Opcional: `ASSISTENTE_MODELO` e `ASSISTENTE_LIMITE_DIARIO`.
+3. No `.env.local` (ou no build), defina `VITE_ASSISTENTE=on`.
+
+A chave da Anthropic nunca vai para o frontend. Cada pergunta tem custo de API, por isso há um limite diário por pessoa.
+
 ### Como funciona
 
 - **Sem conta**: com ou sem Supabase configurado, o botão **Continuar sem conta** mantém o modo local (`localStorage`). A conta pode ser criada depois pelo Perfil.
 - **Com conta**: cada viagem é uma linha em `trips` (`data` guarda o mesmo documento usado localmente), protegida por RLS. A mesma conta vê as viagens em qualquer aparelho.
 - **Edição em dois aparelhos**: cada gravação confere o `updated_at`. Se a viagem mudou em outro aparelho, nada é sobrescrito e o app pede para recarregar.
-- **Sem internet com conta**: o app mostra uma cópia somente leitura salva no aparelho, incluindo o Modo Viagem. Alterações exigem conexão; não há fila de sincronização offline. A cópia é apagada ao sair da conta.
+- **Sem internet com conta**: o app mostra uma cópia somente leitura salva no aparelho, incluindo o Modo Viagem. No Modo Viagem, as mudanças feitas fora do ar ficam numa fila e são enviadas quando a conexão volta; em conflito, vale a versão da conta e o app avisa. A cópia é apagada ao sair da conta.
 - **Envio das viagens locais**: ao entrar, se houver viagens salvas só neste navegador, um painel oferece enviá-las. Viagens novas são inseridas; idênticas não são duplicadas; viagens com o mesmo id e conteúdo diferente nunca substituem a conta (podem ser enviadas como cópias). Fotos locais vão para o bucket privado. A conta é lida novamente para confirmar, e a cópia local só é removida se o usuário pedir.
 - **Backups e HTML offline** continuam funcionando nos dois modos. Importar um backup com conta cria novas viagens na conta.
 
 ## Limites atuais
 
-As integrações de descoberta por cartões, IA, colaboração em grupo, arquivos de reservas e edição offline com sincronização posterior ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
+No Explorar, avaliações, tempo médio de visita, cardápios e disponibilidade de mesas aparecem como "Não informado": as fontes livres usadas não têm esses dados. Os testes com as fontes reais rodam com `npm run testar:explorar` (precisa de internet). Compartilhamento e assistente foram testados só com um Supabase simulado; fotos e documentos privados continuam visíveis apenas para o dono. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 
@@ -114,10 +132,10 @@ Abra uma viagem e toque em **Modo Viagem**, ao lado do status. Funciona com qual
 
 - Cabeçalho compacto, navegação horizontal por dias, timeline na ordem original e progresso das visitas.
 - Atividades sem datas, horários ou endereços continuam utilizáveis. Quando há datas, os dias são calculados por calendário, sem inferir o fuso do destino.
-- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Com um fuso horário opcional (calendário da viagem), o Modo Viagem indica o dia atual; sem ele, usa o fuso do aparelho e avisa isso.
+- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Como o modelo não possui fuso horário, não há “Hoje” automático, contagem regressiva ou reordenação por horário.
 - “Como chegar” só existe com endereço informado. Links externos ficam indisponíveis quando o navegador informa ausência de conexão.
 - Detalhes expansíveis mantêm o dia selecionado. Endereços e hospedagem podem ser copiados.
-- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. Reservas podem ser vinculadas a atividades e hospedagens no planejamento.
+- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. As reservas são gerais: o modelo ainda não associa reservas a atividades.
 - Marcar/desmarcar visitas e atualizar checklist reutiliza o mesmo objeto Trip, a mesma função save e o mesmo localStorage do planejamento. Sem novos bancos, migrações, dependências ou filas de sincronização.
 - Foco de teclado ao entrar/sair, feedback por região live, controles de toque com 44px ou mais e respeito a movimento reduzido.
 

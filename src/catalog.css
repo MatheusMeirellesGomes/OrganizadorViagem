@@ -44,7 +44,7 @@
   margin: 0;
   font-size: 11px;
   line-height: 1.4;
-  color: #6c7b70;
+  color: #5f6c62;
 }
 .photo-credit a {
   color: inherit;
@@ -249,3 +249,491 @@
     min-height: 0;
   }
 }
+
+/* Organizar meu roteiro (planejador inteligente) */
+.smart-planner .section-head svg {
+  color: var(--green);
+}
+.planner-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 8px;
+}
+.planner-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.planner-form legend {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.planner-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2px 16px;
+  max-height: 260px;
+  overflow: auto;
+}
+.chip-row.wrap {
+  flex-wrap: wrap;
+}
+.planner-meals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.planner-meal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.planner-meal input[type="time"] {
+  width: auto;
+}
+.planner-preview {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.planner-days {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.planner-days .chip {
+  flex-shrink: 0;
+}
+.planner-day {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.planner-timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.planner-stop,
+.planner-busy {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.planner-busy.meal {
+  background: #fbf7ee;
+  border-style: dashed;
+}
+.planner-busy.fixed {
+  background: #eef2ea;
+}
+.planner-stop-main {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.planner-stop-main time {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+  min-width: 96px;
+}
+.planner-stop-main p {
+  margin: 4px 0 0;
+}
+.planner-travel {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #4e6352;
+}
+.planner-stop-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+.planner-stop-edit label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.planner-stop-edit input,
+.planner-stop-edit select {
+  width: auto;
+  min-width: 90px;
+}
+.planner-alert {
+  color: #8a3b2c;
+  font-weight: 600;
+  margin: 6px 0 0;
+}
+.planner-undo,
+.planner-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eef2ea;
+  margin-bottom: 12px;
+}
+.planner-diff {
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.planner-diff th,
+.planner-diff td {
+  padding: 6px 14px 6px 0;
+  text-align: left;
+}
+@media (max-width: 900px) {
+  .planner-day {
+    grid-template-columns: 1fr;
+  }
+  .planner-stop-main {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* Refeições no roteiro (Fase 3) */
+.activity-travel {
+  margin: 2px 0 2px 46px;
+  font-size: 13px;
+  color: #4e6352;
+}
+.day-meals {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+}
+.day-meals h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.day-meals-more summary {
+  list-style: none;
+  cursor: pointer;
+}
+.day-meals-more[open] {
+  flex-basis: 100%;
+}
+.day-meals-more summary::-webkit-details-marker {
+  display: none;
+}
+.meal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.meal-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+.meal-card > div {
+  padding: 12px 14px 14px 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.meal-card h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.meal-card p {
+  margin: 0;
+}
+.meal-card .place-photo {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 140px;
+}
+.meal-links {
+  display: flex;
+  gap: 14px;
+}
+.meal-links a {
+  color: var(--green);
+  font-weight: 600;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.meal-cost {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.meal-cost span {
+  display: flex;
+  gap: 8px;
+}
+.meal-cost input {
+  width: 110px;
+}
+.meal-cost select {
+  width: auto;
+}
+.meal-card .primary {
+  justify-self: start;
+  margin-top: 6px;
+}
+@media (max-width: 560px) {
+  .meal-card {
+    grid-template-columns: 1fr;
+  }
+  .meal-card > div {
+    padding: 0 14px 14px;
+  }
+  .meal-card .place-photo {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* Orçamento e divisão (Fase 4) */
+.budget-panel {
+  display: grid;
+  gap: 18px;
+}
+.budget-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.budget-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.budget-kpis > div {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f1f5ee;
+}
+.budget-kpis small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.budget-kpis strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.budget-kpis .negative strong,
+.budget-table .negative {
+  color: #8a3b2c;
+}
+.budget-table .positive {
+  color: #2f6a45;
+}
+.budget-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.budget-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-bars li {
+  display: grid;
+  grid-template-columns: minmax(90px, 30%) 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.budget-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.budget-bar-track {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: #eef2ea;
+  overflow: hidden;
+}
+.budget-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+}
+.budget-bar.planned {
+  background: #c9d6bf;
+}
+.budget-bar.spent {
+  background: var(--green);
+}
+.budget-bar-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.budget-rate-row,
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.budget-rate-row input,
+.inline-form input {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 160px;
+}
+.budget-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.budget-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfcfa;
+}
+.budget-split {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-split legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.budget-split-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.budget-split-row input[inputmode] {
+  width: 110px;
+}
+.budget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.budget-item > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.budget-item.status-planned,
+.budget-item.status-reserved {
+  border-style: dashed;
+}
+.budget-item.status-cancelled {
+  opacity: 0.6;
+}
+.budget-values {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.budget-table th,
+.budget-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.budget-transfers li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+.budget-confirm {
+  display: inline-flex;
+  gap: 6px;
+}
+@media (max-width: 640px) {
+  .budget-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .budget-values {
+    grid-column: 2 / -1;
+    text-align: left;
+  }
+  .budget-bars li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .budget-table {
+    font-size: 13px;
+  }
+}
+.budget-people ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.budget-people .chip .icon-button {
+  width: 28px;
+  height: 28px;
+  margin-right: -8px;
+}
+
+/* Etapa 15: pessoas da viagem e assistente */
+.share-panel, .assistant-panel { display: grid; gap: 12px; }
+.share-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line, #e5e5e5); }
+.share-list li:last-child { border-bottom: 0; }
+.share-invite { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.share-role { width: auto; min-width: 140px; }
+.share-link { display: flex; gap: 8px; }
+.share-link input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 13px; }
+.assistant-answer { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--soft, rgba(0,0,0,.04)); white-space: pre-wrap; }
+.assistant-answer ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.assistant-answer li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+@media (max-width: 480px) { .share-link { flex-direction: column; } .share-invite > * { flex: 1 1 100%; } }

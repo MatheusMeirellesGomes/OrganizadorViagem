@@ -97,7 +97,9 @@ describe("Modo Viagem: dates and itinerary", () => {
     expect(nextActivity(trip, 1)?.id).toBe("b");
     const html = render(trip);
     expect(html).toContain("Sem horário");
-    expect(html.indexOf("Passeio b")).toBeLessThan(html.indexOf("Passeio a"));
+    // The timeline keeps the person's order (the day panel above may highlight by time).
+    const timeline = html.slice(html.indexOf('class="tm-timeline"'));
+    expect(timeline.indexOf("Passeio b")).toBeLessThan(timeline.indexOf("Passeio a"));
     expect(html).not.toContain("em 10 minutos");
     expect(html).not.toContain("Hoje");
   });

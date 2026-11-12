@@ -1,6 +1,8 @@
 import { tf } from "./i18n";
 import { t as tr } from "./i18n";
-import { ItineraryBuilder } from "./ItineraryBuilder";
+import { SmartPlanner } from "./SmartPlanner";
+import { MealFinder } from "./LazyMaps";
+import type { MealRequest } from "./explore/MealFinder";
 import { useRef, useState } from "react";
 import { uid, type Trip } from "./model";
 import {
@@ -26,7 +28,8 @@ export function SavedPlaces({
   const [filter, setFilter] = useState("all"),
     [message, setMessage] = useState(""),
     [day, setDay] = useState(1),
-    [pending, setPending] = useState(false);
+    [pending, setPending] = useState(false),
+    [mealRequest, setMealRequest] = useState<MealRequest>();
   const start = useRef<{ x: number; y: number; id: string } | undefined>(
     undefined,
   );
@@ -44,7 +47,13 @@ export function SavedPlaces({
   }
   return (
     <>
-      <ItineraryBuilder trip={trip} onSave={onSave} busy={busy || pending} />
+      <SmartPlanner
+        trip={trip}
+        onSave={onSave}
+        busy={busy || pending}
+        onFindMeal={(r) => r.near && setMealRequest({ day: r.day, meal: r.meal, time: r.at, near: r.near, nearName: r.nearName ?? "" })}
+      />
+      {mealRequest && <MealFinder trip={trip} request={mealRequest} onSave={onSave} busy={busy} onClose={() => setMealRequest(undefined)} />}
       <section className="panel">
         <h2>{tr("Seus lugares, suas escolhas")}</h2>
         <p>{tr("Salve ideias antes de decidir o dia. Deslize um cartão para a direita para “Quero ir”, ou para a esquerda para “Passar”. Os botões fazem o mesmo.")}</p>

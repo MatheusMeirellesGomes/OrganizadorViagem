@@ -8,11 +8,12 @@ export type RouteLocation = {
   address: string;
   coordinates?: Point;
 };
-export type Transport = "walking" | "driving" | "transit";
+export type Transport = "walking" | "driving" | "transit" | "bicycling";
 export const transportLabels: Record<Transport, string> = {
   walking: "A pé",
   driving: "Carro",
   transit: "Transporte público",
+  bicycling: "Bicicleta",
 };
 export function locationValue(
   location: Pick<RouteLocation, "address" | "coordinates">,

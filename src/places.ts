@@ -1,3 +1,4 @@
+import { osmCategory } from "./explore/categories";
 import { safeExternalUrl } from "./travel-mode";
 export type Point = { lat: number; lng: number };
 export type Place = {
@@ -38,6 +39,15 @@ export const categories: Record<string, string> = {
   place_of_worship: "Igrejas e templos",
   marketplace: "Mercados",
   square: "Praças",
+  historic_center: "Centros históricos",
+  historic: "Lugares históricos",
+  nature: "Natureza",
+  mountain: "Montanhas",
+  trail: "Trilhas",
+  culture: "Cultura e espetáculos",
+  stadium: "Estádios e arenas",
+  bakery: "Padarias",
+  pastry: "Confeitarias",
   restaurant: "Restaurantes",
   cafe: "Cafeterias",
   fast_food: "Lanches",
@@ -136,16 +146,8 @@ export function normalizePlaces(
     )
       continue;
     seen.add(id);
-    const category =
-      [
-        tags.tourism,
-        tags.historic,
-        tags.leisure,
-        tags.natural,
-        tags.waterway,
-        tags.amenity,
-        tags.place,
-      ].find((t) => categories[t]) || "other";
+    // Same categories as Wikidata places (palace, castle, square...), see explore/categories.ts.
+    const category = osmCategory(tags);
     result.push({
       id,
       name: tags.name,

@@ -4,7 +4,7 @@ import { ConflictError } from "./errors";
 
 // One row per trip. `data` keeps the same Trip document used locally, so
 // backups, the offline HTML and Travel Mode keep working unchanged.
-export type RemoteRow = { id: string; data: Trip; updated_at: string };
+export type RemoteRow = { id: string; data: Trip; updated_at: string; /** Owner (shared trips belong to someone else). */ user_id?: string };
 
 export interface TripRepository {
   list(): Promise<RemoteRow[]>;
@@ -21,7 +21,7 @@ export interface TripRepository {
   uploadPhoto(path: string, file: Blob, contentType: string): Promise<void>;
 }
 
-const columns = "id,data,updated_at";
+const columns = "id,data,updated_at,user_id";
 export const photoBucket = "trip-photos";
 
 function alreadyExists(error: {

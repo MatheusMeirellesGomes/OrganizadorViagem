@@ -571,3 +571,100 @@
   border-radius: 10px;
   background: #e7ede1;
 }
+
+/* Painel do dia e ações (Fase 5) */
+.tm-panel {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #e3e9de;
+}
+.tm-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+.tm-panel-grid > div,
+.tm-panel-bookings {
+  display: grid;
+  gap: 3px;
+  align-content: start;
+}
+.tm-panel small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #56694a;
+}
+.tm-panel strong {
+  font-size: 17px;
+  color: #1f3a31;
+}
+.tm-panel span {
+  font-size: 14px;
+  color: #3f5048;
+}
+.tm-panel-next {
+  background: #f1f5ee;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.tm-secret {
+  font-family: ui-monospace, monospace;
+}
+.tm-late-box {
+  display: grid;
+  gap: 10px;
+}
+.tm-late-options > li {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid #e3e9de;
+  border-radius: 12px;
+}
+.tm-late-options ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.tm-late-options button {
+  justify-self: start;
+  min-height: 44px;
+}
+.tm-activity-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.tm-activity-actions .tm-actions a,
+.tm-activity-actions .tm-actions button {
+  min-height: 44px;
+}
+.tm-actions-small {
+  gap: 4px 14px;
+}
+.tm-actions-small .text-button {
+  font-size: 13px;
+  min-height: 40px;
+}
+.tm-history summary {
+  font-size: 13px;
+  cursor: pointer;
+}
+.tm-timeline li.is-skipped .tm-activity {
+  opacity: 0.65;
+}
+.tm-timeline li.is-skipped h3 {
+  text-decoration: line-through;
+}
+.tm-timeline li.is-started .tm-activity {
+  border-color: #56694a;
+  box-shadow: 0 0 0 2px #56694a33;
+}

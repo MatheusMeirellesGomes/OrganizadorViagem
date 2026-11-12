@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import core from "./locales/core.json";
+import { categories } from "./places";
+import { attractionGroups } from "./explore/categories";
+import { mealLabels, cuisineOptions } from "./explore/restaurants";
+import { expenseCategories, statusLabels } from "./budget";
+import { mealNames } from "./meals";
+import { modeLabels } from "./planner";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -20,7 +26,7 @@ const files = (
       options: { query: string; import: string; eager: true },
     ) => Record<string, string>;
   }
-).glob(["./*.ts", "./*.tsx", "!./*.test.ts", "!./*.test.tsx"], {
+).glob(["./*.ts", "./*.tsx", "./explore/*.ts", "./explore/*.tsx", "!./**/*.test.ts", "!./**/*.test.tsx"], {
   query: "?raw",
   import: "default",
   eager: true,
@@ -70,6 +76,19 @@ describe("traduções", () => {
       }
     }
     expect(problems).toEqual([]);
+  });
+  it("rótulos guardados em listas também têm tradução", () => {
+    const labels = [
+      ...Object.values(categories),
+      ...attractionGroups.map((g) => g.label),
+      ...Object.values(mealLabels),
+      ...cuisineOptions.map((c) => c.label),
+      ...Object.values(expenseCategories),
+      ...Object.values(statusLabels),
+      ...Object.values(mealNames),
+      ...Object.values(modeLabels),
+    ];
+    expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });
   it("nenhuma tradução está vazia", () => {
     const empty = Object.entries(dictionary)

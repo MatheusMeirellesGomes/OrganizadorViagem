@@ -2503,3 +2503,11 @@ input[type="date"]::-webkit-date-and-time-value {
     border-radius: 14px;
   }
 }
+
+/* Note and stay added from Explorar */
+.activity-notes {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #4e6352;
+  overflow-wrap: anywhere;
+}

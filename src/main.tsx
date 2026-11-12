@@ -1,7 +1,7 @@
 import { tf } from "./i18n";
 import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown,
@@ -61,8 +61,10 @@ import "./style.css";
 // Shared by the catalog, saved places, itinerary builder and route planner.
 // Loaded eagerly so those screens are styled even before the catalog chunk.
 import "./catalog.css";
+// Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
+import "./explore/explore.css";
 import { downloadOffline, parseBackup } from "./offline";
-import { formatMoney } from "./i18n";
+import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
 import { ConflictError, friendlyError } from "./errors";
 import {
@@ -81,6 +83,15 @@ import { PrivatePhoto } from "./PrivatePhoto";
 import { compressPhoto } from "./photos";
 import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
+import { DayMeals } from "./DayMeals";
+import { BudgetPanel } from "./BudgetPanel";
+import { applyOps, diffOps, onlyQueueable, readOutbox, writeOutbox } from "./outbox";
+import { SharePanel, AssistantPanel } from "./SharePanel";
+import { acceptInvite, takeInviteFromUrl } from "./sharing";
+import { MealFinder } from "./LazyMaps";
+import type { MealRequest } from "./explore/MealFinder";
+import { isMealActivity, mealTime } from "./meals";
+import { estimateTravel } from "./planner";
 import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
@@ -122,6 +133,7 @@ function App() {
     }),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
+    [mealRequest, setMealRequest] = useState<MealRequest>(),
     [modal, setModal] = useState<Modal>(null),
     [notice, setNotice] = useState(""),
     [search, setSearch] = useState(""),
@@ -148,6 +160,8 @@ function App() {
       }
     });
   const versions = useRef<Record<string, string>>({});
+  // Owner of each account trip (shared trips belong to someone else).
+  const owners = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
   const firstName = profile.name.trim().split(" ")[0];
@@ -176,6 +190,7 @@ function App() {
     versions.current = Object.fromEntries(
       rows.map((r) => [r.id, r.updated_at]),
     );
+    owners.current = Object.fromEntries(rows.map((r) => [r.id, r.user_id ?? ""]));
     setTrips(rows.map((r) => r.data));
   };
   const cacheTrips = (userId: string, list: Trip[]) =>
@@ -194,7 +209,28 @@ function App() {
     setLoading(true);
     setLoadError("");
     try {
-      const rows = await repository.list();
+      let rows = await repository.list();
+      // Travel Mode changes made offline: apply on top of the newest version.
+      const queued = readOutbox(userId);
+      if (queued.length) {
+        const conflicts: string[] = [];
+        for (const row of rows) {
+          const ops = queued.filter((o) => o.tripId === row.id);
+          if (!ops.length) continue;
+          const result = applyOps(row.data, ops);
+          conflicts.push(...result.conflicts.map((c) => c.title));
+          if (result.applied) {
+            const saved = await repository.update(result.trip, row.updated_at);
+            rows = rows.map((r) => (r.id === saved.id ? saved : r));
+          }
+        }
+        writeOutbox(userId, []);
+        setNotice(
+          conflicts.length
+            ? tf("Alterações feitas sem internet foram enviadas. Mantivemos a versão do outro aparelho em: {items}.", { items: [...new Set(conflicts)].join(", ") })
+            : tr("Alterações feitas sem internet foram enviadas para a sua conta."),
+        );
+      }
       applyRows(rows);
       setAccountSource("live");
       setStaleTrip(false);
@@ -202,7 +238,8 @@ function App() {
     } catch (e) {
       const cache = readAccountCache(userId);
       if (cache) {
-        applyRows(cache.rows);
+        const queued = readOutbox(userId);
+        applyRows(cache.rows.map((r) => ({ ...r, data: applyOps(r.data, queued).trip })));
         setAccountSource("cache");
         setNotice(
           tf(
@@ -222,8 +259,22 @@ function App() {
     if (session) loadAccount(session.user.id);
   }, [session?.user.id, loadAccount]);
   useEffect(() => {
+    // Invite link (?convite=...): kept until the person signs in, then accepted.
+    const fromUrl = takeInviteFromUrl();
+    if (fromUrl) sessionStorage.setItem("gomes-convite", fromUrl);
+    const token = sessionStorage.getItem("gomes-convite");
+    if (!token || !session || !supabase) return;
+    sessionStorage.removeItem("gomes-convite");
+    acceptInvite(supabase, token)
+      .then(() => {
+        setNotice(tr("Convite aceito. A viagem compartilhada está em Minhas viagens."));
+        return loadAccount(session.user.id);
+      })
+      .catch((e) => setNotice(e instanceof Error ? tr(e.message) : tr("Não foi possível aceitar o convite agora.")));
+  }, [session?.user.id]);
+  useEffect(() => {
     // Back online after showing the offline copy: refresh from the account.
-    if (online && session && accountSource === "cache")
+    if (online && session && (accountSource === "cache" || readOutbox(session.user.id).length))
       loadAccount(session.user.id);
   }, [online]);
   useEffect(() => {
@@ -257,6 +308,17 @@ function App() {
     setFilter("all");
     setScopeFilter("all");
   };
+  /** Travel Mode: without internet in an account, keep the change in a queue. */
+  async function saveTravel(t: Trip) {
+    const before = trips.find((x) => x.id === t.id);
+    if (session && repository && (accountSource === "cache" || !online) && before && onlyQueueable(before, t)) {
+      writeOutbox(session.user.id, [...readOutbox(session.user.id), ...diffOps(before, t)]);
+      setTrips(trips.map((x) => (x.id === t.id ? t : x)));
+      setNotice(tr("Sem internet: alteração guardada neste aparelho. Ela será enviada quando a conexão voltar."));
+      return true;
+    }
+    return save(t);
+  }
   async function save(t: Trip) {
     setBusy(true);
     try {
@@ -593,7 +655,7 @@ function App() {
           </span>
         </a>
         <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
-        <nav>
+        <nav aria-label={tr("Menu principal")}>
           {nav.map((n) => (
             <button
               key={n.id}
@@ -744,7 +806,7 @@ function App() {
                 onDayChange={setDay}
                 online={online}
                 busy={busy}
-                onSave={save}
+                onSave={saveTravel}
                 onBack={() => {
                   setTravelMode(false);
                   requestAnimationFrame(() =>
@@ -942,7 +1004,16 @@ function App() {
                         ) : (
                           trip.activities
                             .filter((a) => a.day === day)
-                            .map((a) => (
+                            .map((a, i, list) => (
+                              <Fragment key={a.id}>
+                              {i > 0 && list[i - 1].coordinates && a.coordinates && (() => {
+                                const est = estimateTravel(list[i - 1].coordinates!, a.coordinates!, "transit");
+                                return est.minutes > 0 ? (
+                                  <p className="activity-travel">
+                                    {tf("≈ {minutes} min · {km} km · {mode} (estimativa)", { minutes: est.minutes, km: formatNumber(est.km, 1), mode: tr(est.mode === "walking" ? "A pé" : "Transporte público") })}
+                                  </p>
+                                ) : null;
+                              })()}
                               <article
                                 className={"activity " + (a.done ? "done" : "")}
                                 key={a.id}
@@ -980,6 +1051,12 @@ function App() {
                                     {a.time || tr("Sem horário")} · {tr(a.kind)}
                                   </small>
                                   <h3>{a.title}</h3>
+                                  {a.notes && <p className="activity-notes">{a.notes}</p>}
+                                  {a.stayId && trip.stays?.some((st) => st.id === a.stayId) && (
+                                    <p className="activity-notes">
+                                      {tf("Hospedagem: {name}", { name: trip.stays!.find((st) => st.id === a.stayId)!.name })}
+                                    </p>
+                                  )}
                                   {a.address && (
                                     <a
                                       target="_blank"
@@ -1027,6 +1104,23 @@ function App() {
                                         ),
                                       )}
                                     </select>
+                                    {isMealActivity(a) && a.coordinates && (
+                                      <button
+                                        className="text-button"
+                                        onClick={() =>
+                                          setMealRequest({
+                                            day: a.day,
+                                            meal: a.meal ?? "lunch",
+                                            time: a.time || mealTime(trip, a.meal ?? "lunch"),
+                                            near: a.coordinates!,
+                                            nearName: a.title,
+                                            replaceId: a.id,
+                                          })
+                                        }
+                                      >
+                                        {tr("Substituir restaurante")}
+                                      </button>
+                                    )}
                                     <button
                                       aria-label={tr("Mover para cima")}
                                       className="icon-button"
@@ -1090,9 +1184,14 @@ function App() {
                                   <X size={16} />
                                 </button>
                               </article>
+                              </Fragment>
                             ))
                         )}
                       </div>
+                      <DayMeals trip={trip} day={day} onSave={save} busy={busy} />
+                      {mealRequest && (
+                        <MealFinder trip={trip} request={mealRequest} onSave={save} busy={busy} onClose={() => setMealRequest(undefined)} />
+                      )}
                     </section>
                     <aside className="panel route-panel">
                       <div className="section-head">
@@ -1398,107 +1497,12 @@ function App() {
                     cloud={!!session}
                   />
                 )}
-                {tab === "Despesas" && (
-                  <section className="panel settings-form">
-                    <h2>{tr("Despesas, se fizer sentido para você")}</h2>
-                    <p>{tr("Os totais são separados por moeda, sem conversão automática.")}</p>
-                    <div className="expense-totals">
-                      {["BRL", "EUR", "USD"].map((c) => (
-                        <div key={c}>
-                          <small>{c}</small>
-                          <h2>
-                            {new Intl.NumberFormat(getLocale(), {
-                              style: "currency",
-                              currency: c,
-                            }).format(
-                              trip.expenses
-                                .filter((x) => x.currency === c)
-                                .reduce((s, x) => s + x.amount, 0),
-                            )}
-                          </h2>
-                        </div>
-                      ))}
-                    </div>
-                    <form
-                      className="expense-form"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const form = e.currentTarget,
-                          f = new FormData(form);
-                        const amount = Number(field(f, "amount"));
-                        if (!Number.isFinite(amount) || amount <= 0) {
-                          setNotice(
-                            tr("Informe um valor maior que zero para registrar a despesa."),
-                          );
-                          return;
-                        }
-                        if (
-                          await save({
-                            ...trip,
-                            expenses: [
-                              ...trip.expenses,
-                              {
-                                id: uid(),
-                                title: field(f, "title") || tr("Despesa"),
-                                amount,
-                                currency: field(f, "currency"),
-                              },
-                            ],
-                          })
-                        )
-                          form.reset();
-                      }}
-                    >
-                      <input
-                        name="title"
-                        placeholder={tr("Descrição")}
-                        aria-label={tr("Descrição da despesa")}
-                      />
-                      <input
-                        name="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder={tr("Valor")}
-                        aria-label={tr("Valor")}
-                      />
-                      <select name="currency" aria-label={tr("Moeda")}>
-                        <option>BRL</option>
-                        <option>EUR</option>
-                        <option>USD</option>
-                      </select>
-                      <button
-                        className="primary"
-                        disabled={busy}
-                        aria-label={tr("Adicionar despesa")}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </form>
-                    {trip.expenses.map((x) => (
-                      <div className="list-row" key={x.id}>
-                        <Wallet size={20} />
-                        <span>{x.title}</span>
-                        <b>
-                          {formatMoney(x.amount, x.currency)}
-                        </b>
-                        <button
-                          className="icon-button"
-                          aria-label={tr("Excluir despesa")}
-                          onClick={() =>
-                            save({
-                              ...trip,
-                              expenses: trip.expenses.filter(
-                                (a) => a.id !== x.id,
-                              ),
-                            })
-                          }
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </section>
+                {tab === "Despesas" && <BudgetPanel trip={trip} onSave={save} busy={busy} />}
+                {tab === "Informações" && session && supabase && (
+                  <SharePanel client={supabase} trip={trip} userId={session.user.id} ownerId={owners.current[trip.id] || undefined} />
+                )}
+                {tab === "Roteiro" && session && supabase && (
+                  <AssistantPanel client={supabase} trip={trip} onSave={save} busy={busy} />
                 )}
               </>
             )
@@ -1978,7 +1982,7 @@ function App() {
             </>
           )}
         </main>
-        <nav className="mobile-nav">
+        <nav className="mobile-nav" aria-label={tr("Menu inferior")}>
           {nav
             .filter((n) => n.id !== "history")
             .map((n) => (
