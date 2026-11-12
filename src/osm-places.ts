@@ -38,6 +38,7 @@ export const attractionPhrases = [
 ];
 
 type NominatimItem = {
+  place_id?: number;
   osm_type?: string;
   osm_id?: number;
   lat?: string;
@@ -63,6 +64,8 @@ export function toOsmElements(items: NominatimItem[]) {
     const city = a.city ?? a.town ?? a.village ?? a.municipality;
     if (city) tags["addr:city"] = city;
     if (a.country) tags["addr:country"] = a.country;
+    if (item.place_id) tags.nominatim_place_id = String(item.place_id);
+    if (a.country_code) tags.country_code = a.country_code.toUpperCase();
     return {
       type: item.osm_type,
       id: item.osm_id,
@@ -94,6 +97,9 @@ export async function searchNominatim(
     language?: string;
     gapMs?: number;
     onProgress?: (done: number, total: number) => void;
+    /** Nominatim place_ids already shown, to load the next results ("carregar mais"). */
+    exclude?: string[];
+    signal?: AbortSignal;
   } = {},
 ): Promise<Place[]> {
   const {
@@ -102,6 +108,8 @@ export async function searchNominatim(
     language = "pt",
     gapMs = 1100,
     onProgress,
+    exclude = [],
+    signal,
   } = options;
   if (!endpoint) throw new Error("OpenStreetMap search is switched off.");
   const items: NominatimItem[] = [];
@@ -120,14 +128,16 @@ export async function searchNominatim(
       addressdetails: "1",
       "accept-language": language,
     });
+    if (exclude.length) params.set("exclude_place_ids", exclude.slice(-400).join(","));
     try {
       const response = await fetcher(`${endpoint}/search?${params}`, {
-        signal: AbortSignal.timeout(20000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
       });
       if (!response.ok) throw new Error("HTTP " + response.status);
       const json = await response.json();
       if (Array.isArray(json)) items.push(...json);
     } catch {
+      if (signal?.aborted) throw new Error("cancelled");
       failures++;
     }
     onProgress?.(i + 1, phrases.length);
