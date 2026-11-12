@@ -1,3 +1,4 @@
+import { tf } from "./i18n";
 import { t as tr } from "./i18n";
 import { ItineraryBuilder } from "./ItineraryBuilder";
 import { useRef, useState } from "react";
@@ -11,7 +12,7 @@ import {
 } from "./choices";
 import { ChoiceButtons } from "./ChoiceButtons";
 import { addPlaceToTrip } from "./food";
-import { TravelMap } from "./TravelMap";
+import { TravelMap } from "./LazyMaps";
 import { validPoint } from "./places";
 export function SavedPlaces({
   trip,
@@ -45,12 +46,8 @@ export function SavedPlaces({
     <>
       <ItineraryBuilder trip={trip} onSave={onSave} busy={busy || pending} />
       <section className="panel">
-        <h2>Seus lugares, suas escolhas</h2>
-        <p>
-          Salve ideias antes de decidir o dia. Deslize um cartão para a direita
-          para “Quero ir”, ou para a esquerda para “Passar”. Os botões fazem o
-          mesmo.
-        </p>
+        <h2>{tr("Seus lugares, suas escolhas")}</h2>
+        <p>{tr("Salve ideias antes de decidir o dia. Deslize um cartão para a direita para “Quero ir”, ou para a esquerda para “Passar”. Os botões fazem o mesmo.")}</p>
         <details>
           <summary>{tr("Adicionar um lugar por conta própria")}</summary>
           <form
@@ -64,13 +61,13 @@ export function SavedPlaces({
                 lat && lng ? { lat: Number(lat), lng: Number(lng) } : undefined;
               if ((lat || lng) && (!coordinates || !validPoint(coordinates))) {
                 setMessage(
-                  "Informe coordenadas válidas juntas ou deixe ambas vazias.",
+                  tr("Informe coordenadas válidas juntas ou deixe ambas vazias."),
                 );
                 return;
               }
               const place: SavedPlace = {
                 id: "manual:" + uid(),
-                name: String(f.get("name") || "Lugar sem nome"),
+                name: String(f.get("name") || tr("Lugar sem nome")),
                 address: String(f.get("address") || ""),
                 city: "",
                 country: "",
@@ -122,7 +119,7 @@ export function SavedPlaces({
               <option value="all">{tr("Todas as decisões")}</option>
               {Object.entries(decisionLabels).map(([key, label]) => (
                 <option key={key} value={key}>
-                  {label}
+                  {tr(label)}
                 </option>
               ))}
             </select>
@@ -138,7 +135,7 @@ export function SavedPlaces({
             />
           </label>
         </div>
-        <p role="status">{message}</p>
+        <p role="status">{tr(message)}</p>
       </section>
       <div className="catalog-grid">
         {choices.map((c) => (
@@ -164,20 +161,20 @@ export function SavedPlaces({
               if (d)
                 void save(
                   choosePlace(trip, c.place, d),
-                  decisionLabels[d] + " salvo.",
+                  tf("{decision} salvo.", { decision: tr(decisionLabels[d]) }),
                 );
             }}
           >
             <span className="eyebrow">{tr(decisionLabels[c.decision])}</span>
             <h3>{c.place.name}</h3>
-            <p>{c.place.address || "Endereço em aberto"}</p>
+            <p>{c.place.address || tr("Endereço em aberto")}</p>
             <ChoiceButtons
               value={c.decision}
               disabled={busy || pending}
               onChoose={(d) =>
                 void save(
                   choosePlace(trip, c.place, d),
-                  decisionLabels[d] + " salvo.",
+                  tf("{decision} salvo.", { decision: tr(decisionLabels[d]) }),
                 )
               }
             />
@@ -193,7 +190,7 @@ export function SavedPlaces({
                     );
                   } catch (e) {
                     setMessage(
-                      e instanceof Error ? e.message : "Confira o dia.",
+                      e instanceof Error ? e.message : tr("Confira o dia."),
                     );
                   }
                 }}
@@ -206,7 +203,7 @@ export function SavedPlaces({
                 onClick={() => {
                   if (
                     confirm(
-                      "Desfazer esta decisão e retirar o lugar da lista? Atividades do roteiro serão preservadas.",
+                      tr("Desfazer esta decisão e retirar o lugar da lista? Atividades do roteiro serão preservadas."),
                     )
                   )
                     void save(
@@ -222,10 +219,7 @@ export function SavedPlaces({
         ))}
       </div>
       {!choices.length && (
-        <p className="panel">
-          Nenhum lugar nesta lista. Adicione uma ideia ou escolha lugares em
-          Explorar.
-        </p>
+        <p className="panel">{tr("Nenhum lugar nesta lista. Adicione uma ideia ou escolha lugares em Explorar.")}</p>
       )}
       <section className="panel">
         <h2>{tr("Lugares no mapa")}</h2>
@@ -241,10 +235,7 @@ export function SavedPlaces({
               status: c.decision === "visited" ? "past" : "planning",
             }))}
         />
-        <p className="subtle">
-          Somente lugares com coordenadas. Itens marcados como Passar ficam fora
-          do mapa.
-        </p>
+        <p className="subtle">{tr("Somente lugares com coordenadas. Itens marcados como Passar ficam fora do mapa.")}</p>
       </section>
     </>
   );

@@ -1,3 +1,4 @@
+import { tf, formatNumber } from "./i18n";
 import { t as tr } from "./i18n";
 import { useState } from "react";
 import type { Trip } from "./model";
@@ -30,10 +31,7 @@ export function TravelNearby({
     <details className="tm-information">
       <summary>{tr("Perto de você · lugares salvos")}</summary>
       <div className="tm-information-content">
-        <p>
-          Escolha uma referência ou consulte sua posição uma vez. A posição do
-          aparelho não é salva na viagem.
-        </p>
+        <p>{tr("Escolha uma referência ou consulte sua posição uma vez. A posição do aparelho não é salva na viagem.")}</p>
         <label>
           {tr("Ponto de referência")}
           <select
@@ -58,7 +56,7 @@ export function TravelNearby({
           disabled={locating}
           onClick={() => {
             if (!navigator.geolocation) {
-              setMessage("Localização não disponível neste aparelho.");
+              setMessage(tr("Localização não disponível neste aparelho."));
               return;
             }
             setLocating(true);
@@ -70,13 +68,13 @@ export function TravelNearby({
                 });
                 setOrigin("");
                 setMessage(
-                  "Posição consultada uma vez. Nenhum rastreamento está ativo.",
+                  tr("Posição consultada uma vez. Nenhum rastreamento está ativo."),
                 );
                 setLocating(false);
               },
               () => {
                 setMessage(
-                  "Não foi possível obter a posição. Você pode escolher um lugar da lista.",
+                  tr("Não foi possível obter a posição. Você pode escolher um lugar da lista."),
                 );
                 setLocating(false);
               },
@@ -84,7 +82,7 @@ export function TravelNearby({
             );
           }}
         >
-          {locating ? "Consultando posição…" : "Usar minha posição uma vez"}
+          {locating ? tr("Consultando posição…") : tr("Usar minha posição uma vez")}
         </button>
         {point && (
           <>
@@ -93,7 +91,7 @@ export function TravelNearby({
               onClick={() => {
                 setPoint(undefined);
                 setOrigin("");
-                setMessage("Referência removida.");
+                setMessage(tr("Referência removida."));
               }}
             >
               {tr("Limpar referência")}
@@ -102,7 +100,7 @@ export function TravelNearby({
               nearby.map((p) => (
                 <article key={p.id} className="tm-reservation">
                   <h4>{p.title}</h4>
-                  <p>{p.distance.toFixed(1)} km em linha reta</p>
+                  <p>{tf("{km} km em linha reta", { km: formatNumber(p.distance, 1) })}</p>
                   {online && (
                     <a
                       href={directionsLink(p, transport, {
@@ -118,7 +116,7 @@ export function TravelNearby({
                 </article>
               ))
             ) : (
-              <p>Não há lugares salvos com coordenadas.</p>
+              <p>{tr("Não há lugares salvos com coordenadas.")}</p>
             )}
             {online && (
               <a
@@ -131,18 +129,12 @@ export function TravelNearby({
                 }
                 target="_blank"
                 rel="noreferrer"
-              >
-                Consultar restaurantes no Google Maps
-              </a>
+              >{tr("Consultar restaurantes no Google Maps")}</a>
             )}
-            <p className="tm-help">
-              Proximidade não confirma abertura, tempo de caminhada ou
-              disponibilidade. Ao abrir o Google Maps, o ponto escolhido é
-              enviado para calcular a busca.
-            </p>
+            <p className="tm-help">{tr("Proximidade não confirma abertura, tempo de caminhada ou disponibilidade. Ao abrir o Google Maps, o ponto escolhido é enviado para calcular a busca.")}</p>
           </>
         )}
-        <p role="status">{message}</p>
+        <p role="status">{tr(message)}</p>
       </div>
     </details>
   );

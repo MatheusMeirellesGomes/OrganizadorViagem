@@ -2366,3 +2366,25 @@ input[type="date"]::-webkit-date-and-time-value {
     display: none;
   }
 }
+
+/* Placeholder while a map or the catalog is downloaded. */
+.lazy-loading {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  color: #6c7b70;
+  font-size: 14px;
+}
+.lazy-loading.lazy-map {
+  min-height: 320px;
+  background: #eef2ea;
+  border-radius: 12px;
+}
+.lazy-failed {
+  text-align: center;
+  gap: 10px;
+  padding: 16px;
+}
+.lazy-failed p {
+  margin: 0;
+}

@@ -1,7 +1,7 @@
 import { t as tr } from "./i18n";
 import { useMemo, useState } from "react";
 import type { Trip } from "./model";
-import { RouteMap } from "./RouteMap";
+import { RouteMap } from "./LazyMaps";
 import {
   mapStops,
   daySegments,
@@ -47,10 +47,7 @@ export function RoutePlanner({
       </label>
       <RouteMap stops={stops} segments={segments} />
       {!stops.length && (
-        <p>
-          Nenhuma coordenada cadastrada para mostrar. Você ainda pode navegar
-          usando os endereços.
-        </p>
+        <p>{tr("Nenhuma coordenada cadastrada para mostrar. Você ainda pode navegar usando os endereços.")}</p>
       )}
       <div className="catalog-filters">
         <label>
@@ -99,30 +96,23 @@ export function RoutePlanner({
           {tr("Calcular trajeto no Google Maps")}
         </a>
       ) : (
-        <p className="subtle">
-          Escolha um destino com endereço ou coordenadas.
-        </p>
+        <p className="subtle">{tr("Escolha um destino com endereço ou coordenadas.")}</p>
       )}
-      <p className="subtle">
-        O Google Maps consulta trajetos, estimativas e opções de metrô, ônibus
-        ou trem onde disponíveis. Linhas, horários, baldeações e custos não são
-        calculados por este aplicativo.
-      </p>
+      <p className="subtle">{tr("O Google Maps consulta trajetos, estimativas e opções de metrô, ônibus ou trem onde disponíveis. Linhas, horários, baldeações e custos não são calculados por este aplicativo.")}</p>
       <ol>
         {trip.activities
           .filter((a) => a.day === day)
           .map((a) => (
             <li key={a.id}>
               <b>{a.title}</b>
-              {!a.coordinates && " · Sem coordenadas no mapa"}
+              {!a.coordinates && tr(" · Sem coordenadas no mapa")}
               {directionsLink(a, mode) && (
                 <p>
                   <a
                     href={directionsLink(a, mode)}
                     target="_blank"
                     rel="noreferrer"
-                  >
-                    Como chegar · {tr(transportLabels[mode])}
+                  >{tr("Como chegar ·")}{" "}{tr(transportLabels[mode])}
                   </a>
                 </p>
               )}

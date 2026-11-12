@@ -10,7 +10,7 @@ export function ChoiceButtons({
   disabled: boolean;
 }) {
   return (
-    <div className="choice-buttons" aria-label="Sua decisão">
+    <div className="choice-buttons" aria-label={tr("Sua decisão")}>
       {(Object.keys(decisionLabels) as Decision[]).map((d) => (
         <button
           key={d}

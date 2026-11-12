@@ -21,13 +21,11 @@ export function DocumentsPanel({
   return (
     <section className="panel">
       <h2>{tr("Documentos da viagem")}</h2>
-      <p>
-        Ingressos e comprovantes em PDF, JPG, PNG ou WebP. Até 1 MB por arquivo.
-      </p>
+      <p>{tr("Ingressos e comprovantes em PDF, JPG, PNG ou WebP. Até 1 MB por arquivo.")}</p>
       <p className="subtle">
         {userId
-          ? "Arquivos privados da sua conta. Para baixar, é necessária uma conexão."
-          : "Guardados somente neste navegador, acessíveis a quem usar este perfil do aparelho. Incluídos no backup JSON."}
+          ? tr("Arquivos privados da sua conta. Para baixar, é necessária uma conexão.")
+          : tr("Guardados somente neste navegador, acessíveis a quem usar este perfil do aparelho. Incluídos no backup JSON.")}
       </p>
       <form
         onSubmit={async (e) => {
@@ -49,7 +47,7 @@ export function DocumentsPanel({
                 .upload(url, file, { contentType: file.type, upsert: false });
               if (error)
                 throw new Error(
-                  "Não foi possível enviar. Confira a conexão e a configuração do armazenamento privado.",
+                  tr("Não foi possível enviar. Confira a conexão e a configuração do armazenamento privado."),
                 );
             }
             const saved = await onSave({
@@ -68,17 +66,17 @@ export function DocumentsPanel({
               ],
             });
             if (saved) {
-              setMessage("Documento salvo.");
+              setMessage(tr("Documento salvo."));
               if (input.current) input.current.value = "";
             } else if (userId && supabase) {
               await supabase.storage.from(documentBucket).remove([url]);
-              setMessage("Não foi possível salvar o documento na viagem.");
+              setMessage(tr("Não foi possível salvar o documento na viagem."));
             }
           } catch (error) {
             setMessage(
               error instanceof Error
                 ? error.message
-                : "Não foi possível salvar.",
+                : tr("Não foi possível salvar."),
             );
           } finally {
             setPending(false);
@@ -106,17 +104,17 @@ export function DocumentsPanel({
           </select>
         </label>
         <button className="secondary" disabled={pending || busy}>
-          {pending ? "Salvando…" : "Anexar documento"}
+          {pending ? tr("Salvando…") : tr("Anexar documento")}
         </button>
       </form>
       {(trip.documents || []).map((d) => (
         <article className="stay-card" key={d.id}>
           <h3>{d.name}</h3>
           <p>
-            {Math.ceil(d.size / 1024)} KB ·{" "}
+            {Math.ceil(d.size / 1024)}{" "}{tr("KB ·")}{" "}
             {d.reservationId
               ? trip.reservations.find((r) => r.id === d.reservationId)
-                  ?.title || "Reserva não disponível"
+                  ?.title || tr("Reserva não disponível")
               : tr("Documento geral")}
           </p>
           <div className="tm-actions">
@@ -133,20 +131,20 @@ export function DocumentsPanel({
                       .download(d.url);
                     if (error || !data)
                       throw new Error(
-                        "Arquivo indisponível. Verifique sua conexão e conta.",
+                        tr("Arquivo indisponível. Verifique sua conexão e conta."),
                       );
                     const url = URL.createObjectURL(data);
                     downloadDocument(d, url);
                     setTimeout(() => URL.revokeObjectURL(url), 1000);
                   } else
                     throw new Error(
-                      "Entre na conta de origem para acessar este arquivo.",
+                      tr("Entre na conta de origem para acessar este arquivo."),
                     );
                 } catch (error) {
                   setMessage(
                     error instanceof Error
                       ? error.message
-                      : "Não foi possível baixar.",
+                      : tr("Não foi possível baixar."),
                   );
                 } finally {
                   setPending(false);
@@ -161,7 +159,7 @@ export function DocumentsPanel({
               onClick={async () => {
                 if (
                   !confirm(
-                    "Remover o documento desta viagem? Guarde uma cópia antes.",
+                    tr("Remover o documento desta viagem? Guarde uma cópia antes."),
                   )
                 )
                   return;
@@ -175,7 +173,7 @@ export function DocumentsPanel({
                       ),
                     })
                   )
-                    setMessage("Documento removido desta viagem.");
+                    setMessage(tr("Documento removido desta viagem."));
                 } finally {
                   setPending(false);
                 }
@@ -186,7 +184,7 @@ export function DocumentsPanel({
           </div>
         </article>
       ))}
-      <p role="status">{message}</p>
+      <p role="status">{tr(message)}</p>
     </section>
   );
 }

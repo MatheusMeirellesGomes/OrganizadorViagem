@@ -25,6 +25,46 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.place-photo {
+  margin: -8px -8px 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e7ede1;
+}
+.place-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+.place-photo figcaption {
+  padding: 6px 10px;
+}
+.photo-credit {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6c7b70;
+}
+.photo-credit a {
+  color: inherit;
+}
+.place-description {
+  color: #4e6352;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.check-row input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
 .place-card h3 {
   font-size: 24px;
   line-height: 1.25;
@@ -120,4 +160,17 @@
 .tm-transport {
   max-width: 400px;
   margin: 20px 0;
+}
+.catalog-complement {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.catalog-complement p {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
 }

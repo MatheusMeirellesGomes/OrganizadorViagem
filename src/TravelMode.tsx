@@ -1,3 +1,4 @@
+import { tf } from "./i18n";
 import { t as tr } from "./i18n";
 import { TravelNearby } from "./TravelNearby";
 import { currentTripDay } from "./travel-clock";
@@ -94,9 +95,9 @@ export function TravelMode({
     try {
       if (await onSave(nextTrip)) setFeedback(message);
       else
-        setFeedback("Não foi possível salvar. Sua marcação não foi alterada.");
+        setFeedback(tr("Não foi possível salvar. Sua marcação não foi alterada."));
     } catch {
-      setFeedback("Não foi possível salvar. Tente novamente.");
+      setFeedback(tr("Não foi possível salvar. Tente novamente."));
     } finally {
       setPending(false);
     }
@@ -104,10 +105,10 @@ export function TravelMode({
   async function copy(value: string) {
     try {
       await navigator.clipboard.writeText(value);
-      setFeedback("Informação copiada.");
+      setFeedback(tr("Informação copiada."));
     } catch {
       setFeedback(
-        "Não foi possível copiar automaticamente. Selecione o texto para copiar.",
+        tr("Não foi possível copiar automaticamente. Selecione o texto para copiar."),
       );
     }
   }
@@ -120,8 +121,7 @@ export function TravelMode({
     ) : (
       <span className="tm-unavailable">
         <WifiOff size={15} />
-        {text}: precisa de internet
-      </span>
+        {tf("{text}: precisa de internet", { text })}</span>
     );
   }
   function directions(activity: Activity) {
@@ -143,7 +143,7 @@ export function TravelMode({
       <div className="tm-title">
         <p className="eyebrow">{tr("UM DIA DE CADA VEZ")}</p>
         <h1 id="travel-mode-title" ref={heading} tabIndex={-1}>
-          {trip.title || "Sua viagem"}
+          {trip.title || tr("Sua viagem")}
         </h1>
         {trip.destination?.trim() && (
           <p>
@@ -154,40 +154,36 @@ export function TravelMode({
       </div>
       {!online && (
         <p className="tm-offline" role="status">
-          <WifiOff size={16} />
-          Sem conexão · Seus dados locais continuam disponíveis. Mapas e links
-          precisam de internet.
-        </p>
+          <WifiOff size={16} />{tr("Sem conexão · Seus dados locais continuam disponíveis. Mapas e links precisam de internet.")}</p>
       )}
-      <nav ref={daysRef} className="tm-days" aria-label="Dias da viagem">
+      <nav ref={daysRef} className="tm-days" aria-label={tr("Dias da viagem")}>
         {travelDays(trip, day).map((number) => (
           <button
             key={number}
             aria-pressed={day === number}
-            aria-label={`Dia ${number}: ${dayLabel(trip, number).full}`}
+            aria-label={tf("Dia {number}: {label}", { number, label: dayLabel(trip, number).full })}
             onClick={() => onDayChange(number)}
           >
             <span>
               {tr("Dia")}
               {number}
-              {today === number ? " · Hoje" : ""}
+              {today === number ? tr(" · Hoje") : ""}
             </span>
             <b>{trip.start ? dayLabel(trip, number).short : tr("Sem data")}</b>
           </button>
         ))}
       </nav>
       <div className="tm-actions">
-        <small>Dia atual pelo fuso {trip.timeZone || "do aparelho"}.</small>
+        <small>{tr("Dia atual pelo fuso")}{" "}{trip.timeZone || tr("do aparelho")}.</small>
         {today && today !== day && (
-          <button className="secondary" onClick={() => onDayChange(today)}>
-            Ir para hoje · Dia {today}
+          <button className="secondary" onClick={() => onDayChange(today)}>{tr("Ir para hoje · Dia")}{" "}{today}
           </button>
         )}
       </div>
       <div className="tm-day-heading">
         <div>
           <h2>{label.full}</h2>
-          {!trip.start && <p>Sem datas definidas. Escolha o dia acima.</p>}
+          {!trip.start && <p>{tr("Sem datas definidas. Escolha o dia acima.")}</p>}
         </div>
         {progress.total > 0 && (
           <span>
@@ -200,7 +196,7 @@ export function TravelMode({
           className="tm-progress"
           value={progress.done}
           max={progress.total}
-          aria-label="Progresso das atividades do dia"
+          aria-label={tr("Progresso das atividades do dia")}
         />
       )}
       <label className="tm-transport">
@@ -225,11 +221,11 @@ export function TravelMode({
             <small>{tr("A SEGUIR NO ROTEIRO")}</small>
             <h3>{next.title}</h3>
             <p>
-              {next.time || "Sem horário definido"}
+              {next.time || tr("Sem horário definido")}
               {next.kind ? " · " + next.kind : ""}
             </p>
           </div>
-          <a href={"#tm-activity-" + next.id} aria-label={"Ver " + next.title}>
+          <a href={"#tm-activity-" + next.id} aria-label={tr("Ver ") + next.title}>
             <ArrowRight size={22} />
           </a>
         </aside>
@@ -237,26 +233,23 @@ export function TravelMode({
         <div className="tm-complete" role="status">
           <CheckCheck size={24} />
           <div>
-            <h3>Um dia cheio de caminhos percorridos.</h3>
-            <p>Todas as atividades estão marcadas como visitadas.</p>
+            <h3>{tr("Um dia cheio de caminhos percorridos.")}</h3>
+            <p>{tr("Todas as atividades estão marcadas como visitadas.")}</p>
           </div>
         </div>
       ) : null}
       {activities.length === 0 ? (
         <div className="tm-empty">
           <Compass size={34} strokeWidth={1.4} />
-          <h3>Um dia aberto a possibilidades</h3>
-          <p>
-            Não há atividades neste dia. Você pode escolher outro dia ou voltar
-            ao planejamento para adicionar um lugar.
-          </p>
+          <h3>{tr("Um dia aberto a possibilidades")}</h3>
+          <p>{tr("Não há atividades neste dia. Você pode escolher outro dia ou voltar ao planejamento para adicionar um lugar.")}</p>
           <button className="secondary" onClick={onBack}>
             <ArrowLeft size={17} />
             {tr("Voltar ao planejamento")}
           </button>
         </div>
       ) : (
-        <ol className="tm-timeline" aria-label="Programação do dia">
+        <ol className="tm-timeline" aria-label={tr("Programação do dia")}>
           {activities.map((activity, index) => (
             <li
               id={"tm-activity-" + activity.id}
@@ -272,10 +265,10 @@ export function TravelMode({
                     {activity.time ? (
                       <time>{activity.time}</time>
                     ) : (
-                      "Sem horário"
+                      tr("Sem horário")
                     )}
                   </span>
-                  {activity.kind && <span>{activity.kind}</span>}
+                  {activity.kind && <span>{tr(activity.kind)}</span>}
                   {activity.done && (
                     <span className="tm-visited">{tr("Visitada")}</span>
                   )}
@@ -302,13 +295,13 @@ export function TravelMode({
                       update(
                         toggleVisited(trip, activity.id),
                         activity.done
-                          ? "Visita desmarcada."
-                          : "Visita salva no seu roteiro.",
+                          ? tr("Visita desmarcada.")
+                          : tr("Visita salva no seu roteiro."),
                       )
                     }
                   >
                     <Check size={17} />
-                    {activity.done ? tr("Visitado") : "Marcar visita"}
+                    {activity.done ? tr("Visitado") : tr("Marcar visita")}
                   </button>
                 </div>
                 <details className="tm-activity-details">
@@ -322,12 +315,12 @@ export function TravelMode({
                     {activity.kind && (
                       <>
                         <dt>{tr("Categoria")}</dt>
-                        <dd>{activity.kind}</dd>
+                        <dd>{tr(activity.kind)}</dd>
                       </>
                     )}
                     {activity.time && (
                       <>
-                        <dt>Horário informado</dt>
+                        <dt>{tr("Horário informado")}</dt>
                         <dd>{activity.time}</dd>
                       </>
                     )}
@@ -346,7 +339,7 @@ export function TravelMode({
                         </dd>
                       </>
                     )}
-                    <dt>Status</dt>
+                    <dt>{tr("Status")}</dt>
                     <dd>
                       {activity.done
                         ? tr("Visitada")
@@ -354,9 +347,7 @@ export function TravelMode({
                     </dd>
                   </dl>
                   {!activity.address?.trim() && (
-                    <p className="tm-help">
-                      Esta atividade ainda não tem endereço para navegação.
-                    </p>
+                    <p className="tm-help">{tr("Esta atividade ainda não tem endereço para navegação.")}</p>
                   )}
                 </details>
               </article>
@@ -370,7 +361,7 @@ export function TravelMode({
           <summary>
             <span>
               {tr("Informações da viagem")}
-              <small>O essencial, sempre à mão</small>
+              <small>{tr("O essencial, sempre à mão")}</small>
             </span>
             <ChevronDown size={21} />
           </summary>
@@ -379,14 +370,11 @@ export function TravelMode({
               <section>
                 <h3>
                   {selectedStays.length
-                    ? "Hospedagens deste dia"
-                    : "Hospedagens cadastradas"}
+                    ? tr("Hospedagens deste dia")
+                    : tr("Hospedagens cadastradas")}
                 </h3>
                 {!selectedStays.length && (
-                  <p className="tm-help">
-                    Nenhuma estadia confirmada para este dia pelas datas
-                    cadastradas.
-                  </p>
+                  <p className="tm-help">{tr("Nenhuma estadia confirmada para este dia pelas datas cadastradas.")}</p>
                 )}
                 {(selectedStays.length ? selectedStays : trip.stays || []).map(
                   (s) => (
@@ -430,25 +418,23 @@ export function TravelMode({
                 <h3>{tr("Reservas da viagem")}</h3>
                 <p className="tm-help">
                   {trip.reservations.some((r) => r.activityId || r.stayId)
-                    ? "Vínculos definidos por você no planejamento."
-                    : "Reservas gerais, sem vínculo automático com as atividades."}
+                    ? tr("Vínculos definidos por você no planejamento.")
+                    : tr("Reservas gerais, sem vínculo automático com as atividades.")}
                 </p>
                 {trip.reservations.map((reservation) => (
                   <article className="tm-reservation" key={reservation.id}>
                     <h4>{reservation.title || tr("Reserva")}</h4>
                     {reservation.activityId && (
-                      <p>
-                        Atividade:{" "}
+                      <p>{tr("Atividade:")}{" "}
                         {trip.activities.find(
                           (a) => a.id === reservation.activityId,
-                        )?.title || "Não disponível"}
+                        )?.title || tr("Não disponível")}
                       </p>
                     )}
                     {reservation.stayId && (
-                      <p>
-                        Hospedagem:{" "}
+                      <p>{tr("Hospedagem:")}{" "}
                         {trip.stays?.find((s) => s.id === reservation.stayId)
-                          ?.name || "Não disponível"}
+                          ?.name || tr("Não disponível")}
                       </p>
                     )}
                     {reservation.details && (
@@ -480,7 +466,7 @@ export function TravelMode({
                               x.id === item.id ? { ...x, done: !x.done } : x,
                             ),
                           },
-                          "Checklist atualizado.",
+                          tr("Checklist atualizado."),
                         )
                       }
                     />
@@ -494,12 +480,9 @@ export function TravelMode({
           </div>
         </details>
       )}
-      <p className="tm-footnote">
-        A sequência é a do seu planejamento. Horários são os cadastrados, sem
-        conversão de fuso.
-      </p>
+      <p className="tm-footnote">{tr("A sequência é a do seu planejamento. Horários são os cadastrados, sem conversão de fuso.")}</p>
       <div className="tm-feedback" role="status" aria-live="polite">
-        {feedback}
+        {tr(feedback)}
       </div>
       <footer className="tm-bottom">
         <button onClick={onBack}>
@@ -509,7 +492,7 @@ export function TravelMode({
         <span>
           {progress.total
             ? `${progress.done} de ${progress.total} visitadas`
-            : "No seu ritmo"}
+            : tr("No seu ritmo")}
         </span>
       </footer>
     </section>

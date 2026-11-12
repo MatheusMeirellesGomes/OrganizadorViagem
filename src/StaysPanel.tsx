@@ -32,11 +32,11 @@ export function StaysPanel({
         })
       ) {
         setEditing(null);
-        setMessage("Hospedagem salva.");
+        setMessage(tr("Hospedagem salva."));
       }
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Não foi possível salvar.",
+        error instanceof Error ? error.message : tr("Não foi possível salvar."),
       );
     } finally {
       setPending(false);
@@ -46,8 +46,8 @@ export function StaysPanel({
     <section className="panel stays-panel">
       <div className="section-head">
         <div>
-          <h2>Onde vamos ficar?</h2>
-          <p>Uma ou várias paradas. Todos os detalhes são opcionais.</p>
+          <h2>{tr("Onde vamos ficar?")}</h2>
+          <p>{tr("Uma ou várias paradas. Todos os detalhes são opcionais.")}</p>
         </div>
         <button
           className="secondary"
@@ -60,15 +60,13 @@ export function StaysPanel({
       </div>
       {trip.hotel && (
         <p className="legacy-stay">
-          <b>Hospedagem já cadastrada</b>
+          <b>{tr("Hospedagem já cadastrada")}</b>
           <br />
           {trip.hotel}
         </p>
       )}
       {!(trip.stays || []).length && !editing && (
-        <p className="subtle">
-          Adicione hotéis, pousadas, casas ou qualquer lugar onde vai ficar.
-        </p>
+        <p className="subtle">{tr("Adicione hotéis, pousadas, casas ou qualquer lugar onde vai ficar.")}</p>
       )}
       {(trip.stays || []).map((s) => (
         <article className="stay-card" key={s.id}>
@@ -77,9 +75,8 @@ export function StaysPanel({
             {s.name}
           </h3>
           <p>{[s.address, s.city].filter(Boolean).join(" · ")}</p>
-          <p>
-            Entrada: {s.start || "Em aberto"} {s.checkInTime} · Saída:{" "}
-            {s.end || "Em aberto"} {s.checkOutTime}
+          <p>{tr("Entrada:")}{" "}{s.start || tr("Em aberto")} {s.checkInTime}{" "}{tr("· Saída:")}{" "}
+            {s.end || tr("Em aberto")} {s.checkOutTime}
           </p>
           {s.notes && <p className="pre-wrap">{s.notes}</p>}
           {s.confirmation && (
@@ -123,7 +120,7 @@ export function StaysPanel({
               onClick={async () => {
                 if (
                   !confirm(
-                    "Excluir esta hospedagem? As reservas serão preservadas, sem o vínculo.",
+                    tr("Excluir esta hospedagem? As reservas serão preservadas, sem o vínculo."),
                   )
                 )
                   return;
@@ -131,7 +128,7 @@ export function StaysPanel({
                 try {
                   if (await onSave(removeStay(trip, s.id))) {
                     if (editing?.id === s.id) setEditing(null);
-                    setMessage("Hospedagem excluída; reservas preservadas.");
+                    setMessage(tr("Hospedagem excluída; reservas preservadas."));
                   }
                 } finally {
                   setPending(false);
@@ -145,7 +142,7 @@ export function StaysPanel({
       ))}
       {editing && (
         <form className="stay-form" key={editing.id || "new"} onSubmit={submit}>
-          <h3>{editing.id ? "Editar hospedagem" : "Nova hospedagem"}</h3>
+          <h3>{editing.id ? tr("Editar hospedagem") : tr("Nova hospedagem")}</h3>
           <div className="form-grid">
             {(
               [
@@ -163,15 +160,15 @@ export function StaysPanel({
               <label key={key}>
                 {
                   {
-                    name: "Nome",
-                    city: "Cidade",
-                    address: "Endereço",
-                    start: "Check-in",
-                    end: "Check-out",
-                    checkInTime: "Horário de entrada",
-                    checkOutTime: "Horário de saída",
-                    url: "Link da reserva",
-                    confirmation: "Código de confirmação",
+                    name: tr("Nome"),
+                    city: tr("Cidade"),
+                    address: tr("Endereço"),
+                    start: tr("Check-in"),
+                    end: tr("Check-out"),
+                    checkInTime: tr("Horário de entrada"),
+                    checkOutTime: tr("Horário de saída"),
+                    url: tr("Link da reserva"),
+                    confirmation: tr("Código de confirmação"),
                   }[key]
                 }
                 <input
@@ -231,7 +228,7 @@ export function StaysPanel({
           </div>
         </form>
       )}
-      <p role="status">{message}</p>
+      <p role="status">{tr(message)}</p>
     </section>
   );
 }
@@ -252,7 +249,7 @@ export function ReservationLinks({
       <label>
         {tr("Atividade vinculada")}
         <select
-          aria-label={"Atividade de " + r.title}
+          aria-label={tr("Atividade de ") + r.title}
           value={r.activityId || ""}
           disabled={busy}
           onChange={(e) =>
@@ -278,7 +275,7 @@ export function ReservationLinks({
       <label>
         {tr("Hospedagem vinculada")}
         <select
-          aria-label={"Hospedagem de " + r.title}
+          aria-label={tr("Hospedagem de ") + r.title}
           value={r.stayId || ""}
           disabled={busy}
           onChange={(e) =>

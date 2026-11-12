@@ -87,3 +87,22 @@ Arquivos: `photos.ts`, `photos.test.ts`, `PrivatePhoto.tsx`, `PhotoGallery.tsx`,
 Seleção pt-BR/en/es no Perfil, persistência por aparelho, idioma do documento e traduções centralizadas. Navegação, abas internas, principais ações/campos e formatos de datas/moedas adaptados. Conteúdo pessoal permanece intacto. Helper de desenvolvimento altera somente literais conhecidos, nunca percorre texto pessoal no DOM.
 
 Arquivos: `i18n.ts`, `i18n.test.tsx`, `LanguagePicker.tsx`, `locales/core.json`, `scripts/localize-ui.cjs`, componentes de interface e formatação em `model.ts`/`travel-mode.ts`. **98 testes aprovados**, build aprovado; troca imediata para inglês verificada no navegador. Limite deliberado desta subetapa: textos explicativos, estados e mensagens ainda parcialmente em português; serão tratados na 11b antes de considerar a internacionalização completa. Próxima subetapa: ampliar tradução dos fluxos e mensagens.
+
+## Revisão — erros, catálogo real e carregamento (Claude)
+
+Revisão da `main` após o PR #1: 98 testes e build aprovados; fluxos de conta, migração e telas de 360/390 px sem regressões. Erros encontrados e corrigidos:
+
+- **Catálogo nunca funcionava:** instâncias públicas do Overpass sobrecarregadas (testado no navegador real: "at capacity", 504 e timeouts) e catálogo desligado em produção. Atrações passam a vir de Wikipédia + Wikidata + Commons (fotos livres com autor e licença), restaurantes e complemento de cidades pequenas do Nominatim, dentro da política de uso. Detalhes em `docs/CATALOGO.md`.
+- **Arquivo principal de 530 KB:** mapas (Leaflet) e catálogo carregados sob demanda; principal com 366 KB. Para não quebrar o uso offline, as partes são baixadas em segundo plano após abrir o app e, se faltarem, aparece um aviso no lugar do mapa (antes o app inteiro travava).
+- **Verificação do Supabase:** passa a cobrir o bucket privado `trip-documents`.
+- Distâncias formatadas no idioma da interface; cache antigo do catálogo removido.
+
+Arquivos: `wiki-places.ts`, `osm-places.ts`, `catalog-service.ts`, `Catalog.tsx`, `catalog.css`, `LazyMaps.tsx`, `main.tsx`, `scripts/verificar-supabase.mjs` e testes. Verificação: testes unitários, build, testes de navegador (catálogo, conta, migração, telas, falha de carregamento) e testes reais das fontes no navegador do computador do Matheus.
+
+## Etapa 11b — idiomas completos (Claude)
+
+Todos os textos da interface passam por `tr()`/`tf()`: telas, rótulos de acessibilidade, mensagens de sucesso e de erro (inclusive as vindas de `errors.ts`, do catálogo e da migração), categorias, status, decisões e o HTML offline. Frases com números ou nomes viraram frases completas com variáveis (`{count} lugares encontrados`), para a ordem das palavras ficar natural em cada idioma; singular e plural são frases separadas. Dicionário de 218 para 730+ entradas, em inglês e espanhol.
+
+Verificação: `i18n-coverage.test.ts` lê o código e falha se algum texto da interface não tiver tradução ou se as variáveis divergirem; varredura no navegador em inglês e espanhol por todas as telas, abas, Modo Viagem, catálogo e cadastro sem textos em português além de nomes de lugares (dados); telas de 360 e 390 px sem rolagem lateral nos dois idiomas. Conteúdo pessoal (títulos, notas) e valores salvos (status, categorias) não são traduzidos nos dados, só na exibição, então backups continuam compatíveis entre idiomas.
+
+Limites: textos vindos das fontes externas (descrições da Wikipédia, nomes no OpenStreetMap) aparecem no idioma da fonte; a Wikipédia usa a edição do idioma da interface.

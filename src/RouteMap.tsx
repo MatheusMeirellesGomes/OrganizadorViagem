@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -96,19 +97,12 @@ export function RouteMap({
       <div
         ref={ref}
         className="travel-map route-map"
-        aria-label="Mapa de atividades e hospedagens"
+        aria-label={tr("Mapa de atividades e hospedagens")}
       />
       {error && (
-        <p role="status">
-          O mapa não carregou completamente. Os lugares continuam na lista
-          abaixo.
-        </p>
+        <p role="status">{tr("O mapa não carregou completamente. Os lugares continuam na lista abaixo.")}</p>
       )}
-      <p className="subtle">
-        Números: ordem do dia · H: hospedagem · Dourado: visitado · Terracota:
-        alimentação. Pontos próximos são agrupados. Linhas pontilhadas indicam
-        sequência em linha reta, não trajetos por ruas.
-      </p>
+      <p className="subtle">{tr("Números: ordem do dia · H: hospedagem · Dourado: visitado · Terracota: alimentação. Pontos próximos são agrupados. Linhas pontilhadas indicam sequência em linha reta, não trajetos por ruas.")}</p>
     </>
   );
 }

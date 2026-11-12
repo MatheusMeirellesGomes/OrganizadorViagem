@@ -1,3 +1,4 @@
+import { getLocale, translate } from "./i18n";
 import type { Trip, Activity } from "./model";
 import type { Point } from "./places";
 import { validPoint } from "./places";
@@ -48,7 +49,7 @@ export function routeLocations(trip: Trip): RouteLocation[] {
     })),
     ...trip.activities.map((a) => ({
       id: "activity:" + a.id,
-      title: `Dia ${a.day} · ${a.title}`,
+      title: `${translate("Dia {number}", getLocale(), { number: a.day })} · ${a.title}`,
       address: a.address,
       coordinates: a.coordinates,
     })),

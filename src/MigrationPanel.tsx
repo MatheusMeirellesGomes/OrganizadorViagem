@@ -1,4 +1,4 @@
-import { t as tr } from "./i18n";
+import { t as tr, tf } from "./i18n";
 import { useState } from "react";
 import {
   CheckCircle2,
@@ -34,9 +34,14 @@ type Report = {
 };
 
 const postponedKey = (userId: string) => "gomes-migracao-adiada:" + userId;
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${n === 1 ? one : many}`;
-const tripName = (t: Trip) => t.title || "Viagem sem nome";
+/** Singular or plural sentence, translated, with {count} filled in. */
+const counted = (
+  n: number,
+  one: string,
+  many: string,
+  values: Record<string, string | number> = {},
+) => tf(n === 1 ? one : many, { count: n, ...values });
+const tripName = (t: Trip) => t.title || tr("Viagem sem nome");
 
 export function MigrationPanel({ userId, repo, online, onSent }: Props) {
   const [local, setLocal] = useState<Trip[]>(readLocal);
@@ -111,14 +116,17 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
       );
       if (!ids.length) {
         setError(
-          "Nenhuma viagem pôde ser confirmada na conta agora. Nada foi removido.",
+          tr("Nenhuma viagem pôde ser confirmada na conta agora. Nada foi removido."),
         );
         return;
       }
       if (
         !confirm(
-          `Remover ${plural(ids.length, "viagem", "viagens")} deste navegador? ` +
-            "Elas continuam salvas na sua conta.",
+          counted(
+            ids.length,
+            "Remover {count} viagem deste navegador? Ela continua salva na sua conta.",
+            "Remover {count} viagens deste navegador? Elas continuam salvas na sua conta.",
+          ),
         )
       )
         return;
@@ -157,28 +165,26 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
         <div className="migration-body">
           <h2>
             {report.sent
-              ? `${plural(report.sent, "viagem confirmada", "viagens confirmadas")} na sua conta`
-              : "Nenhuma viagem foi enviada"}
+              ? counted(
+                  report.sent,
+                  "{count} viagem confirmada na sua conta",
+                  "{count} viagens confirmadas na sua conta",
+                )
+              : tr("Nenhuma viagem foi enviada")}
           </h2>
           {report.failed.length > 0 && (
             <>
               <p>
-                {plural(
+                {counted(
                   report.failed.length,
-                  "viagem não pôde",
-                  "viagens não puderam",
-                )}{" "}
-                ser
-                {report.failed.length === 1 ? " enviada" : " enviadas"} e{" "}
-                {report.failed.length === 1
-                  ? "continua salva"
-                  : "continuam salvas"}{" "}
-                neste navegador:
+                  "{count} viagem não pôde ser enviada e continua salva neste navegador:",
+                  "{count} viagens não puderam ser enviadas e continuam salvas neste navegador:",
+                )}
               </p>
               <ul>
                 {report.failed.map((f) => (
                   <li key={f.trip.id}>
-                    <b>{tripName(f.trip)}</b>: {f.message}
+                    <b>{tripName(f.trip)}</b>: {tr(f.message)}
                   </li>
                 ))}
               </ul>
@@ -196,50 +202,38 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
           {report.conflicts.length > 0 && (
             <>
               <p>
-                {plural(
+                {counted(
                   report.conflicts.length,
-                  "viagem já existe",
-                  "viagens já existem",
-                )}{" "}
-                na conta com outro conteúdo. Nada foi substituído:{" "}
-                {report.conflicts.map(tripName).join(", ")}.
+                  "{count} viagem já existe na conta com outro conteúdo. Nada foi substituído: {names}.",
+                  "{count} viagens já existem na conta com outro conteúdo. Nada foi substituído: {names}.",
+                  { names: report.conflicts.map(tripName).join(", ") },
+                )}
               </p>
               <div className="migration-actions">
                 <button
                   className="primary small"
                   disabled={busy || !online}
                   onClick={() => send(report.conflicts, true)}
-                >
-                  Enviar como cópias
-                </button>
+                >{tr("Enviar como cópias")}</button>
                 <button
                   className="secondary small"
                   disabled={busy}
                   onClick={() => keepAccountVersion(report.conflicts)}
-                >
-                  Manter só a versão da conta
-                </button>
+                >{tr("Manter só a versão da conta")}</button>
               </div>
             </>
           )}
           {confirmedLocal.length > 0 && !report.conflicts.length && (
             <>
-              <p>
-                Uma cópia continua neste navegador. Você pode mantê-la ou
-                removê-la; a conta não é afetada.
-              </p>
+              <p>{tr("Uma cópia continua neste navegador. Você pode mantê-la ou removê-la; a conta não é afetada.")}</p>
               <div className="migration-actions">
                 <button
                   className="secondary small"
                   disabled={busy || !online}
                   onClick={removeLocalCopy}
                 >
-                  <HardDrive size={15} />
-                  Remover cópia deste navegador
-                </button>
-                <button className="text-button" onClick={() => setReport(null)}>
-                  Manter cópia local
-                </button>
+                  <HardDrive size={15} />{tr("Remover cópia deste navegador")}</button>
+                <button className="text-button" onClick={() => setReport(null)}>{tr("Manter cópia local")}</button>
               </div>
             </>
           )}
@@ -248,7 +242,7 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
               {tr("Fechar")}
             </button>
           )}
-          {error && <p className="migration-error">{error}</p>}
+          {error && <p className="migration-error">{tr(error)}</p>}
         </div>
       </section>
     );
@@ -261,30 +255,27 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
       </span>
       <div className="migration-body">
         <h2>
-          {plural(pending.length, "viagem salva", "viagens salvas")} só neste
-          navegador
+          {counted(
+            pending.length,
+            "{count} viagem salva só neste navegador",
+            "{count} viagens salvas só neste navegador",
+          )}
         </h2>
-        <p>
-          Envie para sua conta para acessar em outros aparelhos. Nada que já
-          está na conta será substituído, e a cópia deste navegador só sai se
-          você pedir.
-        </p>
+        <p>{tr("Envie para sua conta para acessar em outros aparelhos. Nada que já está na conta será substituído, e a cópia deste navegador só sai se você pedir.")}</p>
         <div className="migration-actions">
           <button
             className="primary small"
             disabled={busy || !online}
             onClick={() => send(pending)}
           >
-            {busy ? "Enviando…" : "Enviar para minha conta"}
+            {busy ? tr("Enviando…") : tr("Enviar para minha conta")}
           </button>
-          <button className="text-button" disabled={busy} onClick={postpone}>
-            Agora não
-          </button>
+          <button className="text-button" disabled={busy} onClick={postpone}>{tr("Agora não")}</button>
         </div>
         {!online && (
-          <p className="migration-error">Conecte-se à internet para enviar.</p>
+          <p className="migration-error">{tr("Conecte-se à internet para enviar.")}</p>
         )}
-        {error && <p className="migration-error">{error}</p>}
+        {error && <p className="migration-error">{tr(error)}</p>}
       </div>
     </section>
   );

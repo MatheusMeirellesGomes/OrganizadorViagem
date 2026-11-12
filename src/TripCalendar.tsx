@@ -1,3 +1,4 @@
+import { tf } from "./i18n";
 import { getLocale } from "./i18n";
 import { t as tr } from "./i18n";
 import { validTimeZone } from "./travel-clock";
@@ -38,11 +39,7 @@ export function TripCalendar({
     <div className="extension-grid">
       <section className="panel">
         <h2>{tr("Fuso horário opcional")}</h2>
-        <p>
-          Usado para identificar o dia atual no Modo Viagem. Sem configuração,
-          usamos o fuso do aparelho. Os horários que você cadastrou continuam
-          como foram informados.
-        </p>
+        <p>{tr("Usado para identificar o dia atual no Modo Viagem. Sem configuração, usamos o fuso do aparelho. Os horários que você cadastrou continuam como foram informados.")}</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -51,12 +48,12 @@ export function TripCalendar({
             ).trim();
             if (!validTimeZone(timeZone)) {
               setMessage(
-                "Fuso inválido. Use um identificador como Europe/Lisbon.",
+                tr("Fuso inválido. Use um identificador como Europe/Lisbon."),
               );
               return;
             }
             if (await onSave({ ...trip, timeZone: timeZone || undefined }))
-              setMessage("Fuso atualizado.");
+              setMessage(tr("Fuso atualizado."));
           }}
         >
           <label>
@@ -65,17 +62,17 @@ export function TripCalendar({
               name="timeZone"
               list="trip-time-zones"
               defaultValue={trip.timeZone}
-              placeholder="Usar fuso do aparelho"
+              placeholder={tr("Usar fuso do aparelho")}
             />
           </label>
           <datalist id="trip-time-zones">
             {[
-              "America/Sao_Paulo",
-              "America/Manaus",
-              "Europe/Lisbon",
-              "Europe/Madrid",
-              "America/New_York",
-              "Asia/Tokyo",
+              tr("America/Sao_Paulo"),
+              tr("America/Manaus"),
+              tr("Europe/Lisbon"),
+              tr("Europe/Madrid"),
+              tr("America/New_York"),
+              tr("Asia/Tokyo"),
             ].map((z) => (
               <option key={z} value={z} />
             ))}
@@ -88,8 +85,8 @@ export function TripCalendar({
       <section className="panel">
         <div className="section-head">
           <div>
-            <h2>Calendário da viagem</h2>
-            <p>Datas ajudam a visualizar. Continuam opcionais.</p>
+            <h2>{tr("Calendário da viagem")}</h2>
+            <p>{tr("Datas ajudam a visualizar. Continuam opcionais.")}</p>
           </div>
           <CalendarDays size={22} />
         </div>
@@ -100,12 +97,12 @@ export function TripCalendar({
               start = String(f.get("start") || ""),
               end = String(f.get("end") || "");
             if (start && end && end < start) {
-              setMessage("A volta precisa ser igual ou posterior à ida.");
+              setMessage(tr("A volta precisa ser igual ou posterior à ida."));
               return;
             }
             if (await onSave({ ...trip, start, end })) {
               setMessage(
-                "Datas atualizadas. A sequência das atividades foi preservada.",
+                tr("Datas atualizadas. A sequência das atividades foi preservada."),
               );
               if (start)
                 setMonth(new Date(start.slice(0, 7) + "-01T12:00:00Z"));
@@ -131,7 +128,7 @@ export function TripCalendar({
             <div className="month-nav">
               <button
                 className="icon-button"
-                aria-label="Mês anterior"
+                aria-label={tr("Mês anterior")}
                 onClick={() =>
                   setMonth(
                     new Date(
@@ -155,7 +152,7 @@ export function TripCalendar({
               </h3>
               <button
                 className="icon-button"
-                aria-label="Próximo mês"
+                aria-label={tr("Próximo mês")}
                 onClick={() =>
                   setMonth(
                     new Date(
@@ -172,7 +169,7 @@ export function TripCalendar({
               </button>
             </div>
             <div className="month-grid">
-              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((d) => (
+              {[tr("Seg"), tr("Ter"), tr("Qua"), tr("Qui"), tr("Sex"), tr("Sáb"), tr("Dom")].map((d) => (
                 <small key={d}>{d}</small>
               ))}
               {calendarCells(
@@ -184,7 +181,7 @@ export function TripCalendar({
                   key={c.iso}
                   disabled={!c.day}
                   className={`${c.inMonth ? "" : "muted"} ${c.day === day ? "selected" : ""}`}
-                  aria-label={`${c.iso}${c.day ? ", dia " + c.day : ""}`}
+                  aria-label={c.day ? tf("{date}, dia {day}", { date: c.iso, day: c.day }) : c.iso}
                   aria-pressed={c.day === day}
                   onClick={() => c.day && onDayChange(c.day)}
                 >
@@ -192,7 +189,7 @@ export function TripCalendar({
                   {c.day && (
                     <small>
                       {trip.activities.filter((a) => a.day === c.day).length ||
-                        "Livre"}
+                        tr("Livre")}
                     </small>
                   )}
                 </button>
@@ -228,23 +225,18 @@ export function TripCalendar({
           ) : null;
         })}
         {!activities.length && (
-          <p className="subtle">Dia livre. Nenhuma atividade cadastrada.</p>
+          <p className="subtle">{tr("Dia livre. Nenhuma atividade cadastrada.")}</p>
         )}
-        <button className="secondary" onClick={onOpenDay}>
-          Abrir este dia no roteiro
-          <ArrowRight size={16} />
+        <button className="secondary" onClick={onOpenDay}>{tr("Abrir este dia no roteiro")}<ArrowRight size={16} />
         </button>
-        <p role="status">{message}</p>
+        <p role="status">{tr(message)}</p>
       </section>
       <section className="panel">
         <div className="section-head">
-          <h2>Quem vai com você?</h2>
+          <h2>{tr("Quem vai com você?")}</h2>
           <Users size={22} />
         </div>
-        <p>
-          Preencha só o que ajudar a planejar. Não precisamos de documentos ou
-          dados sensíveis.
-        </p>
+        <p>{tr("Preencha só o que ajudar a planejar. Não precisamos de documentos ou dados sensíveis.")}</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -263,7 +255,7 @@ export function TripCalendar({
                 },
               })
             )
-              setMessage("Grupo atualizado.");
+              setMessage(tr("Grupo atualizado."));
           }}
         >
           <div className="form-grid">
@@ -288,20 +280,16 @@ export function TripCalendar({
               />
             </label>
           </div>
-          <label>
-            Apelidos ou nomes · um por linha
-            <textarea
+          <label>{tr("Apelidos ou nomes · um por linha")}<textarea
               name="members"
               defaultValue={trip.party?.members?.join("\n")}
               rows={3}
             />
           </label>
-          <label>
-            Preferências do grupo
-            <textarea
+          <label>{tr("Preferências do grupo")}<textarea
               name="preferences"
               defaultValue={trip.party?.preferences}
-              placeholder="Ritmo tranquilo, pausas, interesses…"
+              placeholder={tr("Ritmo tranquilo, pausas, interesses…")}
             />
           </label>
           <button className="primary full" disabled={busy}>

@@ -53,3 +53,6 @@ export const formatNumber = (value: number, digits = 0) =>
     maximumFractionDigits: digits,
     minimumFractionDigits: digits,
   }).format(value);
+/** Translates and fills {placeholders} in the current language. */
+export const tf = (key: string, values: Record<string, string | number>) =>
+  translate(key, language, values);
