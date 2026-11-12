@@ -84,6 +84,7 @@ import { compressPhoto } from "./photos";
 import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
 import { DayMeals } from "./DayMeals";
+import { BudgetPanel } from "./BudgetPanel";
 import { MealFinder } from "./LazyMaps";
 import type { MealRequest } from "./explore/MealFinder";
 import { isMealActivity, mealTime } from "./meals";
@@ -1443,108 +1444,7 @@ function App() {
                     cloud={!!session}
                   />
                 )}
-                {tab === "Despesas" && (
-                  <section className="panel settings-form">
-                    <h2>{tr("Despesas, se fizer sentido para você")}</h2>
-                    <p>{tr("Os totais são separados por moeda, sem conversão automática.")}</p>
-                    <div className="expense-totals">
-                      {["BRL", "EUR", "USD"].map((c) => (
-                        <div key={c}>
-                          <small>{c}</small>
-                          <h2>
-                            {new Intl.NumberFormat(getLocale(), {
-                              style: "currency",
-                              currency: c,
-                            }).format(
-                              trip.expenses
-                                .filter((x) => x.currency === c)
-                                .reduce((s, x) => s + x.amount, 0),
-                            )}
-                          </h2>
-                        </div>
-                      ))}
-                    </div>
-                    <form
-                      className="expense-form"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const form = e.currentTarget,
-                          f = new FormData(form);
-                        const amount = Number(field(f, "amount"));
-                        if (!Number.isFinite(amount) || amount <= 0) {
-                          setNotice(
-                            tr("Informe um valor maior que zero para registrar a despesa."),
-                          );
-                          return;
-                        }
-                        if (
-                          await save({
-                            ...trip,
-                            expenses: [
-                              ...trip.expenses,
-                              {
-                                id: uid(),
-                                title: field(f, "title") || tr("Despesa"),
-                                amount,
-                                currency: field(f, "currency"),
-                              },
-                            ],
-                          })
-                        )
-                          form.reset();
-                      }}
-                    >
-                      <input
-                        name="title"
-                        placeholder={tr("Descrição")}
-                        aria-label={tr("Descrição da despesa")}
-                      />
-                      <input
-                        name="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder={tr("Valor")}
-                        aria-label={tr("Valor")}
-                      />
-                      <select name="currency" aria-label={tr("Moeda")}>
-                        <option>BRL</option>
-                        <option>EUR</option>
-                        <option>USD</option>
-                      </select>
-                      <button
-                        className="primary"
-                        disabled={busy}
-                        aria-label={tr("Adicionar despesa")}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </form>
-                    {trip.expenses.map((x) => (
-                      <div className="list-row" key={x.id}>
-                        <Wallet size={20} />
-                        <span>{x.title}</span>
-                        <b>
-                          {formatMoney(x.amount, x.currency)}
-                        </b>
-                        <button
-                          className="icon-button"
-                          aria-label={tr("Excluir despesa")}
-                          onClick={() =>
-                            save({
-                              ...trip,
-                              expenses: trip.expenses.filter(
-                                (a) => a.id !== x.id,
-                              ),
-                            })
-                          }
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </section>
-                )}
+                {tab === "Despesas" && <BudgetPanel trip={trip} onSave={save} busy={busy} />}
               </>
             )
           ) : (

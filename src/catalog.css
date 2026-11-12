@@ -510,3 +510,217 @@
     aspect-ratio: 16 / 9;
   }
 }
+
+/* Orçamento e divisão (Fase 4) */
+.budget-panel {
+  display: grid;
+  gap: 18px;
+}
+.budget-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.budget-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.budget-kpis > div {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f1f5ee;
+}
+.budget-kpis small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.budget-kpis strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.budget-kpis .negative strong,
+.budget-table .negative {
+  color: #8a3b2c;
+}
+.budget-table .positive {
+  color: #2f6a45;
+}
+.budget-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.budget-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-bars li {
+  display: grid;
+  grid-template-columns: minmax(90px, 30%) 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.budget-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.budget-bar-track {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: #eef2ea;
+  overflow: hidden;
+}
+.budget-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+}
+.budget-bar.planned {
+  background: #c9d6bf;
+}
+.budget-bar.spent {
+  background: var(--green);
+}
+.budget-bar-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.budget-rate-row,
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.budget-rate-row input,
+.inline-form input {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 160px;
+}
+.budget-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.budget-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfcfa;
+}
+.budget-split {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-split legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.budget-split-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.budget-split-row input[inputmode] {
+  width: 110px;
+}
+.budget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.budget-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.budget-item > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.budget-item.status-planned,
+.budget-item.status-reserved {
+  border-style: dashed;
+}
+.budget-item.status-cancelled {
+  opacity: 0.6;
+}
+.budget-values {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.budget-table th,
+.budget-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.budget-transfers li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+.budget-confirm {
+  display: inline-flex;
+  gap: 6px;
+}
+@media (max-width: 640px) {
+  .budget-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .budget-values {
+    grid-column: 2 / -1;
+    text-align: left;
+  }
+  .budget-bars li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .budget-table {
+    font-size: 13px;
+  }
+}
+.budget-people ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.budget-people .chip .icon-button {
+  width: 28px;
+  height: 28px;
+  margin-right: -8px;
+}
