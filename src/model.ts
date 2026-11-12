@@ -43,6 +43,12 @@ export type TripDocument = {
   size: number;
   url: string;
   reservationId?: string;
+  /** Wallet organization (Etapa 16). */
+  category?: import("./journey/wallet").WalletCategory;
+  day?: number;
+  transportId?: string;
+  stayId?: string;
+  vehicleId?: string;
 };
 export type Trip = {
   timeZone?: string;
@@ -88,6 +94,8 @@ export type Trip = {
     url: string;
     activityId?: string;
     stayId?: string;
+    /** Wallet category (Etapa 16). */
+    category?: import("./journey/wallet").WalletCategory;
     transportId?: string;
     vehicleId?: string;
   }[];
