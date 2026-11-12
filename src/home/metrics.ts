@@ -25,7 +25,8 @@ export type Metric = {
 const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=640&h=420&q=72`;
 /** Generic photos (Unsplash License). They never represent the person's trips. */
 export const genericPhotos: Record<MetricKey, string> = {
-  upcoming: decor.wing.replace("w=480&h=240", "w=640&h=420"),
+  // Not the wing photo: that one is already in the sidebar.
+  upcoming: decor.windowAlt.replace("w=480&h=300", "w=640&h=420"),
   visited: unsplash("1516483638261-f4dbaf036963"),
   places: unsplash("1502602898657-3e91760cbb34"),
   done: decor.road.replace("w=480&h=300", "w=640&h=420"),
