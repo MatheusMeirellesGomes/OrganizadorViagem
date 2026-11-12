@@ -1,3 +1,6 @@
+import { legsOn } from "./journey/transport";
+import { transportKinds } from "./journey/types";
+import { dateOfDay } from "./planner";
 import { tf } from "./i18n";
 import { getLocale } from "./i18n";
 import { t as tr } from "./i18n";
@@ -186,6 +189,7 @@ export function TripCalendar({
                   onClick={() => c.day && onDayChange(c.day)}
                 >
                   <b>{c.date}</b>
+                  {legsOn(trip, c.iso).length > 0 && <span className="cal-move" title={tr("Deslocamento neste dia")} aria-hidden="true">•</span>}
                   {c.day && (
                     <small>
                       {trip.activities.filter((a) => a.day === c.day).length ||
@@ -210,6 +214,16 @@ export function TripCalendar({
           </div>
         )}
         <h3>{dayLabel(trip, day).full}</h3>
+        {dateOfDay(trip, day) && legsOn(trip, dateOfDay(trip, day)!).length > 0 && (
+          <section className="period-list">
+            <h4>{tr("Deslocamentos")}</h4>
+            {legsOn(trip, dateOfDay(trip, day)!).map(({ transport: t, leg: l }) => (
+              <p key={l.id}>
+                {(l.departDate === dateOfDay(trip, day) ? l.departTime : l.arriveTime) || tr("Sem horário")} · {tr(transportKinds[t.kind])}: {l.from.code || l.from.name} → {l.to.code || l.to.name}
+              </p>
+            ))}
+          </section>
+        )}
         {(Object.keys(periods) as Period[]).map((period) => {
           const items = activities.filter((a) => activityPeriod(a) === period);
           return items.length ? (

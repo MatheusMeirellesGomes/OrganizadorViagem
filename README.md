@@ -51,6 +51,15 @@ npm run preview
   - adicionar ao roteiro com dia, horário, observação e hospedagem, sem duplicar;
   - filtros combinados, filtros salvos e buscas recentes guardados só no aparelho.
 - Login e cadastro com Supabase quando configurado.
+- **Etapa 16** (detalhes em `docs/ETAPAS.md`):
+  - Visão Geral com quatro cards de foto e números reais; nova viagem só com o nome;
+  - Meu Espaço como perfil de viajante, com foto (corte, compressão, só JPG/PNG/WebP), preferências e estatísticas;
+  - Central de Transportes: avião (com escalas, fusos, bagagem e check-in), carro próprio ou alugado, trem, ônibus, barco, transporte público, táxi, numa linha do tempo com hospedagens e atividades;
+  - localizador da reserva (PNR) oculto, fora dos dados da viagem e dos backups;
+  - calculadora de combustível, rota por estrada sob demanda (OSRM) e comparador "um carro grande × dois menores";
+  - Carteira de reservas e documentos com categorias, busca, filtros e pré-visualização;
+  - lembretes opcionais, listas de bagagem e preparação internacional informativa;
+  - mapa da viagem inteira, com voos e estradas diferenciados.
 
 ## Conectar Supabase
 
@@ -66,7 +75,7 @@ Nunca use a `service_role` nem a `sb_secret_...` no frontend. O aplicativo recus
 ### Passo a passo
 
 1. Crie um projeto Supabase dedicado.
-2. Abra o **SQL Editor** e execute, nesta ordem, `supabase/migrations/202611090001_initial.sql` (tabela `trips`, RLS e bucket privado `trip-photos`), `002_private_documents.sql` e `003_colaboracao_e_assistente.sql` (pessoas da viagem, convites e limite do assistente).
+2. Abra o **SQL Editor** e execute, nesta ordem, `supabase/migrations/202611090001_initial.sql` (tabela `trips`, RLS e bucket privado `trip-photos`), `002_private_documents.sql`, `003_colaboracao_e_assistente.sql` (pessoas da viagem, convites e limite do assistente) e `004_transportes_e_localizadores.sql` (localizadores de reserva visíveis só para quem os guardou).
 3. Em **Authentication → URL Configuration**, defina a **Site URL** (em desenvolvimento, `http://localhost:5173`; em produção, o domínio publicado) e inclua a mesma URL em **Redirect URLs**. O link de confirmação de e-mail volta para ela.
 4. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O `.env.local` não é enviado ao Git.
 5. Reinicie `npm run dev`.
@@ -109,7 +118,7 @@ A chave da Anthropic nunca vai para o frontend. Cada pergunta tem custo de API, 
 
 ## Limites atuais
 
-No Explorar, avaliações, tempo médio de visita, cardápios e disponibilidade de mesas aparecem como "Não informado": as fontes livres usadas não têm esses dados. Os testes com as fontes reais rodam com `npm run testar:explorar` (precisa de internet). Compartilhamento e assistente foram testados só com um Supabase simulado; fotos e documentos privados continuam visíveis apenas para o dono. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
+No Explorar, avaliações, tempo médio de visita, cardápios e disponibilidade de mesas aparecem como "Não informado": as fontes livres usadas não têm esses dados. Os testes com as fontes reais rodam com `npm run testar:explorar` (precisa de internet). Compartilhamento e assistente foram testados só com um Supabase simulado; fotos e documentos privados continuam visíveis apenas para o dono. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Sem conta, o perfil fica no navegador; com conta, as preferências vão para os metadados do usuário e a foto para a pasta privada `trip-photos/<id>/perfil/`. Lembretes só avisam com o app aberto (não há servidor de notificações). O cálculo de rotas usa por padrão o servidor público de demonstração do OSRM, só quando você clica; para uso intenso, configure `VITE_ROTAS_URL` com um servidor próprio ou `off`. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 

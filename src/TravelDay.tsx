@@ -1,6 +1,9 @@
+import { legsOn } from "./journey/transport";
+import { roadKinds, transportKinds } from "./journey/types";
+import { drivingLinks } from "./journey/routing";
 import { useState } from "react";
-import { Play, SkipForward, Clock, CalendarClock, StickyNote, Wallet, Navigation, Hotel, Ticket, MapPin, Eye, EyeOff, AlarmClock, RotateCcw } from "lucide-react";
-import { t as tr, tf, formatMoney, getLocale } from "./i18n";
+import { Play, SkipForward, Clock, CalendarClock, StickyNote, Wallet, Navigation, Hotel, Ticket, MapPin, Eye, EyeOff, AlarmClock, RotateCcw, Route } from "lucide-react";
+import { t as tr, tf, formatMoney, formatNumber, getLocale } from "./i18n";
 import type { Activity, Trip } from "./model";
 import { travelDays, dayLabel } from "./travel-mode";
 import {
@@ -100,6 +103,46 @@ export function TravelDayPanel({
                 )}
               </li>
             ))}
+          </ul>
+        </div>
+      )}
+      {p.date && legsOn(trip, p.date).length > 0 && (
+        <div className="tm-panel-bookings tm-moves">
+          <small><Route size={13} aria-hidden="true" /> {tr("Deslocamentos do dia")}</small>
+          <ul className="plain-list">
+            {legsOn(trip, p.date).map(({ transport: t, leg: l }) => {
+              const nav = roadKinds.includes(t.kind) && l.from.point && l.to.point ? drivingLinks([l.from.point, l.to.point]) : undefined;
+              return (
+                <li key={l.id}>
+                  <strong>
+                    {tr(transportKinds[t.kind])}: {l.from.code || l.from.name} → {l.to.code || l.to.name}
+                  </strong>{" "}
+                  <span className="muted">
+                    {[
+                      l.departDate === p.date && l.departTime && tf("sai {time}", { time: l.departTime }),
+                      l.arriveDate === p.date && l.arriveTime && tf("chega {time}", { time: l.arriveTime }),
+                      [l.carrier, l.number].filter(Boolean).join(" "),
+                      l.from.terminal && tf("Terminal {name}", { name: l.from.terminal }),
+                      l.gate && tf("Portão {name}", { name: l.gate }),
+                      t.road?.distanceKm && tf("{km} km por estrada", { km: formatNumber(t.road.distanceKm, 0) }),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>{" "}
+                  {t.hasSecret && <span className="muted">· {tr("localizador na Carteira")}</span>}{" "}
+                  {t.flight?.checkInUrl && (
+                    <a href={t.flight.checkInUrl} target="_blank" rel="noreferrer">
+                      {tr("Check-in na companhia")}
+                    </a>
+                  )}{" "}
+                  {nav && (
+                    <a href={nav.google} target="_blank" rel="noreferrer">
+                      Google Maps
+                    </a>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

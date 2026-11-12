@@ -1,3 +1,6 @@
+import { parseJourney } from "./journey/backup";
+import { transportTitle } from "./journey/transport";
+import { costKeys, transportKinds } from "./journey/types";
 import { validTimeZone } from "./travel-clock";
 import { validDocumentData } from "./documents";
 import { isCurrency } from "./budget";
@@ -30,7 +33,7 @@ export function offlineDocument(trip: Trip) {
     )
     .join(
       "",
-    )}${trip.notes ? `<section><h2>${e(t("Anotações"))}</h2><p>${e(trip.notes)}</p></section>` : ""}<section><h2>${e(t("Reservas"))}</h2>${trip.reservations.map((r) => `<article><h3>${e(r.title)}</h3><p>${e(r.details)}</p>${/^https?:\/\//i.test(r.url) ? `<a href="${e(r.url)}" rel="noreferrer">${e(t("Abrir link (precisa de internet)"))}</a>` : ""}</article>`).join("") || `<p>${e(t("Nenhuma reserva cadastrada."))}</p>`}</section><section><h2>Checklist</h2>${trip.checklist.map((c) => `<p>${c.done ? "☑" : "☐"} ${e(c.title)}</p>`).join("") || `<p>${e(t("Nenhuma tarefa cadastrada."))}</p>`}</section><p>${e(t("Guarde este arquivo em um lugar privado: ele pode conter dados de reservas."))}</p></html>`;
+    )}${(trip.transports || []).length ? `<section><h2>${e(t("Transportes"))}</h2>${(trip.transports || []).map((x) => `<article><small>${e(t(transportKinds[x.kind]))}</small><h3>${e(transportTitle(x))}</h3>${x.legs.map((l) => `<p>${e([l.from.code || l.from.name, "→", l.to.code || l.to.name].join(" "))} · ${e([l.departDate, l.departTime].filter(Boolean).join(" "))}${l.arriveTime ? ` → ${e([l.arriveDate, l.arriveTime].filter(Boolean).join(" "))}` : ""} ${e([l.carrier, l.number, l.seat].filter(Boolean).join(" · "))}</p>`).join("")}</article>`).join("")}</section>` : ""}${trip.notes ? `<section><h2>${e(t("Anotações"))}</h2><p>${e(trip.notes)}</p></section>` : ""}<section><h2>${e(t("Reservas"))}</h2>${trip.reservations.map((r) => `<article><h3>${e(r.title)}</h3><p>${e(r.details)}</p>${/^https?:\/\//i.test(r.url) ? `<a href="${e(r.url)}" rel="noreferrer">${e(t("Abrir link (precisa de internet)"))}</a>` : ""}</article>`).join("") || `<p>${e(t("Nenhuma reserva cadastrada."))}</p>`}</section><section><h2>Checklist</h2>${trip.checklist.map((c) => `<p>${c.done ? "☑" : "☐"} ${e(c.title)}</p>`).join("") || `<p>${e(t("Nenhuma tarefa cadastrada."))}</p>`}</section><p>${e(t("Guarde este arquivo em um lugar privado: ele pode conter dados de reservas."))}</p></html>`;
 }
 export function downloadOffline(trip: Trip) {
   const url = URL.createObjectURL(
@@ -280,7 +283,8 @@ export function parseBackup(raw: string): Trip[] {
         };
       });
     trip.coverPhotoId = photoIds.get(text(v.coverPhotoId));
-    parseMoney(v, trip, { activityIds, stayIds, reservationIds, documentIds });
+    const people = parseMoney(v, trip, { activityIds, stayIds, reservationIds, documentIds });
+    parseJourney(v, trip, { activityIds, stayIds, reservationIds, documentIds, people });
     return trip;
   });
 }
@@ -339,6 +343,10 @@ function parseMoney(
         activityId: maps.activityIds.get(text(x.activityId)),
         stayId: maps.stayIds.get(text(x.stayId)),
         reservationId: maps.reservationIds.get(text(x.reservationId)),
+        // Old ids for now; parseJourney links them to the new transports and vehicles.
+        transportId: text(x.transportId) || undefined,
+        vehicleId: text(x.vehicleId) || undefined,
+        costKey: text(x.costKey) in costKeys ? (text(x.costKey) as import("./journey/types").CostKey) : undefined,
         conversion:
           isCurrency(text(conversion.currency)) && (finite(conversion.rate) ?? 0) > 0
             ? { currency: text(conversion.currency), rate: finite(conversion.rate)!, date: text(conversion.date), source: text(conversion.source).slice(0, 120) }
@@ -357,4 +365,5 @@ function parseMoney(
   trip.mealTimes = Object.fromEntries(
     Object.entries(times).filter(([k, t]) => ["breakfast", "brunch", "lunch", "afternoon", "dinner", "dessert"].includes(k) && /^\d{2}:\d{2}$/.test(text(t))),
   ) as Trip["mealTimes"];
+  return people;
 }

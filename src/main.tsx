@@ -1,6 +1,5 @@
 import { tf } from "./i18n";
 import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
-import { LanguagePicker } from "./LanguagePicker";
 import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -63,6 +62,7 @@ import "./style.css";
 import "./catalog.css";
 // Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
 import "./explore/explore.css";
+import "./etapa16.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
@@ -95,7 +95,19 @@ import { estimateTravel } from "./planner";
 import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
-import { DocumentsPanel } from "./DocumentsPanel";
+import { HomeMetrics } from "./home/HomeMetrics";
+import { TransportPanel } from "./journey/TransportPanel";
+import { secretStore } from "./journey/secrets";
+import { ProfilePage } from "./profile/ProfilePage";
+import { ProfileAvatar } from "./profile/ProfileAvatar";
+import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
+import { readAccountProfile, saveAccountProfile } from "./profile/account";
+import { NewTripForm } from "./home/NewTripForm";
+import { WalletPanel } from "./journey/WalletPanel";
+import { TripMapPanel } from "./journey/TripMapPanel";
+import { PreparationPanel } from "./journey/PreparationPanel";
+import { ReminderBanner } from "./journey/ReminderBanner";
+import { isWalletCategory, walletCategories, type WalletCategory } from "./journey/wallet";
 import { prepareTripAssets } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
@@ -149,22 +161,29 @@ function App() {
     [staleTrip, setStaleTrip] = useState(false),
     [busy, setBusy] = useState(false),
     [online, setOnline] = useState(navigator.onLine),
-    [profile, setProfile] = useState(() => {
-      try {
-        return JSON.parse(
-          localStorage.getItem("atlas-profile") ||
-            '{"name":"","style":"No meu ritmo"}',
-        );
-      } catch {
-        return { name: "", style: "No meu ritmo" };
-      }
-    });
+    [profile, setProfile] = useState<Profile>(() => loadProfile(localStorage));
   const versions = useRef<Record<string, string>>({});
   // Owner of each account trip (shared trips belong to someone else).
   const owners = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
-  const firstName = profile.name.trim().split(" ")[0];
+  const firstName = profileFirstName(profile);
+  useEffect(() => {
+    // With an account, the profile saved in it wins; without one, this browser's.
+    const fromAccount = session ? readAccountProfile(session.user.user_metadata) : undefined;
+    setProfile(fromAccount ?? loadProfile(localStorage));
+  }, [session?.user.id]);
+  async function saveUserProfile(next: Profile): Promise<boolean> {
+    try {
+      if (session && supabase) await saveAccountProfile(supabase, next);
+      else if (!saveProfile(localStorage, next)) throw new Error("O navegador não permitiu salvar. Libere espaço e tente de novo.");
+      setProfile(next);
+      return true;
+    } catch (e) {
+      setNotice(tr(e instanceof Error ? e.message : "Não foi possível salvar."));
+      return false;
+    }
+  }
   useEffect(() => {
     if (!supabase) return;
     supabase.auth
@@ -436,11 +455,24 @@ function App() {
       if (importRef.current) importRef.current.value = "";
     }
   }
-  async function exportData() {
+  async function exportData(includeDocuments = true) {
     if (busy) return;
     setBusy(true);
     try {
-      const portable = await portableTrips(trips, async (bucket, path) => {
+      // Files of trips other people shared with you stay private to them; documents only when chosen.
+      const me = session?.user.id;
+      const source = trips.map((t) => {
+        const shared = Boolean(me && owners.current[t.id] && owners.current[t.id] !== me);
+        return {
+          ...t,
+          documents: shared || !includeDocuments ? [] : t.documents,
+          photos: shared ? [] : t.photos,
+          coverPhotoId: shared ? undefined : t.coverPhotoId,
+          expenses: shared || !includeDocuments ? t.expenses.map((x) => ({ ...x, receiptDocumentId: undefined })) : t.expenses,
+          transports: shared || !includeDocuments ? t.transports?.map((x) => ({ ...x, documentIds: undefined })) : t.transports,
+        };
+      });
+      const portable = await portableTrips(source, async (bucket, path) => {
         if (!supabase || !session)
           throw new Error(
             tr("Entre na conta de origem para incluir os anexos no backup."),
@@ -556,6 +588,7 @@ function App() {
             title: field(f, "title") || "Nova reserva",
             details: field(f, "details"),
             url,
+            category: isWalletCategory(field(f, "category")) ? (field(f, "category") as WalletCategory) : undefined,
           },
         ],
       });
@@ -689,9 +722,7 @@ function App() {
           className={"profile-link " + (page === "profile" ? "active" : "")}
           onClick={() => go("profile")}
         >
-          <span className="avatar">
-            {firstName ? firstName[0].toUpperCase() : <User size={18} />}
-          </span>
+          <ProfileAvatar profile={profile} client={supabase} size={38} className="avatar" />
           <span>
             <b>{firstName || tr("Seu espaço pessoal")}</b>
             <small>
@@ -740,15 +771,16 @@ function App() {
               </span>
             </span>
             <button
-              className="avatar"
+              className="avatar avatar-button"
               aria-label={tr("Abrir perfil")}
               onClick={() => go("profile")}
             >
-              {firstName ? firstName[0].toUpperCase() : <User size={18} />}
+              <ProfileAvatar profile={profile} client={supabase} size={34} />
             </button>
           </div>
         </header>
         <main>
+          <ReminderBanner trips={trips} onOpen={openTrip} onSave={save} />
           {staleTrip && session && !loading && (
             <div className="stale-banner" role="status">
               <Cloud size={18} />
@@ -892,10 +924,11 @@ function App() {
                     "Lugares",
                     "Mapa",
                     "Informações",
+                    "Transportes",
                     "Hospedagens",
                     "Reservas",
-                    "Documentos",
-                    "Checklist",
+                    "Carteira",
+                    "Preparação",
                     "Fotos",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
@@ -1234,6 +1267,7 @@ function App() {
                 )}
                 {tab === "Mapa" && (
                   <>
+                    <TripMapPanel trip={trip} />
                     <RoutePlanner trip={trip} day={day} onDayChange={setDay} />
                     <section className="panel">
                       <div className="section-head">
@@ -1343,16 +1377,14 @@ function App() {
                     </div>
                   </form>
                 )}
+                {tab === "Transportes" && (
+                  <TransportPanel trip={trip} store={secretStore(supabase, Boolean(session))} onSave={save} busy={busy} />
+                )}
                 {tab === "Hospedagens" && (
                   <StaysPanel trip={trip} onSave={save} busy={busy} />
                 )}
-                {tab === "Documentos" && (
-                  <DocumentsPanel
-                    trip={trip}
-                    onSave={save}
-                    busy={busy}
-                    userId={session?.user.id}
-                  />
+                {tab === "Carteira" && (
+                  <WalletPanel trip={trip} store={secretStore(supabase, Boolean(session))} userId={session?.user.id} onSave={save} busy={busy} />
                 )}
                 {tab === "Reservas" && (
                   <section className="panel">
@@ -1416,7 +1448,10 @@ function App() {
                     )}
                   </section>
                 )}
-                {tab === "Checklist" && (
+                {tab === "Preparação" && (
+                  <PreparationPanel trip={trip} trips={trips} onSave={save} busy={busy} />
+                )}
+                {tab === "Preparação" && (
                   <section className="panel settings-form">
                     <h2>{tr("Uma coisa de cada vez")}</h2>
                     <p>
@@ -1552,34 +1587,7 @@ function App() {
                       </span>
                     </div>
                   </section>
-                  <div className="stats">
-                    <Stat
-                      icon={Compass}
-                      value={trips.filter((t) => t.status !== "past").length}
-                      label={tr("viagens por vir")}
-                    />
-                    <Stat
-                      icon={Globe2}
-                      value={
-                        new Set(
-                          trips
-                            .filter((t) => t.status === "past" && t.destination)
-                            .map((t) => t.destination.toLowerCase()),
-                        ).size
-                      }
-                      label={tr("destinos visitados")}
-                    />
-                    <Stat
-                      icon={MapPin}
-                      value={trips.reduce((n, t) => n + t.activities.length, 0)}
-                      label={tr("lugares no seu roteiro")}
-                    />
-                    <Stat
-                      icon={CheckCheck}
-                      value={trips.filter((t) => t.status === "past").length}
-                      label={tr("viagens realizadas")}
-                    />
-                  </div>
+                  <HomeMetrics trips={trips} onOpen={go} />
                   <div className="section-head">
                     <div>
                       <h2>{tr("Seus próximos caminhos")}</h2>
@@ -1856,128 +1864,42 @@ function App() {
                 </section>
               )}
               {page === "profile" && (
-                <div className="profile-grid">
-                  <form
-                    className="panel settings-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const f = new FormData(e.currentTarget);
-                      const next = {
-                        name: field(f, "name"),
-                        style: field(f, "style"),
-                      };
-                      localStorage.setItem(
-                        "atlas-profile",
-                        JSON.stringify(next),
-                      );
-                      setProfile(next);
-                      setNotice(tr("Preferências salvas neste aparelho."));
+                <>
+                  <input
+                    ref={importRef}
+                    type="file"
+                    accept="application/json,.json"
+                    hidden
+                    onChange={(e) => restoreBackup(e.target.files?.[0])}
+                  />
+                  <ProfilePage
+                    profile={profile}
+                    onSave={saveUserProfile}
+                    trips={trips}
+                    client={supabase}
+                    userId={session?.user.id}
+                    email={session?.user.email}
+                    hasSupabase={!!supabase}
+                    busy={busy}
+                    sharedWithMe={session ? trips.filter((t) => owners.current[t.id] && owners.current[t.id] !== session.user.id).length : 0}
+                    onExport={exportData}
+                    onImport={() => importRef.current?.click()}
+                    onSignOut={async () => {
+                      clearAccountCaches();
+                      const { error } = await supabase!.auth.signOut();
+                      if (error) setNotice(friendlyError(error, "Não foi possível sair da conta."));
                     }}
-                  >
-                    <LanguagePicker />
-                    <div className="profile-avatar">
-                      <User size={30} />
-                    </div>
-                    <h2>{tr("Seu perfil de explorador")}</h2>
-                    <p>
-                      {tr("Uma apresentação, se quiser. Nada obrigatório.")}
-                    </p>
-                    <label>
-                      {tr("Como podemos chamar você?")}
-                      <input
-                        name="name"
-                        defaultValue={profile.name}
-                        placeholder={tr("Seu nome")}
-                      />
-                    </label>
-                    <label>
-                      {tr("Seu ritmo de viagem")}
-                      <select name="style" defaultValue={profile.style}>
-                        <option>{tr("No meu ritmo")}</option>
-                        <option>{tr("Quero explorar bastante")}</option>
-                        <option>{tr("Prefiro dias tranquilos")}</option>
-                        <option>{tr("Um pouco de cada")}</option>
-                      </select>
-                    </label>
-                    <button className="primary">
-                      {tr("Salvar preferências")}
-                    </button>
-                  </form>
-                  <section className="panel">
-                    <h2>{tr("Seus dados, com você")}</h2>
-                    <p>
-                      {session
-                        ? tr("Suas viagens são salvas na sua conta Supabase.")
-                        : tr("Você está no modo local. As viagens ficam neste navegador e não são sincronizadas com outros aparelhos.")}
-                    </p>
-                    <button className="secondary" onClick={exportData}>
-                      <Download size={17} />
-                      {tr("Exportar backup das viagens")}
-                    </button>
-                    <p className="subtle">{tr("O backup inclui informações, fotos e documentos, inclusive os arquivos baixados da conta. Guarde-o em local privado.")}</p>
-                    <input
-                      ref={importRef}
-                      type="file"
-                      accept="application/json,.json"
-                      hidden
-                      onChange={(e) => restoreBackup(e.target.files?.[0])}
-                    />
-                    <button
-                      className="secondary"
-                      disabled={busy}
-                      onClick={() => importRef.current?.click()}
-                    >
-                      <Plus size={17} />
-                      {tr("Importar backup")}
-                    </button>
-                    <p className="subtle">{tr("As viagens são adicionadas como novas cópias. Nenhuma viagem existente é substituída.")}</p>
-                    {session ? (
-                      <button
-                        className="text-button"
-                        onClick={async () => {
-                          clearAccountCaches();
-                          const { error } = await supabase!.auth.signOut();
-                          if (error)
-                            setNotice(
-                              friendlyError(
-                                error,
-                                "Não foi possível sair da conta.",
-                              ),
-                            );
-                        }}
-                      >
-                        <LogOut size={16} />
-                        {tr("Sair da conta")}
-                      </button>
-                    ) : supabase ? (
-                      <div className="tip">
-                        <Cloud size={20} />
-                        <div>
-                          <p>{tr("Crie uma conta ou entre para acessar suas viagens em outros aparelhos. Você poderá enviar as viagens deste navegador para a conta.")}</p>
-                          <button
-                            className="secondary"
-                            onClick={() => {
-                              try {
-                                localStorage.removeItem(localModeKey);
-                              } catch {
-                                // Nothing stored.
-                              }
-                              setLocalChoice(false);
-                            }}
-                          >
-                            <LogIn size={17} />
-                            {tr("Entrar ou criar conta")}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="tip">
-                        <Cloud size={20} />
-                        <p>{tr("Para entrar na conta e sincronizar aparelhos, configure o projeto Supabase seguindo o README do repositório.")}</p>
-                      </div>
-                    )}
-                  </section>
-                </div>
+                    onSignIn={() => {
+                      try {
+                        localStorage.removeItem(localModeKey);
+                      } catch {
+                        // Nothing stored.
+                      }
+                      setLocalChoice(false);
+                    }}
+                    onOpenTrip={openTrip}
+                  />
+                </>
               )}
             </>
           )}
@@ -2018,21 +1940,26 @@ function App() {
       )}
       {modal && (
         <dialog
+          className={modal === "trip" ? "dialog-trip" : undefined}
           onCancel={() => setModal(null)}
           onClick={(e) => {
             if (e.target === e.currentTarget) setModal(null);
           }}
         >
+          {modal === "trip" ? (
+            <NewTripForm
+              onSubmit={handleSubmit}
+              onClose={() => setModal(null)}
+              busy={busy}
+              scope={scopeFilter === "all" ? "undecided" : scopeFilter}
+              status={page === "history" ? "past" : "planning"}
+              scopePicker={(v) => <ScopePicker defaultValue={v} />}
+            />
+          ) : (
           <form onSubmit={handleSubmit}>
             <div className="section-head">
               <span className="modal-icon">
-                {modal === "trip" ? (
-                  <Compass />
-                ) : modal === "activity" ? (
-                  <MapPin />
-                ) : (
-                  <Plane />
-                )}
+                {modal === "activity" ? <MapPin /> : <Plane />}
               </span>
               <button
                 type="button"
@@ -2044,85 +1971,25 @@ function App() {
               </button>
             </div>
             <h2>
-              {modal === "trip"
-                ? tr("Todo caminho começa com uma ideia.")
-                : modal === "activity"
-                  ? tr("O que vamos fazer?")
-                  : tr("Uma reserva, tudo organizado.")}
+              {modal === "activity"
+                ? tr("O que vamos fazer?")
+                : tr("Uma reserva, tudo organizado.")}
             </h2>
             <p>
-              {modal === "trip"
-                ? tr("Preencha só o que já sabe. O resto pode esperar.")
-                : tr("Adicione os detalhes que forem úteis para você.")}
+              {tr("Adicione os detalhes que forem úteis para você.")}
             </p>
             <label>
-              {modal === "trip" ? tr("Nome da viagem") : tr("Nome")}
+              {tr("Nome")}
               <input
                 name="title"
                 placeholder={
-                  modal === "trip"
-                    ? tr("Uma nova aventura")
-                    : modal === "activity"
-                      ? tr("Um café, um museu, uma caminhada…")
-                      : tr("Hotel, voo, ingresso…")
+                  modal === "activity"
+                    ? tr("Um café, um museu, uma caminhada…")
+                    : tr("Hotel, voo, ingresso…")
                 }
               />
             </label>
-            {modal === "trip" ? (
-              <>
-                <label>
-                  {tr("Destino")}
-                  <input
-                    name="destination"
-                    placeholder={tr("Para onde a vontade leva?")}
-                  />
-                </label>
-                <div className="form-grid">
-                  <label>
-                    {tr("Ida")}
-                    <small>opcional</small>
-                    <input type="date" name="start" />
-                  </label>
-                  <label>
-                    {tr("Volta")}
-                    <small>opcional</small>
-                    <input type="date" name="end" />
-                  </label>
-                </div>
-                <ScopePicker
-                  defaultValue={
-                    scopeFilter === "all" ? "undecided" : scopeFilter
-                  }
-                />
-                <label>
-                  {tr("Momento da viagem")}
-                  <select
-                    name="status"
-                    defaultValue={page === "history" ? "past" : "planning"}
-                  >
-                    {Object.entries(statusLabels).map(([k, v]) => (
-                      <option value={k} key={k}>
-                        {tr(v)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <fieldset className="cover-picker">
-                  <legend>{tr("Uma capa para começar")}</legend>
-                  {Object.entries(pictures).map(([k, v], i) => (
-                    <label key={k} style={{ backgroundImage: `url(${v})` }}>
-                      <input
-                        type="radio"
-                        name="cover"
-                        value={k}
-                        defaultChecked={i === 0}
-                      />
-                      <span>{tr(coverLabels[k as keyof typeof pictures])}</span>
-                    </label>
-                  ))}
-                </fieldset>
-              </>
-            ) : modal === "activity" ? (
+            {modal === "activity" ? (
               <>
                 <div className="form-grid">
                   <label>
@@ -2171,27 +2038,34 @@ function App() {
                   <textarea
                     name="details"
                     rows={3}
-                    placeholder={tr("Código de reserva, horários, endereço…")}
+                    placeholder={tr("Horários, endereço, observações…")}
                   />
                 </label>
                 <label>{tr("Link")}<input name="url" type="url" placeholder="https://" />
                 </label>
+                <label>
+                  {tr("Categoria na carteira")}
+                  <select name="category" defaultValue="">
+                    <option value="">{tr("Automática")}</option>
+                    {Object.entries(walletCategories).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {tr(v)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="form-footnote">{tr("Localizadores e códigos ficam protegidos em Transportes, fora destes detalhes.")}</p>
               </>
             )}
             <button className="primary full" disabled={busy}>
-              {busy
-                ? tr("Salvando…")
-                : modal === "trip"
-                  ? tr("Criar viagem")
-                  : tr("Adicionar")}
+              {busy ? tr("Salvando…") : tr("Adicionar")}
               <ArrowRight size={17} />
             </button>
             <span className="form-footnote">
-              {modal === "trip"
-                ? tr("Sem orçamento obrigatório. Sem pressa.")
-                : tr("Você pode reorganizar depois.")}
+              {tr("Você pode reorganizar depois.")}
             </span>
           </form>
+          )}
         </dialog>
       )}
     </div>
@@ -2232,27 +2106,6 @@ function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
         </label>
       ))}
     </fieldset>
-  );
-}
-function Stat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof Compass;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="stat">
-      <span>
-        <Icon size={21} />
-      </span>
-      <div>
-        <strong>{String(value).padStart(2, "0")}</strong>
-        <p>{label}</p>
-      </div>
-    </div>
   );
 }
 function Empty({

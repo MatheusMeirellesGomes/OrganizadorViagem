@@ -43,6 +43,12 @@ export type TripDocument = {
   size: number;
   url: string;
   reservationId?: string;
+  /** Wallet organization (Etapa 16). */
+  category?: import("./journey/wallet").WalletCategory;
+  day?: number;
+  transportId?: string;
+  stayId?: string;
+  vehicleId?: string;
 };
 export type Trip = {
   timeZone?: string;
@@ -88,7 +94,18 @@ export type Trip = {
     url: string;
     activityId?: string;
     stayId?: string;
+    /** Wallet category (Etapa 16). */
+    category?: import("./journey/wallet").WalletCategory;
+    transportId?: string;
+    vehicleId?: string;
   }[];
+  /** Etapa 16: transport, vehicles, comparison, packing, reminders and preparation. */
+  transports?: import("./journey/types").Transport[];
+  vehicles?: import("./journey/types").Vehicle[];
+  carComparison?: import("./journey/vehicles").Comparison;
+  packing?: import("./journey/packing").PackingItem[];
+  reminders?: import("./journey/reminders").Reminder[];
+  prep?: Record<string, import("./journey/prep").PrepState>;
 };
 export const uid = () => crypto.randomUUID();
 export function newTrip(input: Partial<Trip> = {}): Trip {
