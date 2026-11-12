@@ -88,7 +88,13 @@ export type Trip = {
     url: string;
     activityId?: string;
     stayId?: string;
+    transportId?: string;
+    vehicleId?: string;
   }[];
+  /** Etapa 16: transport, vehicles, comparison, packing, reminders and preparation. */
+  transports?: import("./journey/types").Transport[];
+  vehicles?: import("./journey/types").Vehicle[];
+  carComparison?: import("./journey/vehicles").Comparison;
 };
 export const uid = () => crypto.randomUUID();
 export function newTrip(input: Partial<Trip> = {}): Trip {

@@ -10,6 +10,7 @@ import { overviewMetrics } from "./home/metrics";
 import { laterItems } from "./home/NewTripForm";
 import { paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs } from "./profile/profile";
 import { profileSections } from "./profile/ProfilePage";
+import { transportKinds, checkInStatuses, fuelKinds, costKeys } from "./journey/types";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -95,6 +96,7 @@ describe("traduções", () => {
       ...laterItems,
       ...[paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs].flatMap((o) => Object.values(o)),
       ...profileSections.map(([, l]) => l),
+      ...[transportKinds, checkInStatuses, fuelKinds, costKeys].flatMap((o) => Object.values(o)),
     ];
     expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });

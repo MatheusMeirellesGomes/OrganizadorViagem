@@ -58,6 +58,10 @@ export type Expense = {
   activityId?: string;
   stayId?: string;
   reservationId?: string;
+  /** Etapa 16: cost of a transport or vehicle; one expense per link and key. */
+  transportId?: string;
+  vehicleId?: string;
+  costKey?: import("./journey/types").CostKey;
   /** Rate to the trip's reference currency, kept with its date and source. */
   conversion?: Conversion;
 };
