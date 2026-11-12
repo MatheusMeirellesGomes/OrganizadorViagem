@@ -1,6 +1,6 @@
 import { tf } from "./i18n";
 import { t as tr } from "./i18n";
-import { ItineraryBuilder } from "./ItineraryBuilder";
+import { SmartPlanner } from "./SmartPlanner";
 import { useRef, useState } from "react";
 import { uid, type Trip } from "./model";
 import {
@@ -44,7 +44,7 @@ export function SavedPlaces({
   }
   return (
     <>
-      <ItineraryBuilder trip={trip} onSave={onSave} busy={busy || pending} />
+      <SmartPlanner trip={trip} onSave={onSave} busy={busy || pending} />
       <section className="panel">
         <h2>{tr("Seus lugares, suas escolhas")}</h2>
         <p>{tr("Salve ideias antes de decidir o dia. Deslize um cartão para a direita para “Quero ir”, ou para a esquerda para “Passar”. Os botões fazem o mesmo.")}</p>

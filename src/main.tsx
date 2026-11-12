@@ -61,6 +61,8 @@ import "./style.css";
 // Shared by the catalog, saved places, itinerary builder and route planner.
 // Loaded eagerly so those screens are styled even before the catalog chunk.
 import "./catalog.css";
+// Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
+import "./explore/explore.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney } from "./i18n";
 import { decor, hideOnError } from "./decor";
