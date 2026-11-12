@@ -8,7 +8,7 @@
 // Usa somente a chave pública (anon/publishable), exatamente como o navegador.
 // Tudo o que o script cria é apagado no final.
 import { createClient } from "@supabase/supabase-js";
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 const env = process.env;
 const url = env.VITE_SUPABASE_URL?.trim();
@@ -190,6 +190,44 @@ try {
     const still = await A.c.storage.from(bucket).download(own);
     check(`Conta B não apaga ${label} da A`, !still.error && !!still.data, still.error?.message);
     await A.c.storage.from(bucket).remove([own]);
+  }
+  // 8. Colaboração (migração 003) e localizadores de reserva (migração 004)
+  {
+    const missing = (r) => ["PGRST205", "42P01"].includes(r.error?.code);
+    const invites = await A.c.from("trip_invites").select("id").limit(1);
+    if (missing(invites)) {
+      check("Migração 003 aplicada (compartilhamento)", false, "execute supabase/migrations/003_colaboracao_e_assistente.sql");
+    } else {
+      const token = randomBytes(32).toString("base64url");
+      const token_hash = createHash("sha256").update(token).digest("hex");
+      const inv = await A.c.from("trip_invites").insert({ trip_id: tripA.id, token_hash, role: "viewer", created_by: A.id });
+      check("Conta A cria convite de leitura", !inv.error, inv.error?.message);
+      const forged = await B.c.from("trip_invites").insert({ trip_id: tripA.id, token_hash: createHash("sha256").update("x").digest("hex"), role: "editor", created_by: B.id });
+      check("Conta B não cria convite na viagem da A", !!forged.error);
+      const before = await B.c.from("trips").select("id").eq("id", tripA.id);
+      check("Antes de aceitar, B continua sem ver a viagem", (before.data ?? []).length === 0);
+      const acc = await B.c.rpc("accept_trip_invite", { token });
+      check("Conta B aceita o convite", !acc.error && acc.data === tripA.id, acc.error?.message);
+      const after = await B.c.from("trips").select("id").eq("id", tripA.id);
+      check("Depois de aceitar, B lê a viagem", (after.data ?? []).length === 1, after.error?.message);
+      const edit = await B.c.from("trips").update({ data: { ...tripA, title: "leitor editou" } }).eq("id", tripA.id).select("id");
+      check("Leitor não altera a viagem", (edit.data ?? []).length === 0);
+      const again = await B.c.rpc("accept_trip_invite", { token });
+      check("Convite não pode ser usado de novo", !!again.error);
+      const secrets = await A.c.from("booking_secrets").select("id").limit(1);
+      if (missing(secrets)) {
+        check("Migração 004 aplicada (localizadores)", false, "execute supabase/migrations/004_transportes_e_localizadores.sql");
+      } else {
+        const save = await A.c.from("booking_secrets").insert({ trip_id: tripA.id, ref_id: "verificacao", code: "TESTE1" });
+        check("Conta A guarda um localizador", !save.error, save.error?.message);
+        const peek = await B.c.from("booking_secrets").select("code").eq("trip_id", tripA.id);
+        check("Participante não vê o localizador da A", (peek.data ?? []).length === 0);
+        const fake = await B.c.from("booking_secrets").insert({ trip_id: tripA.id, ref_id: "verificacao", code: "X", owner: A.id });
+        check("Participante não grava em nome da A", !!fake.error);
+        const visitor = await anon.from("booking_secrets").select("code");
+        check("Visitante sem login não lê localizadores", !!visitor.error || (visitor.data ?? []).length === 0);
+      }
+    }
   }
 } finally {
   await A.c.from("trips").delete().eq("id", tripA.id);
