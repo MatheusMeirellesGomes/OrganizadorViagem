@@ -11,6 +11,11 @@ import { laterItems } from "./home/NewTripForm";
 import { paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs } from "./profile/profile";
 import { profileSections } from "./profile/ProfilePage";
 import { transportKinds, checkInStatuses, fuelKinds, costKeys } from "./journey/types";
+import { walletCategories } from "./journey/wallet";
+import { reminderKinds, offsets } from "./journey/reminders";
+import { packingCategories, suggestions } from "./journey/packing";
+import { prepItems, prepStatuses } from "./journey/prep";
+import { newTrip } from "./model";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -96,7 +101,10 @@ describe("traduções", () => {
       ...laterItems,
       ...[paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs].flatMap((o) => Object.values(o)),
       ...profileSections.map(([, l]) => l),
-      ...[transportKinds, checkInStatuses, fuelKinds, costKeys].flatMap((o) => Object.values(o)),
+      ...[transportKinds, checkInStatuses, fuelKinds, costKeys, walletCategories, reminderKinds, packingCategories, prepStatuses].flatMap((o) => Object.values(o)),
+      ...offsets.map(([, l]) => l),
+      ...Object.values(prepItems).flatMap((i) => [i.title, i.hint]),
+      ...suggestions(newTrip({ scope: "international", start: "2027-01-01", end: "2027-01-05", transports: [{ id: "x", kind: "flight", legs: [] }], vehicles: [{ id: "v", ownership: "rental" }] })).flatMap((s) => [s.title, s.reason ?? "confira a previsão do tempo antes de sair"]),
     ];
     expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });

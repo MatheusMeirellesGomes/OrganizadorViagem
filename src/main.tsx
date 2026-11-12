@@ -103,7 +103,11 @@ import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
 import { readAccountProfile, saveAccountProfile } from "./profile/account";
 import { NewTripForm } from "./home/NewTripForm";
-import { DocumentsPanel } from "./DocumentsPanel";
+import { WalletPanel } from "./journey/WalletPanel";
+import { TripMapPanel } from "./journey/TripMapPanel";
+import { PreparationPanel } from "./journey/PreparationPanel";
+import { ReminderBanner } from "./journey/ReminderBanner";
+import { isWalletCategory, walletCategories, type WalletCategory } from "./journey/wallet";
 import { prepareTripAssets } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
@@ -451,11 +455,24 @@ function App() {
       if (importRef.current) importRef.current.value = "";
     }
   }
-  async function exportData() {
+  async function exportData(includeDocuments = true) {
     if (busy) return;
     setBusy(true);
     try {
-      const portable = await portableTrips(trips, async (bucket, path) => {
+      // Files of trips other people shared with you stay private to them; documents only when chosen.
+      const me = session?.user.id;
+      const source = trips.map((t) => {
+        const shared = Boolean(me && owners.current[t.id] && owners.current[t.id] !== me);
+        return {
+          ...t,
+          documents: shared || !includeDocuments ? [] : t.documents,
+          photos: shared ? [] : t.photos,
+          coverPhotoId: shared ? undefined : t.coverPhotoId,
+          expenses: shared || !includeDocuments ? t.expenses.map((x) => ({ ...x, receiptDocumentId: undefined })) : t.expenses,
+          transports: shared || !includeDocuments ? t.transports?.map((x) => ({ ...x, documentIds: undefined })) : t.transports,
+        };
+      });
+      const portable = await portableTrips(source, async (bucket, path) => {
         if (!supabase || !session)
           throw new Error(
             tr("Entre na conta de origem para incluir os anexos no backup."),
@@ -571,6 +588,7 @@ function App() {
             title: field(f, "title") || "Nova reserva",
             details: field(f, "details"),
             url,
+            category: isWalletCategory(field(f, "category")) ? (field(f, "category") as WalletCategory) : undefined,
           },
         ],
       });
@@ -762,6 +780,7 @@ function App() {
           </div>
         </header>
         <main>
+          <ReminderBanner trips={trips} onOpen={openTrip} onSave={save} />
           {staleTrip && session && !loading && (
             <div className="stale-banner" role="status">
               <Cloud size={18} />
@@ -908,8 +927,8 @@ function App() {
                     "Transportes",
                     "Hospedagens",
                     "Reservas",
-                    "Documentos",
-                    "Checklist",
+                    "Carteira",
+                    "Preparação",
                     "Fotos",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
@@ -1248,6 +1267,7 @@ function App() {
                 )}
                 {tab === "Mapa" && (
                   <>
+                    <TripMapPanel trip={trip} />
                     <RoutePlanner trip={trip} day={day} onDayChange={setDay} />
                     <section className="panel">
                       <div className="section-head">
@@ -1363,13 +1383,8 @@ function App() {
                 {tab === "Hospedagens" && (
                   <StaysPanel trip={trip} onSave={save} busy={busy} />
                 )}
-                {tab === "Documentos" && (
-                  <DocumentsPanel
-                    trip={trip}
-                    onSave={save}
-                    busy={busy}
-                    userId={session?.user.id}
-                  />
+                {tab === "Carteira" && (
+                  <WalletPanel trip={trip} store={secretStore(supabase, Boolean(session))} userId={session?.user.id} onSave={save} busy={busy} />
                 )}
                 {tab === "Reservas" && (
                   <section className="panel">
@@ -1433,7 +1448,10 @@ function App() {
                     )}
                   </section>
                 )}
-                {tab === "Checklist" && (
+                {tab === "Preparação" && (
+                  <PreparationPanel trip={trip} trips={trips} onSave={save} busy={busy} />
+                )}
+                {tab === "Preparação" && (
                   <section className="panel settings-form">
                     <h2>{tr("Uma coisa de cada vez")}</h2>
                     <p>
@@ -2020,11 +2038,23 @@ function App() {
                   <textarea
                     name="details"
                     rows={3}
-                    placeholder={tr("Código de reserva, horários, endereço…")}
+                    placeholder={tr("Horários, endereço, observações…")}
                   />
                 </label>
                 <label>{tr("Link")}<input name="url" type="url" placeholder="https://" />
                 </label>
+                <label>
+                  {tr("Categoria na carteira")}
+                  <select name="category" defaultValue="">
+                    <option value="">{tr("Automática")}</option>
+                    {Object.entries(walletCategories).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {tr(v)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="form-footnote">{tr("Localizadores e códigos ficam protegidos em Transportes, fora destes detalhes.")}</p>
               </>
             )}
             <button className="primary full" disabled={busy}>

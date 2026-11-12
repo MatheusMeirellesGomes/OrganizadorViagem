@@ -71,7 +71,7 @@ export function ProfilePage({
   hasSupabase: boolean;
   busy: boolean;
   sharedWithMe: number;
-  onExport: () => void;
+  onExport: (includeDocuments?: boolean) => void;
   onImport: () => void;
   onSignOut: () => void;
   onSignIn: () => void;
@@ -360,14 +360,18 @@ export function ProfilePage({
           <h2>{tr("Meus dados")}</h2>
           <p className="muted">{tr("O backup inclui informações, fotos e documentos, inclusive os arquivos baixados da conta. Guarde-o em local privado.")}</p>
           <div className="profile-buttons">
-            <button className="secondary" onClick={onExport} disabled={busy}>
+            <button className="secondary" onClick={() => onExport(true)} disabled={busy}>
               <Download size={16} /> {tr("Exportar backup das viagens")}
+            </button>
+            <button className="secondary" onClick={() => onExport(false)} disabled={busy}>
+              <Download size={16} /> {tr("Exportar sem documentos")}
             </button>
             <button className="secondary" onClick={onImport} disabled={busy}>
               <Plus size={16} /> {tr("Importar backup")}
             </button>
           </div>
           <p className="muted">{tr("As viagens são adicionadas como novas cópias. Nenhuma viagem existente é substituída.")}</p>
+          <p className="muted">{tr("Localizadores de reserva nunca entram no backup. Arquivos de viagens compartilhadas com você ficam com quem os enviou.")}</p>
         </section>
 
         <section id="privacidade" className="panel profile-section">
