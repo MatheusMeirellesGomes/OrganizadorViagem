@@ -15,6 +15,12 @@ export type Activity = {
   notes?: string;
   /** Optional link to a stay of the trip. */
   stayId?: string;
+  /** Meal this activity is for (Fase 3). */
+  meal?: import("./meals").MealKind;
+  /** Travel Mode progress (Fase 5). */
+  status?: "started" | "skipped";
+  /** Important changes (postponed, rescheduled...), newest last. */
+  history?: { at: string; what: string }[];
 };
 export type Stay = {
   id: string;
@@ -62,7 +68,16 @@ export type Trip = {
   hotel: string;
   activities: Activity[];
   checklist: { id: string; title: string; done: boolean }[];
-  expenses: { id: string; title: string; amount: number; currency: string }[];
+  expenses: import("./budget").Expense[];
+  /** People who share costs (Fase 4). */
+  participants?: import("./budget").Participant[];
+  /** Reimbursements between participants. */
+  settlements?: import("./budget").Settlement[];
+  /** Total budget, in the reference currency. */
+  budget?: { amount: number; currency: string };
+  customExpenseCategories?: string[];
+  /** Preferred meal times (Fase 3). */
+  mealTimes?: Partial<Record<import("./meals").MealKind, string>>;
   budgetEnabled: boolean;
   photos: import("./photos").TripPhoto[];
   coverPhotoId?: string;
