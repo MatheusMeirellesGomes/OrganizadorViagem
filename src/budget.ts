@@ -234,7 +234,7 @@ export function summarize(
     const cat = (s.byCategory[c] ||= { planned: 0, spent: 0 });
     cat.planned += planned;
     cat.spent += spent;
-    const dayKey = x.date ?? (x.day ? "Dia " + x.day : "Sem data");
+    const dayKey = x.date ?? (x.day ? "day:" + x.day : "none");
     s.byDay[dayKey] = (s.byDay[dayKey] ?? 0) + spent;
     if (spent && people.length) {
       try {

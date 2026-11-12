@@ -1,5 +1,6 @@
 import { validTimeZone } from "./travel-clock";
 import { validDocumentData } from "./documents";
+import { isCurrency } from "./budget";
 import { newTrip, type Trip, dateLabel, pictures } from "./model";
 import { getLocale, t, translate } from "./i18n";
 export function escapeHtml(text: string) {
@@ -160,6 +161,20 @@ export function parseBackup(raw: string): Trip[] {
           ? text(a.period)
           : "any") as import("./calendar").Period,
         done: a.done === true,
+        notes: text(a.notes).slice(0, 500) || undefined,
+        stayId: stayIds.get(text(a.stayId)),
+        meal: (["breakfast", "brunch", "lunch", "afternoon", "dinner", "dessert"].includes(text(a.meal))
+          ? text(a.meal)
+          : undefined) as import("./meals").MealKind | undefined,
+        status: (["started", "skipped"].includes(text(a.status)) ? text(a.status) : undefined) as
+          | "started"
+          | "skipped"
+          | undefined,
+        history: list(a.history)
+          .map(object)
+          .filter((h) => text(h.at) && text(h.what))
+          .slice(-50)
+          .map((h) => ({ at: text(h.at), what: text(h.what).slice(0, 200) })),
       };
     });
     trip.checklist = list(v.checklist).map((value) => {
@@ -170,20 +185,6 @@ export function parseBackup(raw: string): Trip[] {
         done: c.done === true,
       };
     });
-    trip.expenses = list(v.expenses)
-      .map(object)
-      .filter(
-        (x) =>
-          Number.isFinite(x.amount) &&
-          Number(x.amount) > 0 &&
-          ["BRL", "EUR", "USD"].includes(text(x.currency)),
-      )
-      .map((x) => ({
-        id: crypto.randomUUID(),
-        title: text(x.title),
-        amount: Number(x.amount),
-        currency: text(x.currency),
-      }));
     const reservationIds = new Map<string, string>();
     trip.reservations = list(v.reservations)
       .map(object)
@@ -242,11 +243,16 @@ export function parseBackup(raw: string): Trip[] {
           },
         };
       });
+    const documentIds = new Map<string, string>();
     trip.documents = list(v.documents)
       .map(object)
       .filter((d) => validDocumentData(text(d.url)))
       .map((d) => ({
-        id: crypto.randomUUID(),
+        id: (() => {
+          const id = crypto.randomUUID();
+          if (text(d.id)) documentIds.set(text(d.id), id);
+          return id;
+        })(),
         name: text(d.name, "Documento"),
         mime: text(d.url).slice(5).split(";")[0],
         size: atob(text(d.url).split(",")[1]).length,
@@ -274,6 +280,81 @@ export function parseBackup(raw: string): Trip[] {
         };
       });
     trip.coverPhotoId = photoIds.get(text(v.coverPhotoId));
+    parseMoney(v, trip, { activityIds, stayIds, reservationIds, documentIds });
     return trip;
   });
+}
+
+const finite = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+
+/** Expenses, people and reimbursements of a backup (Fase 4), with new ids and links kept. */
+function parseMoney(
+  v: Record<string, unknown>,
+  trip: Trip,
+  maps: { activityIds: Map<string, string>; stayIds: Map<string, string>; reservationIds: Map<string, string>; documentIds: Map<string, string> },
+) {
+  const people = new Map<string, string>();
+  trip.participants = list(v.participants)
+    .map(object)
+    .filter((p) => text(p.name).trim())
+    .slice(0, 100)
+    .map((p) => {
+      const id = crypto.randomUUID();
+      if (text(p.id)) people.set(text(p.id), id);
+      return { id, name: text(p.name).slice(0, 80), group: text(p.group).slice(0, 80) || undefined };
+    });
+  const person = (x: unknown) => people.get(text(x));
+  const statuses = ["planned", "reserved", "partial", "paid", "cancelled"];
+  trip.expenses = list(v.expenses)
+    .map(object)
+    .filter((x) => isCurrency(text(x.currency)) && ((finite(x.amount) ?? -1) > 0 || (finite(x.estimate) ?? -1) > 0) && (finite(x.amount) ?? 0) >= 0)
+    .map((x) => {
+      const split = object(x.split);
+      const values = object(split.values);
+      const conversion = object(x.conversion);
+      return {
+        id: crypto.randomUUID(),
+        title: text(x.title).slice(0, 200),
+        amount: finite(x.amount) ?? 0,
+        currency: text(x.currency),
+        estimate: finite(x.estimate),
+        status: statuses.includes(text(x.status)) ? (text(x.status) as import("./budget").ExpenseStatus) : undefined,
+        category: text(x.category).slice(0, 60) || undefined,
+        date: /^\d{4}-\d{2}-\d{2}$/.test(text(x.date)) ? text(x.date) : undefined,
+        day: Number.isInteger(x.day) && Number(x.day) > 0 ? Number(x.day) : undefined,
+        payerId: person(x.payerId),
+        split: ["equal", "shares", "percent", "amounts"].includes(text(split.mode))
+          ? {
+              mode: text(split.mode) as import("./budget").SplitMode,
+              participants: list(split.participants).map(person).filter((p): p is string => Boolean(p)),
+              values: Object.fromEntries(
+                Object.entries(values)
+                  .map(([k, n]) => [person(k), finite(n)] as const)
+                  .filter((e): e is readonly [string, number] => Boolean(e[0]) && e[1] !== undefined),
+              ),
+            }
+          : undefined,
+        notes: text(x.notes).slice(0, 500) || undefined,
+        receiptDocumentId: maps.documentIds.get(text(x.receiptDocumentId)),
+        activityId: maps.activityIds.get(text(x.activityId)),
+        stayId: maps.stayIds.get(text(x.stayId)),
+        reservationId: maps.reservationIds.get(text(x.reservationId)),
+        conversion:
+          isCurrency(text(conversion.currency)) && (finite(conversion.rate) ?? 0) > 0
+            ? { currency: text(conversion.currency), rate: finite(conversion.rate)!, date: text(conversion.date), source: text(conversion.source).slice(0, 120) }
+            : undefined,
+      };
+    });
+  trip.settlements = list(v.settlements)
+    .map(object)
+    .filter((x) => person(x.from) && person(x.to) && (finite(x.amount) ?? 0) > 0 && isCurrency(text(x.currency)))
+    .map((x) => ({ id: crypto.randomUUID(), from: person(x.from)!, to: person(x.to)!, amount: finite(x.amount)!, currency: text(x.currency), date: text(x.date), done: x.done === true }));
+  const budget = object(v.budget);
+  if ((finite(budget.amount) ?? 0) > 0 && isCurrency(text(budget.currency)))
+    trip.budget = { amount: finite(budget.amount)!, currency: text(budget.currency) };
+  trip.customExpenseCategories = list(v.customExpenseCategories).filter((c): c is string => typeof c === "string").map((c) => c.slice(0, 40)).slice(0, 30);
+  const times = object(v.mealTimes);
+  trip.mealTimes = Object.fromEntries(
+    Object.entries(times).filter(([k, t]) => ["breakfast", "brunch", "lunch", "afternoon", "dinner", "dessert"].includes(k) && /^\d{2}:\d{2}$/.test(text(t))),
+  ) as Trip["mealTimes"];
 }

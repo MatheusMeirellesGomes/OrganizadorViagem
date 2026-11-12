@@ -72,3 +72,57 @@ describe("moedas", () => {
     expect(s.available).toBe(100000 - 6123);
   });
 });
+
+import { parseBackup } from "./offline";
+import { newTrip } from "./model";
+describe("backup preserva o orçamento", () => {
+  it("participantes, divisão, pagador, vínculos e reembolsos voltam com ids novos e coerentes", () => {
+    const t = newTrip({
+      participants: [{ id: "p1", name: "Ana" }, { id: "p2", name: "Bia", group: "Casal" }],
+      activities: [{ id: "a1", title: "Prado", day: 2, time: "10:00", address: "", done: false, kind: "Museus", notes: "levar água", meal: "lunch" }],
+      expenses: [
+        { id: "e1", title: "Ingressos", amount: 30, estimate: 30, currency: "EUR", status: "paid", category: "tickets", payerId: "p1", activityId: "a1", split: { mode: "shares", participants: ["p1", "p2"], values: { p1: 1, p2: 2 } }, conversion: { currency: "BRL", rate: 6.1, date: "2027-01-25", source: "BCE" } },
+        { id: "e2", title: "Jantar previsto", amount: 0, estimate: 80, currency: "EUR", status: "planned" },
+      ],
+      settlements: [{ id: "s", from: "p2", to: "p1", amount: 20, currency: "EUR", date: "2027-01-26", done: true }],
+      budget: { amount: 5000, currency: "BRL" },
+      mealTimes: { lunch: "14:00" },
+    });
+    const [back] = parseBackup(JSON.stringify({ version: 1, trips: [t] }));
+    const [ana, bia] = back.participants!;
+    expect(bia.group).toBe("Casal");
+    const e = back.expenses[0];
+    expect(e.payerId).toBe(ana.id);
+    expect(e.split).toEqual({ mode: "shares", participants: [ana.id, bia.id], values: { [ana.id]: 1, [bia.id]: 2 } });
+    expect(e.activityId).toBe(back.activities[0].id);
+    expect(e.conversion?.rate).toBe(6.1);
+    expect(back.expenses[1]).toMatchObject({ status: "planned", estimate: 80, amount: 0 });
+    expect(back.settlements![0]).toMatchObject({ from: bia.id, to: ana.id, done: true });
+    expect(back.budget).toEqual({ amount: 5000, currency: "BRL" });
+    expect(back.mealTimes).toEqual({ lunch: "14:00" });
+    expect(back.activities[0]).toMatchObject({ notes: "levar água", meal: "lunch" });
+  });
+});
+
+import { plannedSuggestions } from "./budget-links";
+describe("despesas previstas sugeridas", () => {
+  it("vêm de hospedagens, reservas e ingressos com preço real, sem duplicar o que já tem despesa", () => {
+    const t = newTrip({
+      start: "2027-01-25",
+      stays: [{ id: "h", name: "Hotel Madrid", address: "", city: "", start: "2027-01-25", end: "2027-01-29", checkInTime: "", checkOutTime: "", url: "", confirmation: "", notes: "" }],
+      reservations: [{ id: "r", title: "Carro 1", details: "", url: "" }, { id: "r2", title: "Carro 2", details: "", url: "" }],
+      activities: [
+        { id: "a", title: "Prado", day: 2, time: "", address: "", done: false, kind: "Museus", placeId: "wd:Q160112" },
+        { id: "b", title: "Retiro", day: 2, time: "", address: "", done: false, kind: "Parques", placeId: "wd:Q1131807" },
+      ],
+      placeChoices: [
+        { decision: "want", decidedAt: "", place: { id: "wd:Q160112", name: "Prado", address: "", city: "", country: "", category: "museum", source: "", retrievedAt: "", tags: { charge: "15", currency: "EUR" } } },
+        { decision: "want", decidedAt: "", place: { id: "wd:Q1131807", name: "Retiro", address: "", city: "", country: "", category: "park", source: "", retrievedAt: "", tags: { fee: "no" } } },
+      ],
+      expenses: [{ id: "x", title: "Carro 2", amount: 450, currency: "EUR", reservationId: "r2" }],
+    });
+    const s = plannedSuggestions(t, "EUR");
+    expect(s.map((x) => x.key)).toEqual(["stay:h", "res:r", "act:a"]);
+    expect(s[2].expense).toMatchObject({ estimate: 15, currency: "EUR", category: "tickets", date: "2027-01-26", status: "planned" });
+  });
+});
