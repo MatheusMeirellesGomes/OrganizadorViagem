@@ -1,6 +1,5 @@
 import { tf } from "./i18n";
 import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
-import { LanguagePicker } from "./LanguagePicker";
 import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -97,6 +96,10 @@ import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
 import { HomeMetrics } from "./home/HomeMetrics";
+import { ProfilePage } from "./profile/ProfilePage";
+import { ProfileAvatar } from "./profile/ProfileAvatar";
+import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
+import { readAccountProfile, saveAccountProfile } from "./profile/account";
 import { NewTripForm } from "./home/NewTripForm";
 import { DocumentsPanel } from "./DocumentsPanel";
 import { prepareTripAssets } from "./migration";
@@ -152,22 +155,29 @@ function App() {
     [staleTrip, setStaleTrip] = useState(false),
     [busy, setBusy] = useState(false),
     [online, setOnline] = useState(navigator.onLine),
-    [profile, setProfile] = useState(() => {
-      try {
-        return JSON.parse(
-          localStorage.getItem("atlas-profile") ||
-            '{"name":"","style":"No meu ritmo"}',
-        );
-      } catch {
-        return { name: "", style: "No meu ritmo" };
-      }
-    });
+    [profile, setProfile] = useState<Profile>(() => loadProfile(localStorage));
   const versions = useRef<Record<string, string>>({});
   // Owner of each account trip (shared trips belong to someone else).
   const owners = useRef<Record<string, string>>({});
   const importRef = useRef<HTMLInputElement>(null);
   const trip = trips.find((t) => t.id === selected);
-  const firstName = profile.name.trim().split(" ")[0];
+  const firstName = profileFirstName(profile);
+  useEffect(() => {
+    // With an account, the profile saved in it wins; without one, this browser's.
+    const fromAccount = session ? readAccountProfile(session.user.user_metadata) : undefined;
+    setProfile(fromAccount ?? loadProfile(localStorage));
+  }, [session?.user.id]);
+  async function saveUserProfile(next: Profile): Promise<boolean> {
+    try {
+      if (session && supabase) await saveAccountProfile(supabase, next);
+      else if (!saveProfile(localStorage, next)) throw new Error("O navegador não permitiu salvar. Libere espaço e tente de novo.");
+      setProfile(next);
+      return true;
+    } catch (e) {
+      setNotice(tr(e instanceof Error ? e.message : "Não foi possível salvar."));
+      return false;
+    }
+  }
   useEffect(() => {
     if (!supabase) return;
     supabase.auth
@@ -692,9 +702,7 @@ function App() {
           className={"profile-link " + (page === "profile" ? "active" : "")}
           onClick={() => go("profile")}
         >
-          <span className="avatar">
-            {firstName ? firstName[0].toUpperCase() : <User size={18} />}
-          </span>
+          <ProfileAvatar profile={profile} client={supabase} size={38} className="avatar" />
           <span>
             <b>{firstName || tr("Seu espaço pessoal")}</b>
             <small>
@@ -743,11 +751,11 @@ function App() {
               </span>
             </span>
             <button
-              className="avatar"
+              className="avatar avatar-button"
               aria-label={tr("Abrir perfil")}
               onClick={() => go("profile")}
             >
-              {firstName ? firstName[0].toUpperCase() : <User size={18} />}
+              <ProfileAvatar profile={profile} client={supabase} size={34} />
             </button>
           </div>
         </header>
@@ -1832,128 +1840,42 @@ function App() {
                 </section>
               )}
               {page === "profile" && (
-                <div className="profile-grid">
-                  <form
-                    className="panel settings-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const f = new FormData(e.currentTarget);
-                      const next = {
-                        name: field(f, "name"),
-                        style: field(f, "style"),
-                      };
-                      localStorage.setItem(
-                        "atlas-profile",
-                        JSON.stringify(next),
-                      );
-                      setProfile(next);
-                      setNotice(tr("Preferências salvas neste aparelho."));
+                <>
+                  <input
+                    ref={importRef}
+                    type="file"
+                    accept="application/json,.json"
+                    hidden
+                    onChange={(e) => restoreBackup(e.target.files?.[0])}
+                  />
+                  <ProfilePage
+                    profile={profile}
+                    onSave={saveUserProfile}
+                    trips={trips}
+                    client={supabase}
+                    userId={session?.user.id}
+                    email={session?.user.email}
+                    hasSupabase={!!supabase}
+                    busy={busy}
+                    sharedWithMe={session ? trips.filter((t) => owners.current[t.id] && owners.current[t.id] !== session.user.id).length : 0}
+                    onExport={exportData}
+                    onImport={() => importRef.current?.click()}
+                    onSignOut={async () => {
+                      clearAccountCaches();
+                      const { error } = await supabase!.auth.signOut();
+                      if (error) setNotice(friendlyError(error, "Não foi possível sair da conta."));
                     }}
-                  >
-                    <LanguagePicker />
-                    <div className="profile-avatar">
-                      <User size={30} />
-                    </div>
-                    <h2>{tr("Seu perfil de explorador")}</h2>
-                    <p>
-                      {tr("Uma apresentação, se quiser. Nada obrigatório.")}
-                    </p>
-                    <label>
-                      {tr("Como podemos chamar você?")}
-                      <input
-                        name="name"
-                        defaultValue={profile.name}
-                        placeholder={tr("Seu nome")}
-                      />
-                    </label>
-                    <label>
-                      {tr("Seu ritmo de viagem")}
-                      <select name="style" defaultValue={profile.style}>
-                        <option>{tr("No meu ritmo")}</option>
-                        <option>{tr("Quero explorar bastante")}</option>
-                        <option>{tr("Prefiro dias tranquilos")}</option>
-                        <option>{tr("Um pouco de cada")}</option>
-                      </select>
-                    </label>
-                    <button className="primary">
-                      {tr("Salvar preferências")}
-                    </button>
-                  </form>
-                  <section className="panel">
-                    <h2>{tr("Seus dados, com você")}</h2>
-                    <p>
-                      {session
-                        ? tr("Suas viagens são salvas na sua conta Supabase.")
-                        : tr("Você está no modo local. As viagens ficam neste navegador e não são sincronizadas com outros aparelhos.")}
-                    </p>
-                    <button className="secondary" onClick={exportData}>
-                      <Download size={17} />
-                      {tr("Exportar backup das viagens")}
-                    </button>
-                    <p className="subtle">{tr("O backup inclui informações, fotos e documentos, inclusive os arquivos baixados da conta. Guarde-o em local privado.")}</p>
-                    <input
-                      ref={importRef}
-                      type="file"
-                      accept="application/json,.json"
-                      hidden
-                      onChange={(e) => restoreBackup(e.target.files?.[0])}
-                    />
-                    <button
-                      className="secondary"
-                      disabled={busy}
-                      onClick={() => importRef.current?.click()}
-                    >
-                      <Plus size={17} />
-                      {tr("Importar backup")}
-                    </button>
-                    <p className="subtle">{tr("As viagens são adicionadas como novas cópias. Nenhuma viagem existente é substituída.")}</p>
-                    {session ? (
-                      <button
-                        className="text-button"
-                        onClick={async () => {
-                          clearAccountCaches();
-                          const { error } = await supabase!.auth.signOut();
-                          if (error)
-                            setNotice(
-                              friendlyError(
-                                error,
-                                "Não foi possível sair da conta.",
-                              ),
-                            );
-                        }}
-                      >
-                        <LogOut size={16} />
-                        {tr("Sair da conta")}
-                      </button>
-                    ) : supabase ? (
-                      <div className="tip">
-                        <Cloud size={20} />
-                        <div>
-                          <p>{tr("Crie uma conta ou entre para acessar suas viagens em outros aparelhos. Você poderá enviar as viagens deste navegador para a conta.")}</p>
-                          <button
-                            className="secondary"
-                            onClick={() => {
-                              try {
-                                localStorage.removeItem(localModeKey);
-                              } catch {
-                                // Nothing stored.
-                              }
-                              setLocalChoice(false);
-                            }}
-                          >
-                            <LogIn size={17} />
-                            {tr("Entrar ou criar conta")}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="tip">
-                        <Cloud size={20} />
-                        <p>{tr("Para entrar na conta e sincronizar aparelhos, configure o projeto Supabase seguindo o README do repositório.")}</p>
-                      </div>
-                    )}
-                  </section>
-                </div>
+                    onSignIn={() => {
+                      try {
+                        localStorage.removeItem(localModeKey);
+                      } catch {
+                        // Nothing stored.
+                      }
+                      setLocalChoice(false);
+                    }}
+                    onOpenTrip={openTrip}
+                  />
+                </>
               )}
             </>
           )}

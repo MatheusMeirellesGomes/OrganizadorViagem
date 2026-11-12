@@ -8,6 +8,8 @@ import { mealNames } from "./meals";
 import { modeLabels } from "./planner";
 import { overviewMetrics } from "./home/metrics";
 import { laterItems } from "./home/NewTripForm";
+import { paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs } from "./profile/profile";
+import { profileSections } from "./profile/ProfilePage";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -91,6 +93,8 @@ describe("traduções", () => {
       ...Object.values(modeLabels),
       ...overviewMetrics([]).flatMap((m) => [m.label, m.text]),
       ...laterItems,
+      ...[paces, travelStyles, transportPrefs, foodPrefs, accessibilityPrefs].flatMap((o) => Object.values(o)),
+      ...profileSections.map(([, l]) => l),
     ];
     expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });
