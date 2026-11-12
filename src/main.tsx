@@ -85,6 +85,7 @@ import { blobDataUrl } from "./backup";
 import { RoutePlanner } from "./RoutePlanner";
 import { DayMeals } from "./DayMeals";
 import { BudgetPanel } from "./BudgetPanel";
+import { applyOps, diffOps, onlyQueueable, readOutbox, writeOutbox } from "./outbox";
 import { MealFinder } from "./LazyMaps";
 import type { MealRequest } from "./explore/MealFinder";
 import { isMealActivity, mealTime } from "./meals";
@@ -203,7 +204,28 @@ function App() {
     setLoading(true);
     setLoadError("");
     try {
-      const rows = await repository.list();
+      let rows = await repository.list();
+      // Travel Mode changes made offline: apply on top of the newest version.
+      const queued = readOutbox(userId);
+      if (queued.length) {
+        const conflicts: string[] = [];
+        for (const row of rows) {
+          const ops = queued.filter((o) => o.tripId === row.id);
+          if (!ops.length) continue;
+          const result = applyOps(row.data, ops);
+          conflicts.push(...result.conflicts.map((c) => c.title));
+          if (result.applied) {
+            const saved = await repository.update(result.trip, row.updated_at);
+            rows = rows.map((r) => (r.id === saved.id ? saved : r));
+          }
+        }
+        writeOutbox(userId, []);
+        setNotice(
+          conflicts.length
+            ? tf("Alterações feitas sem internet foram enviadas. Mantivemos a versão do outro aparelho em: {items}.", { items: [...new Set(conflicts)].join(", ") })
+            : tr("Alterações feitas sem internet foram enviadas para a sua conta."),
+        );
+      }
       applyRows(rows);
       setAccountSource("live");
       setStaleTrip(false);
@@ -211,7 +233,8 @@ function App() {
     } catch (e) {
       const cache = readAccountCache(userId);
       if (cache) {
-        applyRows(cache.rows);
+        const queued = readOutbox(userId);
+        applyRows(cache.rows.map((r) => ({ ...r, data: applyOps(r.data, queued).trip })));
         setAccountSource("cache");
         setNotice(
           tf(
@@ -232,7 +255,7 @@ function App() {
   }, [session?.user.id, loadAccount]);
   useEffect(() => {
     // Back online after showing the offline copy: refresh from the account.
-    if (online && session && accountSource === "cache")
+    if (online && session && (accountSource === "cache" || readOutbox(session.user.id).length))
       loadAccount(session.user.id);
   }, [online]);
   useEffect(() => {
@@ -266,6 +289,17 @@ function App() {
     setFilter("all");
     setScopeFilter("all");
   };
+  /** Travel Mode: without internet in an account, keep the change in a queue. */
+  async function saveTravel(t: Trip) {
+    const before = trips.find((x) => x.id === t.id);
+    if (session && repository && (accountSource === "cache" || !online) && before && onlyQueueable(before, t)) {
+      writeOutbox(session.user.id, [...readOutbox(session.user.id), ...diffOps(before, t)]);
+      setTrips(trips.map((x) => (x.id === t.id ? t : x)));
+      setNotice(tr("Sem internet: alteração guardada neste aparelho. Ela será enviada quando a conexão voltar."));
+      return true;
+    }
+    return save(t);
+  }
   async function save(t: Trip) {
     setBusy(true);
     try {
@@ -753,7 +787,7 @@ function App() {
                 onDayChange={setDay}
                 online={online}
                 busy={busy}
-                onSave={save}
+                onSave={saveTravel}
                 onBack={() => {
                   setTravelMode(false);
                   requestAnimationFrame(() =>
