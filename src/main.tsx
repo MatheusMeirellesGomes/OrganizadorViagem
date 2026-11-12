@@ -593,7 +593,7 @@ function App() {
           </span>
         </a>
         <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
-        <nav>
+        <nav aria-label={tr("Menu principal")}>
           {nav.map((n) => (
             <button
               key={n.id}
@@ -980,6 +980,12 @@ function App() {
                                     {a.time || tr("Sem horário")} · {tr(a.kind)}
                                   </small>
                                   <h3>{a.title}</h3>
+                                  {a.notes && <p className="activity-notes">{a.notes}</p>}
+                                  {a.stayId && trip.stays?.some((st) => st.id === a.stayId) && (
+                                    <p className="activity-notes">
+                                      {tf("Hospedagem: {name}", { name: trip.stays!.find((st) => st.id === a.stayId)!.name })}
+                                    </p>
+                                  )}
                                   {a.address && (
                                     <a
                                       target="_blank"
@@ -1978,7 +1984,7 @@ function App() {
             </>
           )}
         </main>
-        <nav className="mobile-nav">
+        <nav className="mobile-nav" aria-label={tr("Menu inferior")}>
           {nav
             .filter((n) => n.id !== "history")
             .map((n) => (
