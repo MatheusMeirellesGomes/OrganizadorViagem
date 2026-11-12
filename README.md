@@ -36,10 +36,16 @@ npm run preview
 - Escolha visual de viagem Nacional, Internacional ou "Ainda não sei" no cadastro e na edição. O tipo é opcional; viagens e backups antigos sem tipo continuam válidos.
 - Selo Nacional/Internacional nos cartões das viagens.
 - Pesquisa e trajetos com links para Google Maps.
-- Calendário, participantes opcionais, várias hospedagens, reservas vinculadas, documentos privados, álbuns de fotos e gerador de roteiro sem IA (veja `docs/ETAPAS.md`).
-- **Explorar lugares reais:** atrações da Wikipédia e do Wikidata com fotos livres creditadas (autor e licença), patrimônio e site oficial; complemento e restaurantes do OpenStreetMap via Nominatim, dentro da política de uso. Nada de preço, nota ou horário inventado. Detalhes em `docs/CATALOGO.md`.
-- **Idiomas:** português, inglês e espanhol, com datas e números no formato de cada idioma, inclusive mensagens de erro e o HTML offline. Um teste automático falha se algum texto novo ficar sem tradução.
-- Mapas e catálogo carregados sob demanda, com aviso em vez de travar se faltar conexão.
+- **Explorar mundial** (detalhes em `docs/EXPLORAR.md`):
+  - busca de cidades, bairros, endereços, atrações, coordenadas e localização atual, com sugestões em português, inglês, espanhol e nomes locais;
+  - raio real de 1 a 20 km, mostrado no mapa, com o centro na cidade, no hotel cadastrado, numa atração, num ponto do mapa ou na sua localização;
+  - atrações do Wikidata (palácios, castelos, praças, museus, igrejas, parques, mirantes, zoológicos, mercados, ruínas, natureza, estádios…);
+  - restaurantes do OpenStreetMap por refeição (café da manhã, almoço, jantar…), culinária, faixa de preço e "aberto agora";
+  - fotos sempre ligadas ao próprio lugar, com autor e licença;
+  - cards, mapa ou cards + mapa, com marcadores agrupados;
+  - painel de detalhes com galeria, horários, preços, transporte próximo e atrações vizinhas;
+  - adicionar ao roteiro com dia, horário, observação e hospedagem, sem duplicar;
+  - filtros combinados, filtros salvos e buscas recentes guardados só no aparelho.
 - Login e cadastro com Supabase quando configurado.
 
 ## Conectar Supabase
@@ -91,7 +97,7 @@ O script usa só a chave pública, como o navegador, e confere: visitante sem lo
 
 ## Limites atuais
 
-As integrações de descoberta por cartões, IA, colaboração em grupo, arquivos de reservas e edição offline com sincronização posterior ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
+No Explorar, avaliações, tempo médio de visita, cardápios e disponibilidade de mesas aparecem como "Não informado": as fontes livres usadas não têm esses dados. Os testes com as fontes reais rodam com `npm run testar:explorar` (precisa de internet). As integrações de IA, colaboração em grupo, arquivos de reservas e edição offline com sincronização posterior ainda não estão implementadas. As telas indicam as integrações indisponíveis. Não há viagens fictícias cadastradas. Preferências de perfil são locais. Recuperação de senha ainda não existe na interface. A integração Supabase foi testada com testes automatizados e uma API simulada no navegador; a validação contra um projeto real depende de `npm run verificar:supabase`.
 
 Fotos de inspiração são carregadas do Unsplash; fontes do Google Fonts. Essas imagens não representam viagens do usuário. Links de mapas dependem de internet.
 
@@ -114,10 +120,10 @@ Abra uma viagem e toque em **Modo Viagem**, ao lado do status. Funciona com qual
 
 - Cabeçalho compacto, navegação horizontal por dias, timeline na ordem original e progresso das visitas.
 - Atividades sem datas, horários ou endereços continuam utilizáveis. Quando há datas, os dias são calculados por calendário, sem inferir o fuso do destino.
-- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Com um fuso horário opcional (calendário da viagem), o Modo Viagem indica o dia atual; sem ele, usa o fuso do aparelho e avisa isso.
+- “A seguir no roteiro” destaca a primeira atividade não visitada do dia. Como o modelo não possui fuso horário, não há “Hoje” automático, contagem regressiva ou reordenação por horário.
 - “Como chegar” só existe com endereço informado. Links externos ficam indisponíveis quando o navegador informa ausência de conexão.
 - Detalhes expansíveis mantêm o dia selecionado. Endereços e hospedagem podem ser copiados.
-- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. Reservas podem ser vinculadas a atividades e hospedagens no planejamento.
+- “Informações da viagem” aparece somente quando há hospedagem, notas, reservas ou checklist. As reservas são gerais: o modelo ainda não associa reservas a atividades.
 - Marcar/desmarcar visitas e atualizar checklist reutiliza o mesmo objeto Trip, a mesma função save e o mesmo localStorage do planejamento. Sem novos bancos, migrações, dependências ou filas de sincronização.
 - Foco de teclado ao entrar/sair, feedback por região live, controles de toque com 44px ou mais e respeito a movimento reduzido.
 

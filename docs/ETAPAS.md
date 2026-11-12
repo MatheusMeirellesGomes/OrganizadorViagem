@@ -99,10 +99,64 @@ Revisão da `main` após o PR #1: 98 testes e build aprovados; fluxos de conta, 
 
 Arquivos: `wiki-places.ts`, `osm-places.ts`, `catalog-service.ts`, `Catalog.tsx`, `catalog.css`, `LazyMaps.tsx`, `main.tsx`, `scripts/verificar-supabase.mjs` e testes. Verificação: testes unitários, build, testes de navegador (catálogo, conta, migração, telas, falha de carregamento) e testes reais das fontes no navegador do computador do Matheus.
 
-## Etapa 11b — idiomas completos (Claude)
+## Etapa 12 — idiomas completos (Claude)
 
-Todos os textos da interface passam por `tr()`/`tf()`: telas, rótulos de acessibilidade, mensagens de sucesso e de erro (inclusive as vindas de `errors.ts`, do catálogo e da migração), categorias, status, decisões e o HTML offline. Frases com números ou nomes viraram frases completas com variáveis (`{count} lugares encontrados`), para a ordem das palavras ficar natural em cada idioma; singular e plural são frases separadas. Dicionário de 218 para 730+ entradas, em inglês e espanhol.
+Toda a interface, as mensagens de erro e o roteiro offline estão em português, inglês e espanhol. O teste `i18n-coverage.test.ts` falha se algum texto novo ficar sem tradução, se as variáveis {assim} não baterem entre os idiomas, ou se um texto traduzido for usado como valor de controle. Esse último caso foi o erro que deixava as abas vazias em inglês e espanhol.
 
-Verificação: `i18n-coverage.test.ts` lê o código e falha se algum texto da interface não tiver tradução ou se as variáveis divergirem; varredura no navegador em inglês e espanhol por todas as telas, abas, Modo Viagem, catálogo e cadastro sem textos em português além de nomes de lugares (dados); telas de 360 e 390 px sem rolagem lateral nos dois idiomas. Conteúdo pessoal (títulos, notas) e valores salvos (status, categorias) não são traduzidos nos dados, só na exibição, então backups continuam compatíveis entre idiomas.
+## Etapa 13 — design e acessibilidade (Claude)
 
-Limites: textos vindos das fontes externas (descrições da Wikipédia, nomes no OpenStreetMap) aparecem no idioma da fonte; a Wikipédia usa a edição do idioma da interface.
+- **Contraste e tamanho:** cores de texto com contraste mínimo de 4,5:1 e nenhum texto menor que 11 px. A auditoria axe passou de 90 violações para 0.
+- **Abas da viagem no celular:** roláveis, com indicação de que há mais e área de toque de 44 px.
+- **Datas e valores:** "Dia 1" com espaço e despesas no formato de moeda de cada idioma.
+- **Fotos:** os desenhos de linha foram trocados por fotos reais do Unsplash, de licença livre. Se uma foto não carregar, o layout continua no lugar.
+
+## Etapa 14 — comparação de roteiros (Claude)
+
+Alternativas rápida, econômica e tranquila, comparadas lado a lado antes de escolher:
+
+- dias usados;
+- lugares incluídos e fora da proposta;
+- máximo de lugares por dia;
+- distância em linha reta;
+- lugares gratuitos, pagos e sem informação.
+
+Os preços só aparecem quando a fonte informa. A alternativa escolhida vira uma prévia editável e não apaga o roteiro atual.
+
+## Explorar mundial (Claude)
+
+A auditoria e as decisões estão em `docs/EXPLORAR.md`.
+
+**Causa encontrada:** a busca antiga trazia só os 100 artigos da Wikipédia mais próximos do centro. Em Madrid, eles cabem em 312 m, e por isso o Palacio Real e o Prado não apareciam.
+
+**Atrações:** agora vêm do Wikidata por raio real, de 1 a 20 km, com regras de equivalência de categorias. Ficam fora estações, aeroportos, cidades, lugares demolidos e obras de acervo.
+
+**Fotos:** só a imagem P18 do próprio item ou a etiqueta `wikimedia_commons` do próprio objeto. A galeria usa arquivos que retratam o item (P180).
+
+**Busca:** mundial com sugestões. Endereços vão ao OpenStreetMap só quando a pessoa pede.
+
+**Restaurantes:** por refeição, culinária, preço e "aberto agora", no fuso do lugar.
+
+**Interface:**
+
+- cards com esqueleto de carregamento;
+- mapa com círculo do raio e agrupamento de marcadores;
+- painel de detalhes;
+- adicionar ao roteiro com dia, horário, observação e hospedagem, sem duplicar.
+
+**Verificação:**
+
+- testes unitários e de tela com fontes simuladas no formato real;
+- axe com 0 violações em pt, en e es, em 1280 e 390 px;
+- buscas reais feitas no navegador do computador do Matheus:
+  - Madrid, 20 km: 782 atrações, com os 9 lugares obrigatórios;
+  - Segóvia: aqueduto, Alcázar (castelo) e catedral;
+  - Lisboa, Paris e Belo Horizonte sem aeroportos, cidades ou lugares demolidos;
+  - restaurantes para jantar e "carregar mais".
+
+Testes com as fontes reais: `npm run testar:explorar`.
+
+**Limites:**
+
+- avaliações, tempo de visita, cardápio e reserva de mesa não existem nas fontes livres;
+- poucos restaurantes têm faixa de preço cadastrada;
+- a primeira busca grande (Paris, 10 km) pode levar até ~35 s; as seguintes usam o cache.
