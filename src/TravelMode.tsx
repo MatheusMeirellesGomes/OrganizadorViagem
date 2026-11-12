@@ -31,6 +31,7 @@ import {
   travelDays,
 } from "./travel-mode";
 import "./travel-mode.css";
+import { decor, hideOnError } from "./decor";
 type Props = {
   trip: Trip;
   day: number;
@@ -165,8 +166,7 @@ export function TravelMode({
             onClick={() => onDayChange(number)}
           >
             <span>
-              {tr("Dia")}
-              {number}
+              {tf("Dia {number}", { number })}
               {today === number ? tr(" · Hoje") : ""}
             </span>
             <b>{trip.start ? dayLabel(trip, number).short : tr("Sem data")}</b>
@@ -240,7 +240,14 @@ export function TravelMode({
       ) : null}
       {activities.length === 0 ? (
         <div className="tm-empty">
-          <Compass size={34} strokeWidth={1.4} />
+          <img
+            className="tm-empty-photo"
+            src={decor.lake}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={hideOnError}
+          />
           <h3>{tr("Um dia aberto a possibilidades")}</h3>
           <p>{tr("Não há atividades neste dia. Você pode escolher outro dia ou voltar ao planejamento para adicionar um lugar.")}</p>
           <button className="secondary" onClick={onBack}>

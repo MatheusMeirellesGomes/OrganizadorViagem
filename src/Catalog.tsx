@@ -1,9 +1,10 @@
+import { decor, hideOnError } from "./decor";
 import { getLocale } from "./i18n";
 import { t as tr, tf, formatNumber } from "./i18n";
 import { ChoiceButtons } from "./ChoiceButtons";
 import { choosePlace } from "./choices";
 import { useState } from "react";
-import { MapPin, Search, Compass } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { TravelMap } from "./LazyMaps";
 import type { Trip } from "./model";
 import { foodMatches, nearestPlaces, isFood, addPlaceToTrip } from "./food";
@@ -242,7 +243,13 @@ export function Catalog({
             <h2>{tr("Lugares de verdade, no seu ritmo")}</h2>
             <p>{tr("Busque uma cidade ou escolha uma região no mapa.")}</p>
           </div>
-          <Compass size={30} />
+          <img
+            className="head-photo"
+            src={decor.roadWide}
+            alt=""
+            loading="lazy"
+            onError={hideOnError}
+          />
         </div>
         <div className="tm-actions">
           {(["attractions", "food"] as CatalogKind[]).map((k) => (

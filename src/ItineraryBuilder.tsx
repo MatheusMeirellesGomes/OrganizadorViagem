@@ -4,11 +4,94 @@ import { useState } from "react";
 import type { Trip } from "./model";
 import {
   generateItinerary,
+  generateAlternatives,
   appendDraft,
+  type Alternative,
   type PlanDraft,
   type PlanOptions,
+  type Strategy,
   straightLineLength,
 } from "./itinerary";
+
+const strategyText: Record<Strategy, [string, string]> = {
+  fast: ["Mais rápida", "Menos dias, mais lugares por dia."],
+  budget: [
+    "Mais econômica",
+    "Primeiro os lugares cadastrados como gratuitos; os pagos ficam por último.",
+  ],
+  relaxed: ["Mais tranquila", "No máximo 3 lugares por dia, espalhados pelos dias."],
+};
+
+function Comparison({
+  alternatives,
+  onChoose,
+}: {
+  alternatives: Alternative[];
+  onChoose: (a: Alternative) => void;
+}) {
+  const fewestDays = Math.min(...alternatives.map((a) => a.summary.daysUsed));
+  const shortest = Math.min(
+    ...alternatives.filter((a) => a.summary.places > 1).map((a) => a.summary.km),
+  );
+  return (
+    <div className="alt-compare" role="list">
+      {alternatives.map((a) => {
+        const s = a.summary;
+        const [title, text] = strategyText[a.strategy];
+        return (
+          <article className="alt-card" role="listitem" key={a.strategy}>
+            <h3>{tr(title)}</h3>
+            <p className="subtle">{tr(text)}</p>
+            <div className="alt-badges">
+              {s.places > 0 && s.daysUsed === fewestDays && (
+                <span>{tr("Menos dias")}</span>
+              )}
+              {s.places > 1 && s.kmComplete && s.km === shortest && (
+                <span>{tr("Menor distância")}</span>
+              )}
+              {s.paid === 0 && s.free > 0 && <span>{tr("Sem pagos cadastrados")}</span>}
+            </div>
+            <dl>
+              <dt>{tr("Dias usados")}</dt>
+              <dd>{s.daysUsed}</dd>
+              <dt>{tr("Lugares incluídos")}</dt>
+              <dd>{s.places}</dd>
+              <dt>{tr("Fora da proposta")}</dt>
+              <dd>{s.leftOut}</dd>
+              <dt>{tr("Máximo em um dia")}</dt>
+              <dd>{s.maxPerDay}</dd>
+              <dt>{tr("Distância em linha reta")}</dt>
+              <dd>
+                {tf("{km} km", { km: formatNumber(s.km, 1) })}
+                {!s.kmComplete && " · " + tr("incompleta")}
+              </dd>
+              <dt>{tr("Entrada")}</dt>
+              <dd>
+                {tf("{free} gratuitos · {paid} pagos · {unknown} sem informação", {
+                  free: s.free,
+                  paid: s.paid,
+                  unknown: s.unknownPrice,
+                })}
+              </dd>
+            </dl>
+            <button
+              className="secondary"
+              disabled={!s.places}
+              onClick={() => onChoose(a)}
+            >
+              {tr("Escolher e revisar")}
+            </button>
+          </article>
+        );
+      })}
+      <p className="subtle alt-note">
+        {tr(
+          "Distâncias em linha reta entre lugares do mesmo dia. Preços só aparecem quando a fonte informa se a entrada é gratuita ou paga; nada é estimado.",
+        )}
+      </p>
+    </div>
+  );
+}
 import { calendarDate } from "./travel-mode";
 import { periods, type Period } from "./calendar";
 export function ItineraryBuilder({
@@ -30,6 +113,7 @@ export function ItineraryBuilder({
     [pace, setPace] = useState<PlanOptions["pace"]>("balanced"),
     [maybe, setMaybe] = useState(false),
     [draft, setDraft] = useState<PlanDraft>(),
+    [alternatives, setAlternatives] = useState<Alternative[]>(),
     [message, setMessage] = useState(""),
     [pending, setPending] = useState(false);
   const distance = draft ? straightLineLength(draft.activities) : undefined;
@@ -85,6 +169,7 @@ export function ItineraryBuilder({
               includeMaybe: maybe,
             });
             setDraft(next);
+            setAlternatives(undefined);
             setMessage(
               next.activities.length
                 ? tr("Prévia criada. Confira a distribuição.")
@@ -98,13 +183,58 @@ export function ItineraryBuilder({
         }}
       >
         {tr("Criar prévia")}
+      </button>{" "}
+      <button
+        className="secondary"
+        disabled={busy || pending}
+        onClick={() => {
+          try {
+            const alts = generateAlternatives(trip, { days, includeMaybe: maybe });
+            if (!alts.some((a) => a.summary.places)) {
+              setAlternatives(undefined);
+              setMessage(tr("Salve lugares em Quero ir, ou inclua Talvez."));
+              return;
+            }
+            setAlternatives(alts);
+            setDraft(undefined);
+            setMessage(tr("Compare as alternativas e escolha uma para revisar."));
+          } catch (e) {
+            setMessage(
+              e instanceof Error ? e.message : tr("Não foi possível gerar."),
+            );
+          }
+        }}
+      >
+        {tr("Comparar alternativas")}
       </button>
+      {alternatives && !draft && (
+        <Comparison
+          alternatives={alternatives}
+          onChoose={(a) => {
+            setDraft(a.draft);
+            setMessage(
+              tf("Prévia criada a partir da alternativa “{name}”. Edite o que quiser antes de salvar.", {
+                name: tr(strategyText[a.strategy][0]),
+              }),
+            );
+          }}
+        />
+      )}
       {draft && (
         <div className="itinerary-preview">
-          <h3>{tr("Sua proposta ·")}{" "}{draft.activities.length} lugares</h3>
+          <h3>
+            {tf("Sua proposta · {count} lugares", {
+              count: draft.activities.length,
+            })}
+          </h3>
+          {alternatives && (
+            <button className="text-button" onClick={() => setDraft(undefined)}>
+              {tr("Voltar à comparação")}
+            </button>
+          )}
           {draft.warnings.map((w) => (
             <p className="subtle" key={w}>
-              {w}
+              {tr(w)}
             </p>
           ))}
           {distance && distance.segments > 0 && (
@@ -114,8 +244,7 @@ export function ItineraryBuilder({
           {draft.activities.map((a, index) => (
             <article className="stay-card" key={a.id}>
               <label>
-                {tr("Atividade")}
-                {index + 1}
+                {tf("Atividade {number}", { number: index + 1 })}
                 <input
                   value={a.title}
                   onChange={(e) =>
@@ -250,6 +379,7 @@ export function ItineraryBuilder({
                   }
                   if (await onSave(next)) {
                     setDraft(undefined);
+                    setAlternatives(undefined);
                     setMessage(
                       tf("{count} atividades adicionadas. Seu roteiro anterior foi preservado.", { count: added }),
                     );
@@ -270,6 +400,7 @@ export function ItineraryBuilder({
               disabled={pending}
               onClick={() => {
                 setDraft(undefined);
+                setAlternatives(undefined);
                 setMessage(tr("Prévia descartada. Roteiro preservado."));
               }}
             >

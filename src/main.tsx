@@ -58,7 +58,12 @@ const localModeKey = "gomes-modo-local";
 const repository = supabase ? supabaseRepository(supabase) : null;
 import { localKey, readLocal, saveLocal, supabase } from "./store";
 import "./style.css";
+// Shared by the catalog, saved places, itinerary builder and route planner.
+// Loaded eagerly so those screens are styled even before the catalog chunk.
+import "./catalog.css";
 import { downloadOffline, parseBackup } from "./offline";
+import { formatMoney } from "./i18n";
+import { decor, hideOnError } from "./decor";
 import { ConflictError, friendlyError } from "./errors";
 import {
   clearAccountCaches,
@@ -607,10 +612,14 @@ function App() {
           ))}
         </nav>
         <div className="sidebar-note">
-          <div className="note-icon">
-            <Plane size={22} />
-            <span>✦</span>
-          </div>
+          <img
+            className="note-photo"
+            src={decor.wing}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={hideOnError}
+          />
           <h4>{tr("Menos abas abertas.")}<br />{tr("Mais mundo lá fora.")}</h4>
           <p>{tr("Um lugar para todos os seus caminhos.")}</p>
         </div>
@@ -710,7 +719,8 @@ function App() {
                 icon={Cloud}
                 title={tr("Não conseguimos abrir suas viagens")}
                 text={tr(loadError)}
-                action="Tentar novamente"
+                action={tr("Tentar novamente")}
+                photo={decor.window}
                 onAction={() => loadAccount(session.user.id)}
               />
             </section>
@@ -808,23 +818,34 @@ function App() {
                     {tr("Baixar roteiro offline")}
                   </button>
                 </div>
-                <div className="tabs detail-tabs">
+                <div
+                  className="tabs detail-tabs"
+                  role="tablist"
+                  aria-label={tr("Seções da viagem")}
+                >
+                  {/* Internal tab ids stay in Portuguese; only the label is translated. */}
                   {[
-                    tr("Roteiro"),
-                    tr("Calendário"),
-                    tr("Lugares"),
-                    tr("Mapa"),
-                    tr("Informações"),
-                    tr("Hospedagens"),
-                    tr("Reservas"),
-                    tr("Documentos"),
-                    tr("Checklist"),
-                    tr("Fotos"),
-                    ...(trip.budgetEnabled ? [tr("Despesas")] : []),
+                    "Roteiro",
+                    "Calendário",
+                    "Lugares",
+                    "Mapa",
+                    "Informações",
+                    "Hospedagens",
+                    "Reservas",
+                    "Documentos",
+                    "Checklist",
+                    "Fotos",
+                    ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
                     <button
                       key={v}
+                      role="tab"
+                      aria-selected={tab === v}
                       className={tab === v ? "selected" : ""}
+                      ref={(el) => {
+                        if (el && tab === v)
+                          el.scrollIntoView({ block: "nearest", inline: "nearest" });
+                      }}
                       onClick={() => setTab(v)}
                     >
                       {tr(v)}
@@ -875,8 +896,7 @@ function App() {
                               className={day === i + 1 ? "selected" : ""}
                               onClick={() => setDay(i + 1)}
                             >
-                              {tr("Dia")}
-                              {i + 1}
+                              {tf("Dia {number}", { number: i + 1 })}
                             </button>
                           ),
                         )}
@@ -914,8 +934,9 @@ function App() {
                           <Empty
                             icon={MapPin}
                             title={tr("O dia está aberto a possibilidades")}
-                            text="Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer."
-                            action="Adicionar atividade"
+                            text={tr("Adicione um passeio, uma pausa para café ou qualquer lugar que queira conhecer.")}
+                            action={tr("Adicionar atividade")}
+                            photo={decor.calm}
                             onAction={() => setModal("activity")}
                           />
                         ) : (
@@ -1001,8 +1022,7 @@ function App() {
                                         },
                                         (_, i) => (
                                           <option key={i} value={i + 1}>
-                                            {tr("Dia")}
-                                            {i + 1}
+                                            {tf("Dia {number}", { number: i + 1 })}
                                           </option>
                                         ),
                                       )}
@@ -1254,7 +1274,8 @@ function App() {
                       <Empty
                         icon={Plane}
                         title={tr("Uma viagem sem papelada espalhada")}
-                        text="Guarde os detalhes e links das suas reservas aqui."
+                        text={tr("Guarde os detalhes e links das suas reservas aqui.")}
+                        photo={decor.windowAlt}
                       />
                     ) : (
                       trip.reservations.map((r) => (
@@ -1446,7 +1467,11 @@ function App() {
                         <option>EUR</option>
                         <option>USD</option>
                       </select>
-                      <button className="primary" disabled={busy}>
+                      <button
+                        className="primary"
+                        disabled={busy}
+                        aria-label={tr("Adicionar despesa")}
+                      >
                         <Plus size={16} />
                       </button>
                     </form>
@@ -1455,7 +1480,7 @@ function App() {
                         <Wallet size={20} />
                         <span>{x.title}</span>
                         <b>
-                          {x.currency} {x.amount.toFixed(2)}
+                          {formatMoney(x.amount, x.currency)}
                         </b>
                         <button
                           className="icon-button"
@@ -1574,6 +1599,14 @@ function App() {
                         className="create-card"
                         onClick={() => setModal("trip")}
                       >
+                        <img
+                          className="create-photo"
+                          src={decor.family}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          onError={hideOnError}
+                        />
                         <span className="dashed-icon">
                           <Plus size={25} />
                         </span>
@@ -1590,9 +1623,14 @@ function App() {
                           </h3>
                           <p>{tr("Sem formulários intermináveis.")}<br />{tr("Sem orçamento obrigatório.")}<br />{tr("Só o que faz sentido para você.")}</p>
                         </div>
-                        <div className="editorial-compass">
-                          <Compass size={105} strokeWidth={0.65} />
-                        </div>
+                        <img
+                          className="editorial-photo"
+                          src={decor.compass}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          onError={hideOnError}
+                        />
                       </div>
                     </div>
                   )}
@@ -1686,6 +1724,7 @@ function App() {
                     <section className="panel">
                       <Empty
                         icon={page === "history" ? BookOpen : Compass}
+                        photo={page === "history" ? decor.compassAlt : decor.roadAlt}
                         title={
                           search
                             ? tr("Nenhuma viagem encontrada")
@@ -1730,7 +1769,13 @@ function App() {
                       <h2>{tr("Todos os seus caminhos no mapa")}</h2>
                       <p>{tr("Marque os destinos das suas viagens. Os pontos ficam salvos com cada viagem.")}</p>
                     </div>
-                    <Globe2 size={26} />
+                    <img
+                      className="head-photo"
+                      src={decor.map}
+                      alt=""
+                      loading="lazy"
+                      onError={hideOnError}
+                    />
                   </div>
                   <TravelMap
                     trips={trips}
@@ -2212,17 +2257,22 @@ function Empty({
   text,
   action,
   onAction,
+  photo = decor.road,
 }: {
   icon: typeof Compass;
   title: string;
   text: string;
   action?: string;
+  photo?: string;
   onAction?: () => void;
 }) {
   return (
     <div className="empty">
-      <span className="empty-icon">
-        <Icon size={29} strokeWidth={1.4} />
+      <span className="empty-photo" aria-hidden="true">
+        <img src={photo} alt="" loading="lazy" onError={hideOnError} />
+        <span className="empty-badge">
+          <Icon size={18} />
+        </span>
       </span>
       <h3>{title}</h3>
       <p>{text}</p>
