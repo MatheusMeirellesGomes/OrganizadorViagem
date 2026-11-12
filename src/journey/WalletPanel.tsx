@@ -210,7 +210,7 @@ export function WalletPanel({ trip, store, userId, onSave, busy }: { trip: Trip;
           <span className="wallet-badge">{tr(walletCategories[i.category])}</span>
           {i.date && <span className="wallet-date">{shortDate(i.date)}</span>}
         </div>
-        <h4>{i.title}</h4>
+        <h3>{i.title}</h3>
         {i.detail && <p className="muted">{i.detail}</p>}
         <div className="wallet-actions">
           {i.hasSecret && i.source === "transport" && <SecretView store={store} tripId={trip.id} refId={i.id.slice(2)} />}

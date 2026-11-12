@@ -33,17 +33,17 @@ export function TripMapPanel({ trip }: { trip: Trip }) {
   if (!data.segments.length && !data.points.length)
     return (
       <section className="panel journey-card">
-        <h3>
+        <h2>
           <MapIcon size={17} aria-hidden="true" /> {tr("Mapa da viagem inteira")}
-        </h3>
+        </h2>
         <p className="muted">{tr("Escolha origem e destino pelas sugestões em Transportes e marque hospedagens e atividades no mapa para ver o percurso completo aqui.")}</p>
       </section>
     );
   return (
     <section className="panel journey-card trip-map-panel">
-      <h3>
+      <h2>
         <MapIcon size={17} aria-hidden="true" /> {tr("Mapa da viagem inteira")}
-      </h3>
+      </h2>
       <div className="wallet-filters">
         <select value={date} onChange={(e) => { setDate(e.target.value); setTransportId(""); setSelected(undefined); }} aria-label={tr("Filtrar por dia")}>
           <option value="">{tr("Viagem inteira")}</option>

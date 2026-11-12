@@ -30,9 +30,9 @@ function Reminders({ trip, onSave, busy }: { trip: Trip; onSave: (t: Trip) => Pr
   }
   return (
     <section className="panel journey-card" aria-labelledby="rem-title">
-      <h3 id="rem-title">
+      <h2 id="rem-title">
         <Bell size={17} aria-hidden="true" /> {tr("Lembretes")}
-      </h3>
+      </h2>
       <p className="muted">
         {tr("Você escolhe o que lembrar e quando. Os lembretes aparecem aqui e no topo do app quando chega a hora.")}{" "}
         {perm === "granted"
@@ -132,9 +132,9 @@ function Packing({ trip, trips, onSave, busy }: { trip: Trip; trips: Trip[]; onS
   return (
     <section className="panel journey-card" aria-labelledby="pack-title">
       <div className="section-head">
-        <h3 id="pack-title">
+        <h2 id="pack-title">
           <Luggage size={17} aria-hidden="true" /> {tr("Bagagem")}
-        </h3>
+        </h2>
         <span className="pack-progress" aria-label={tf("{done} de {total} itens prontos", { done: p.done, total: p.total })}>
           <span style={{ width: p.pct + "%" }} />
           <b>
@@ -185,7 +185,7 @@ function Packing({ trip, trips, onSave, busy }: { trip: Trip; trips: Trip[]; onS
         if (!group.length) return null;
         return (
           <div key={c} className="pack-group">
-            <h4>{tr(packingCategories[c])}</h4>
+            <h3>{tr(packingCategories[c])}</h3>
             <ul>
               {group.map((x) => (
                 <li key={x.id} className={x.packed ? "is-packed" : ""}>
@@ -257,9 +257,9 @@ function International({ trip, onSave, busy }: { trip: Trip; onSave: (t: Trip) =
   const today = new Date().toISOString().slice(0, 10);
   return (
     <section className="panel journey-card" aria-labelledby="intl-title">
-      <h3 id="intl-title">
+      <h2 id="intl-title">
         <Globe2 size={17} aria-hidden="true" /> {tr("Preparação internacional")}
-      </h3>
+      </h2>
       <p className="muted">{tr("Lista para conferir, não uma lista de exigências. O que é obrigatório depende do país, da sua nacionalidade, da situação e da data: confirme sempre na fonte oficial e anote quando consultou.")}</p>
       <ul className="prep-list">
         {keys.map((k) => {

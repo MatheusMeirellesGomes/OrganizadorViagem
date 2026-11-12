@@ -106,7 +106,7 @@ export function TransportPanel({ trip, store, onSave, busy }: { trip: Trip; stor
       </div>
 
       <section className="panel journey-card" aria-labelledby="timeline-title">
-        <h3 id="timeline-title">{tr("Linha do tempo da viagem")}</h3>
+        <h2 id="timeline-title">{tr("Linha do tempo da viagem")}</h2>
         {!days.length ? (
           <p className="muted">{tr("Adicione voos, carros ou trens com data para ver o percurso inteiro, junto com hospedagens e atividades.")}</p>
         ) : (
@@ -160,7 +160,7 @@ export function TransportPanel({ trip, store, onSave, busy }: { trip: Trip; stor
                     </button>
                   </div>
                 </header>
-                <h4>{transportTitle(t)}</h4>
+                <h3>{transportTitle(t)}</h3>
                 {t.title && <p className="muted">{routeLabel(t)}</p>}
                 <ol className="leg-list">
                   {t.legs.map((l) => {

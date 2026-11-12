@@ -1766,5 +1766,6 @@
   "Exportar sem documentos": ["Export without documents", "Exportar sin documentos"],
   "Localizadores de reserva nunca entram no backup. Arquivos de viagens compartilhadas com você ficam com quem os enviou.": ["Booking references never go into the backup. Files from trips shared with you stay with whoever uploaded them.", "Los localizadores de reserva nunca entran en la copia. Los archivos de viajes compartidos contigo quedan con quien los subió."],
   "Medicamentos de uso pessoal": ["Personal medication", "Medicamentos de uso personal"],
-  "pela duração (até 7, contando lavagem)": ["by trip length (up to 7, with laundry)", "según la duración (hasta 7, contando lavado)"]
+  "pela duração (até 7, contando lavagem)": ["by trip length (up to 7, with laundry)", "según la duración (hasta 7, contando lavado)"],
+  "Atualizar": ["Update", "Actualizar"]
 }

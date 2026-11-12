@@ -91,7 +91,7 @@
   margin-top: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--leaf);
+  color: #476536;
 }
 .metric-source {
   position: absolute;
@@ -275,7 +275,7 @@ dialog.dialog-trip[open] { animation: trip-in 0.22s ease-out; }
 .profile-photo-button { position: absolute; right: 0; bottom: 4px; background: var(--green); color: #fff; width: 32px; height: 32px; border: 2px solid #fff; }
 .profile-hero-text h2 { margin: 2px 0 4px; font-size: 26px; }
 .profile-hero-text p { margin: 0 0 8px; color: var(--muted); }
-.profile-kicker { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--leaf); font-weight: 600; }
+.profile-kicker { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #476536; font-weight: 600; }
 .profile-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
 .profile-facts li { display: inline-flex; align-items: center; gap: 4px; background: var(--cream-deep); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: #4d5b45; }
 .profile-hero-actions { display: grid; gap: 6px; justify-items: end; }
@@ -362,7 +362,7 @@ dialog.dialog-trip[open] { animation: trip-in 0.22s ease-out; }
 /* Transportes */
 .journey { display: grid; gap: 18px; }
 .journey-card { margin: 0; }
-.journey-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 17px; }
+.journey-card > h2, .journey-card .section-head h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 17px; }
 .journey-card .section-head { margin: 0 0 6px; }
 .journey-add { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .journey-add-button {
@@ -397,7 +397,7 @@ dialog.dialog-trip[open] { animation: trip-in 0.22s ease-out; }
 .transport-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .transport-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; box-shadow: var(--card-shadow); }
 .transport-card header { display: flex; justify-content: space-between; align-items: center; }
-.transport-card h4 { margin: 0; font-size: 16px; }
+.transport-card h3 { margin: 0; font-size: 16px; }
 .transport-card .muted { margin: 0; }
 .transport-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef2ea; color: #4f6a47; }
 .tb-flight { background: #e3edf5; color: #2f5d80; }
@@ -531,7 +531,7 @@ dialog.journey-dialog { width: 760px; padding: 0; overflow: hidden; }
 .wallet-search input { border: 0; background: transparent; padding: 10px 0; }
 .wallet-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .wallet-item { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; box-shadow: var(--card-shadow); border-left: 4px solid #c9d6c0; }
-.wallet-item h4 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.wallet-item h3 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 .wallet-item p { margin: 0; }
 .wallet-item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .wallet-badge { font-size: 11px; font-weight: 600; color: #4f6a47; background: #eef2ea; padding: 2px 8px; border-radius: 999px; }
@@ -566,7 +566,7 @@ dialog.wallet-preview { width: 900px; }
 .reminder-list li > span:first-child { display: grid; gap: 1px; }
 .reminder-list small { color: var(--muted); font-size: 11.5px; }
 .reminder-list li.is-due { background: #fdf1df; box-shadow: inset 3px 0 0 #d79a3c; }
-.reminder-list li.is-done { opacity: 0.55; text-decoration: line-through; }
+.reminder-list li.is-done { color: #5f6b62; text-decoration: line-through; background: #f4f4f0; }
 .reminder-banner { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 16px; padding: 12px 16px; border-radius: 14px; background: #fdf1df; border: 1px solid #efd3a6; color: #6b4a14; }
 .reminder-banner ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; flex: 1; }
 .reminder-banner li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -576,7 +576,7 @@ dialog.wallet-preview { width: 900px; }
 .pack-progress b { position: relative; font-size: 11.5px; color: var(--green); }
 .pack-add { display: grid; grid-template-columns: 1fr 70px 170px auto; gap: 8px; margin: 10px 0; }
 .pack-qty { text-align: center; }
-.pack-group h4 { margin: 10px 0 4px; font-size: 12.5px; color: #596d5e; text-transform: uppercase; letter-spacing: 0.8px; }
+.pack-group h3 { margin: 10px 0 4px; font-size: 12.5px; color: #596d5e; text-transform: uppercase; letter-spacing: 0.8px; }
 .pack-group li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 0; border-bottom: 1px solid #f0f2ec; }
 .pack-group li .check-row { margin: 0; font-size: 13.5px; }
 .pack-group li small { color: var(--muted); }
@@ -628,3 +628,14 @@ dialog.wallet-preview { width: 900px; }
 .prep-status.is-ok { background: #e1eed8; color: #3f6a32; }
 .prep-status.is-na { background: #ececea; color: #6a6f68; }
 @media (max-width: 520px) { .prep-form { grid-template-columns: 1fr 1fr; } .prep-form input[name="source"], .prep-form input[name="note"] { grid-column: 1 / -1; } }
+
+/* Indicadores financeiros: cards com faixa de cor e hierarquia mais clara */
+.budget-kpis > div { position: relative; background: #fff; border: 1px solid var(--border); box-shadow: var(--card-shadow); padding: 16px 18px 14px; overflow: hidden; }
+.budget-kpis > div::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: #c9d8bf; }
+.budget-kpis > div:nth-child(2)::before { background: #9cbcd6; }
+.budget-kpis > div:nth-child(3)::before { background: #d9a86a; }
+.budget-kpis > div:nth-child(4)::before { background: #6a8755; }
+.budget-kpis > div.negative::before { background: #b5533f; }
+.budget-kpis > div.negative strong { color: #9b3b2b; }
+.budget-kpis small { text-transform: uppercase; letter-spacing: 0.7px; font-size: 10.5px; font-weight: 600; }
+.budget-kpis strong { font-family: "Manrope", sans-serif; font-size: 22px; color: var(--ink); }

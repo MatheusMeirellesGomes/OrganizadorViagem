@@ -267,9 +267,9 @@ function FuelCalculator({ trip, onSave, busy }: { trip: Trip; onSave: (t: Trip) 
   }
   return (
     <section className="panel journey-card" aria-labelledby="fuel-title">
-      <h3 id="fuel-title">
+      <h2 id="fuel-title">
         <Calculator size={17} aria-hidden="true" /> {tr("Calculadora de combustível")}
-      </h3>
+      </h2>
       <div className="cost-grid">
         {roadTrips.length > 0 && (
           <label>
@@ -372,9 +372,9 @@ function CarComparator({ trip, onSave, busy }: { trip: Trip; onSave: (t: Trip) =
   );
   return (
     <section className="panel journey-card" aria-labelledby="compare-title">
-      <h3 id="compare-title">
+      <h2 id="compare-title">
         <Scale size={17} aria-hidden="true" /> {tr("Comparar veículos")}
-      </h3>
+      </h2>
       <p className="muted">{tr("Dois carros pagam combustível, pedágio e estacionamento duas vezes e precisam de dois motoristas. Nem sempre saem mais baratos.")}</p>
       <div className="cost-grid">
         <label>
@@ -490,9 +490,9 @@ export function VehiclePanel({ trip, store, onSave, busy }: { trip: Trip; store:
     <>
       <section className="panel journey-card" aria-labelledby="vehicles-title">
         <div className="section-head">
-          <h3 id="vehicles-title">
+          <h2 id="vehicles-title">
             <Car size={17} aria-hidden="true" /> {tr("Veículos")}
-          </h3>
+          </h2>
           <button className="secondary small" onClick={() => setEditing("new")}>
             <Plus size={14} /> {tr("Adicionar veículo")}
           </button>
