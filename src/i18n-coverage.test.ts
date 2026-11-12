@@ -6,6 +6,7 @@ import { mealLabels, cuisineOptions } from "./explore/restaurants";
 import { expenseCategories, statusLabels } from "./budget";
 import { mealNames } from "./meals";
 import { modeLabels } from "./planner";
+import { overviewMetrics } from "./home/metrics";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -26,7 +27,7 @@ const files = (
       options: { query: string; import: string; eager: true },
     ) => Record<string, string>;
   }
-).glob(["./*.ts", "./*.tsx", "./explore/*.ts", "./explore/*.tsx", "!./**/*.test.ts", "!./**/*.test.tsx"], {
+).glob(["./*.ts", "./*.tsx", "./explore/*.ts", "./explore/*.tsx", "./home/*.ts", "./home/*.tsx", "./journey/*.ts", "./journey/*.tsx", "./profile/*.ts", "./profile/*.tsx", "!./**/*.test.ts", "!./**/*.test.tsx"], {
   query: "?raw",
   import: "default",
   eager: true,
@@ -87,6 +88,7 @@ describe("traduções", () => {
       ...Object.values(statusLabels),
       ...Object.values(mealNames),
       ...Object.values(modeLabels),
+      ...overviewMetrics([]).flatMap((m) => [m.label, m.text]),
     ];
     expect(labels.filter((l) => !dictionary[l])).toEqual([]);
   });

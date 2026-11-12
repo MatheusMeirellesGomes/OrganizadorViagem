@@ -63,6 +63,7 @@ import "./style.css";
 import "./catalog.css";
 // Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
 import "./explore/explore.css";
+import "./etapa16.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
@@ -95,6 +96,7 @@ import { estimateTravel } from "./planner";
 import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
+import { HomeMetrics } from "./home/HomeMetrics";
 import { DocumentsPanel } from "./DocumentsPanel";
 import { prepareTripAssets } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
@@ -1552,34 +1554,7 @@ function App() {
                       </span>
                     </div>
                   </section>
-                  <div className="stats">
-                    <Stat
-                      icon={Compass}
-                      value={trips.filter((t) => t.status !== "past").length}
-                      label={tr("viagens por vir")}
-                    />
-                    <Stat
-                      icon={Globe2}
-                      value={
-                        new Set(
-                          trips
-                            .filter((t) => t.status === "past" && t.destination)
-                            .map((t) => t.destination.toLowerCase()),
-                        ).size
-                      }
-                      label={tr("destinos visitados")}
-                    />
-                    <Stat
-                      icon={MapPin}
-                      value={trips.reduce((n, t) => n + t.activities.length, 0)}
-                      label={tr("lugares no seu roteiro")}
-                    />
-                    <Stat
-                      icon={CheckCheck}
-                      value={trips.filter((t) => t.status === "past").length}
-                      label={tr("viagens realizadas")}
-                    />
-                  </div>
+                  <HomeMetrics trips={trips} onOpen={go} />
                   <div className="section-head">
                     <div>
                       <h2>{tr("Seus próximos caminhos")}</h2>
@@ -2232,27 +2207,6 @@ function ScopePicker({ defaultValue }: { defaultValue: TripScope }) {
         </label>
       ))}
     </fieldset>
-  );
-}
-function Stat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof Compass;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="stat">
-      <span>
-        <Icon size={21} />
-      </span>
-      <div>
-        <strong>{String(value).padStart(2, "0")}</strong>
-        <p>{label}</p>
-      </div>
-    </div>
   );
 }
 function Empty({
