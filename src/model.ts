@@ -20,7 +20,7 @@ export type Activity = {
   /** Travel Mode progress (Fase 5). */
   status?: "started" | "skipped";
   /** Important changes (postponed, rescheduled...), newest last. */
-  history?: { at: string; what: string }[];
+  history?: { at: string; what: string; from?: string; to?: string }[];
 };
 export type Stay = {
   id: string;

@@ -174,7 +174,7 @@ export function parseBackup(raw: string): Trip[] {
           .map(object)
           .filter((h) => text(h.at) && text(h.what))
           .slice(-50)
-          .map((h) => ({ at: text(h.at), what: text(h.what).slice(0, 200) })),
+          .map((h) => ({ at: text(h.at), what: text(h.what).slice(0, 40), ...(text(h.from) || text(h.to) ? { from: text(h.from).slice(0, 40), to: text(h.to).slice(0, 40) } : {}) })),
       };
     });
     trip.checklist = list(v.checklist).map((value) => {
