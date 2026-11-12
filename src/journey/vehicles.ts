@@ -77,6 +77,7 @@ export function removeVehicle(trip: Trip, id: string): Trip {
     transports: (trip.transports || []).map((t) => (t.road?.vehicleIds?.includes(id) ? { ...t, road: { ...t.road, vehicleIds: t.road.vehicleIds.filter((x) => x !== id) } } : t)),
     expenses: trip.expenses.map((x) => (x.vehicleId === id ? { ...x, vehicleId: undefined, costKey: undefined } : x)),
     reservations: trip.reservations.map((r) => (r.vehicleId === id ? { ...r, vehicleId: undefined } : r)),
+    reminders: (trip.reminders || []).filter((r) => r.refId !== id),
   };
 }
 

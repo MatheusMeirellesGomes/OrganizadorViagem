@@ -142,6 +142,7 @@ export function removeTransport(trip: Trip, id: string): Trip {
     transports: (trip.transports || []).filter((t) => t.id !== id),
     expenses: trip.expenses.map((x) => (x.transportId === id ? { ...x, transportId: undefined, costKey: undefined } : x)),
     reservations: trip.reservations.map((r) => (r.transportId === id ? { ...r, transportId: undefined } : r)),
+    reminders: (trip.reminders || []).filter((r) => r.refId !== id),
   };
 }
 

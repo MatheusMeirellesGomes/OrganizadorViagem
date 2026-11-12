@@ -103,6 +103,9 @@ export type Trip = {
   transports?: import("./journey/types").Transport[];
   vehicles?: import("./journey/types").Vehicle[];
   carComparison?: import("./journey/vehicles").Comparison;
+  packing?: import("./journey/packing").PackingItem[];
+  reminders?: import("./journey/reminders").Reminder[];
+  prep?: Record<string, import("./journey/prep").PrepState>;
 };
 export const uid = () => crypto.randomUUID();
 export function newTrip(input: Partial<Trip> = {}): Trip {
