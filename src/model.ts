@@ -11,6 +11,10 @@ export type Activity = {
   address: string;
   done: boolean;
   kind: string;
+  /** Optional note written when adding the place (Explorar). */
+  notes?: string;
+  /** Optional link to a stay of the trip. */
+  stayId?: string;
 };
 export type Stay = {
   id: string;
