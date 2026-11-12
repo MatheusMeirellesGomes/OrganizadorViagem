@@ -96,6 +96,8 @@ import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
 import { HomeMetrics } from "./home/HomeMetrics";
+import { TransportPanel } from "./journey/TransportPanel";
+import { secretStore } from "./journey/secrets";
 import { ProfilePage } from "./profile/ProfilePage";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
@@ -903,6 +905,7 @@ function App() {
                     "Lugares",
                     "Mapa",
                     "Informações",
+                    "Transportes",
                     "Hospedagens",
                     "Reservas",
                     "Documentos",
@@ -1353,6 +1356,9 @@ function App() {
                         <Trash2 size={16} />{tr("Excluir viagem")}</button>
                     </div>
                   </form>
+                )}
+                {tab === "Transportes" && (
+                  <TransportPanel trip={trip} store={secretStore(supabase, Boolean(session))} onSave={save} busy={busy} />
                 )}
                 {tab === "Hospedagens" && (
                   <StaysPanel trip={trip} onSave={save} busy={busy} />
