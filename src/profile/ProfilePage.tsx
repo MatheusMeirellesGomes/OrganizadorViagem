@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Camera, Cloud, Download, HardDrive, LogIn, LogOut, MapPin, Pencil, Plus, Shield, Trash2 } from "lucide-react";
+import { Accessibility, Archive, Bell, Bus, Camera, Cloud, Compass, Download, Eraser, HardDrive, LogIn, LogOut, MapPin, Pencil, Settings, Shield, SlidersHorizontal, Trash2, Upload, Utensils } from "lucide-react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { t as tr, tf, formatNumber, useLanguage, setLanguage, type Language } from "../i18n";
 import type { Trip } from "../model";
@@ -83,6 +83,7 @@ export function ProfilePage({
   const [file, setFile] = useState<Blob>();
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [notif, setNotif] = useState<NotificationPermission | "unsupported">(() => (typeof Notification === "undefined" ? "unsupported" : Notification.permission));
   const input = useRef<HTMLInputElement>(null);
   const stats = personalStats(trips);
   const cloud = Boolean(client && userId);
@@ -257,9 +258,7 @@ export function ProfilePage({
         <p className="muted profile-stats-note">{tr("Contados a partir das viagens concluídas, dos lugares salvos e das visitas marcadas.")}</p>
       </section>
 
-      <section id="preferencias" className="panel profile-section">
-        <h2>{tr("Preferências")}</h2>
-        <p className="muted">{tr("Tudo opcional. Ajuda a sugerir roteiros, restaurantes e moedas.")}</p>
+      <section id="preferencias" className="panel profile-section profile-prefs-section">
         <form
           className="profile-prefs"
           onSubmit={(e) => {
@@ -267,6 +266,15 @@ export function ProfilePage({
             submit(e.currentTarget, "prefs");
           }}
         >
+          <header className="settings-head">
+            <span className="settings-icon" aria-hidden="true">
+              <SlidersHorizontal size={18} />
+            </span>
+            <div>
+              <h2>{tr("Preferências")}</h2>
+              <p>{tr("Tudo opcional. Ajuda a sugerir roteiros, restaurantes e moedas.")}</p>
+            </div>
+          </header>
           <div className="profile-prefs-grid">
             <label>
               {tr("Idioma")}
@@ -296,125 +304,220 @@ export function ProfilePage({
               </select>
             </label>
           </div>
-          <fieldset>
-            <legend>{tr("Estilo de viagem")}</legend>
-            <Chips name="styles" options={travelStyles} value={profile.styles} />
-          </fieldset>
-          <fieldset>
-            <legend>{tr("Como prefere se deslocar")}</legend>
-            <Chips name="transport" options={transportPrefs} value={profile.transport} />
-          </fieldset>
-          <fieldset>
-            <legend>{tr("Comida")}</legend>
-            <Chips name="food" options={foodPrefs} value={profile.food} />
-          </fieldset>
-          <fieldset>
-            <legend>{tr("Acessibilidade")}</legend>
-            <Chips name="accessibility" options={accessibilityPrefs} value={profile.accessibility} />
-          </fieldset>
-          <button className="primary" disabled={busy || pending}>
-            {tr("Salvar preferências")}
-          </button>
+          <div className="pref-groups">
+            {(
+              [
+                ["styles", "Estilo de viagem", travelStyles, profile.styles, Compass],
+                ["transport", "Como prefere se deslocar", transportPrefs, profile.transport, Bus],
+                ["food", "Comida", foodPrefs, profile.food, Utensils],
+                ["accessibility", "Acessibilidade", accessibilityPrefs, profile.accessibility, Accessibility],
+              ] as const
+            ).map(([name, legend, options, value, Icon]) => (
+              <fieldset key={name} className="pref-group">
+                <legend>
+                  <Icon size={15} aria-hidden="true" /> {tr(legend)}
+                </legend>
+                <Chips name={name} options={options} value={value} />
+              </fieldset>
+            ))}
+          </div>
+          <footer className="settings-foot">
+            <span className="muted">{tr("Marque quantas opções quiser.")}</span>
+            <button className="primary" disabled={busy || pending}>
+              {tr("Salvar preferências")}
+            </button>
+          </footer>
         </form>
       </section>
 
-      <div className="profile-columns">
-        <section id="conta" className="panel profile-section">
-          <h2>{tr("Minha conta")}</h2>
-          {userId ? (
-            <>
-              <p className="profile-line">
-                <Cloud size={18} aria-hidden="true" />
-                <span>
-                  <b>{tr("Conta sincronizada")}</b>
-                  <small>{email}</small>
-                </span>
-              </p>
-              <p className="muted">{tr("Suas viagens, preferências e foto ficam na sua conta e aparecem em outros aparelhos.")}</p>
-              <button className="secondary" onClick={onSignOut}>
-                <LogOut size={16} /> {tr("Sair da conta")}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="profile-line">
-                <HardDrive size={18} aria-hidden="true" />
-                <span>
-                  <b>{tr("Modo local")}</b>
-                  <small>{tr("Salvo neste navegador")}</small>
-                </span>
-              </p>
-              <p className="muted">{tr("Você está no modo local. As viagens ficam neste navegador e não são sincronizadas com outros aparelhos.")}</p>
-              {hasSupabase ? (
-                <button className="secondary" onClick={onSignIn}>
-                  <LogIn size={16} /> {tr("Entrar ou criar conta")}
+      <div className="settings-grid">
+        <section id="conta" className="panel settings-card" aria-labelledby="conta-title">
+          <header className="settings-head">
+            <span className="settings-icon" aria-hidden="true">
+              {userId ? <Cloud size={18} /> : <HardDrive size={18} />}
+            </span>
+            <div>
+              <h2 id="conta-title">{tr("Minha conta")}</h2>
+              <p>{userId ? tr("Viagens sincronizadas entre aparelhos") : tr("Viagens salvas só neste navegador")}</p>
+            </div>
+          </header>
+          <ul className="settings-rows">
+            <li>
+              <span>
+                <b>{userId ? tr("Conta sincronizada") : tr("Modo local")}</b>
+                <small>{userId ? email : tr("Não sincroniza com outros aparelhos.")}</small>
+              </span>
+              <span className={"settings-badge" + (userId ? " is-ok" : "")}>{userId ? tr("Conectada") : tr("Local")}</span>
+            </li>
+            <li>
+              <span>
+                <b>{userId ? tr("Sair deste aparelho") : tr("Sincronizar aparelhos")}</b>
+                <small>
+                  {userId
+                    ? tr("Suas viagens continuam guardadas na conta.")
+                    : hasSupabase
+                      ? tr("Entre para levar viagens, preferências e foto para outros aparelhos.")
+                      : tr("Disponível depois de configurar o Supabase (veja o README).")}
+                </small>
+              </span>
+              {userId ? (
+                <button className="secondary small" onClick={onSignOut}>
+                  <LogOut size={15} /> {tr("Sair")}
                 </button>
               ) : (
-                <p className="muted">{tr("Para entrar na conta e sincronizar aparelhos, configure o projeto Supabase seguindo o README do repositório.")}</p>
+                hasSupabase && (
+                  <button className="secondary small" onClick={onSignIn}>
+                    <LogIn size={15} /> {tr("Entrar")}
+                  </button>
+                )
               )}
-            </>
-          )}
-        </section>
-
-        <section id="dados" className="panel profile-section">
-          <h2>{tr("Meus dados")}</h2>
-          <p className="muted">{tr("O backup inclui informações, fotos e documentos, inclusive os arquivos baixados da conta. Guarde-o em local privado.")}</p>
-          <div className="profile-buttons">
-            <button className="secondary" onClick={() => onExport(true)} disabled={busy}>
-              <Download size={16} /> {tr("Exportar backup das viagens")}
-            </button>
-            <button className="secondary" onClick={() => onExport(false)} disabled={busy}>
-              <Download size={16} /> {tr("Exportar sem documentos")}
-            </button>
-            <button className="secondary" onClick={onImport} disabled={busy}>
-              <Plus size={16} /> {tr("Importar backup")}
-            </button>
-          </div>
-          <p className="muted">{tr("As viagens são adicionadas como novas cópias. Nenhuma viagem existente é substituída.")}</p>
-          <p className="muted">{tr("Localizadores de reserva nunca entram no backup. Arquivos de viagens compartilhadas com você ficam com quem os enviou.")}</p>
-        </section>
-
-        <section id="privacidade" className="panel profile-section">
-          <h2>{tr("Privacidade")}</h2>
-          <ul className="profile-privacy">
-            <li>
-              <Shield size={16} aria-hidden="true" />
-              {cloud ? tr("Sua foto fica numa pasta privada da sua conta e só aparece para você.") : tr("Sua foto e suas preferências ficam só neste navegador.")}
             </li>
             <li>
-              <Shield size={16} aria-hidden="true" />
-              {tr("Quem participa das suas viagens não vê seu perfil, seus localizadores de reserva nem seus documentos.")}
-            </li>
-            <li>
-              <Shield size={16} aria-hidden="true" />
-              {sharedWithMe ? tf("{count} viagens foram compartilhadas com você.", { count: sharedWithMe }) : tr("Nenhuma viagem de outra pessoa compartilhada com você.")}
+              <span>
+                <b>{userId ? tr("Preferências e foto") : tr("Não perca suas viagens")}</b>
+                <small>{userId ? tr("Acompanham você em qualquer aparelho conectado.") : tr("Sem conta, limpar o navegador apaga os dados. Exporte um backup de vez em quando.")}</small>
+              </span>
+              {userId ? (
+                <span className="settings-badge is-ok">{tr("Na conta")}</span>
+              ) : (
+                <button className="secondary small" onClick={() => onExport(true)} disabled={busy}>
+                  <Download size={15} /> {tr("Backup")}
+                </button>
+              )}
             </li>
           </ul>
-          <p className="muted">{tr("Convites e papéis ficam em cada viagem, na aba Informações.")}</p>
         </section>
 
-        <section id="configuracoes" className="panel profile-section">
-          <h2>{tr("Configurações")}</h2>
-          {settings}
-          <div className="profile-setting">
-            <span>
-              <b>{tr("Cache do Explorar")}</b>
-              <small>{tr("Buscas guardadas por 24 horas para abrir mais rápido. Suas viagens não são afetadas.")}</small>
+        <section id="dados" className="panel settings-card" aria-labelledby="dados-title">
+          <header className="settings-head">
+            <span className="settings-icon" aria-hidden="true">
+              <Archive size={18} />
             </span>
-            <button
-              className="secondary small"
-              onClick={() => {
-                try {
-                  ["gomes-explorar-cache-v2", "gomes-wikidata-classes-v2"].forEach((k) => localStorage.removeItem(k));
-                } catch {
-                  // Storage blocked: nothing cached.
-                }
-                setMessage("Cache do Explorar limpo.");
-              }}
-            >
-              {tr("Limpar")}
-            </button>
-          </div>
+            <div>
+              <h2 id="dados-title">{tr("Meus dados")}</h2>
+              <p>{tr("Backups ficam com você. Guarde em local privado.")}</p>
+            </div>
+          </header>
+          <ul className="settings-rows">
+            <li>
+              <span>
+                <b>{tr("Backup completo")}</b>
+                <small>{tr("Viagens, fotos e documentos da carteira.")}</small>
+              </span>
+              <button className="secondary small" onClick={() => onExport(true)} disabled={busy}>
+                <Download size={15} /> {tr("Exportar")}
+              </button>
+            </li>
+            <li>
+              <span>
+                <b>{tr("Backup sem documentos")}</b>
+                <small>{tr("Viagens e fotos, sem os arquivos da carteira.")}</small>
+              </span>
+              <button className="secondary small" onClick={() => onExport(false)} disabled={busy}>
+                <Download size={15} /> {tr("Exportar")}
+              </button>
+            </li>
+            <li>
+              <span>
+                <b>{tr("Importar backup")}</b>
+                <small>{tr("Entra como novas cópias; nada é substituído.")}</small>
+              </span>
+              <button className="secondary small" onClick={onImport} disabled={busy}>
+                <Upload size={15} /> {tr("Importar")}
+              </button>
+            </li>
+          </ul>
+          <p className="settings-note">{tr("Localizadores de reserva nunca entram no backup.")}</p>
+        </section>
+
+        <section id="privacidade" className="panel settings-card" aria-labelledby="privacidade-title">
+          <header className="settings-head">
+            <span className="settings-icon" aria-hidden="true">
+              <Shield size={18} />
+            </span>
+            <div>
+              <h2 id="privacidade-title">{tr("Privacidade")}</h2>
+              <p>{tr("Quem vê o quê")}</p>
+            </div>
+          </header>
+          <ul className="settings-rows">
+            <li>
+              <span>
+                <b>{tr("Foto e preferências")}</b>
+                <small>{cloud ? tr("Pasta privada da sua conta.") : tr("Guardadas neste navegador.")}</small>
+              </span>
+              <span className="settings-badge is-ok">{tr("Só você")}</span>
+            </li>
+            <li>
+              <span>
+                <b>{tr("Localizadores e documentos")}</b>
+                <small>{tr("Participantes das viagens não veem.")}</small>
+              </span>
+              <span className="settings-badge is-ok">{tr("Só você")}</span>
+            </li>
+            <li>
+              <span>
+                <b>{tr("Viagens compartilhadas com você")}</b>
+                <small>{tr("Convites e papéis ficam em cada viagem, na aba Informações.")}</small>
+              </span>
+              <span className="settings-badge">{formatNumber(sharedWithMe, 0)}</span>
+            </li>
+          </ul>
+        </section>
+
+        <section id="configuracoes" className="panel settings-card" aria-labelledby="config-title">
+          <header className="settings-head">
+            <span className="settings-icon" aria-hidden="true">
+              <Settings size={18} />
+            </span>
+            <div>
+              <h2 id="config-title">{tr("Configurações")}</h2>
+              <p>{tr("Ajustes deste aparelho")}</p>
+            </div>
+          </header>
+          <ul className="settings-rows">
+            {settings}
+            <li>
+              <span>
+                <b>{tr("Notificações de lembretes")}</b>
+                <small>
+                  {notif === "granted"
+                    ? tr("Ativadas. Aparecem com o app aberto.")
+                    : notif === "denied"
+                      ? tr("Bloqueadas nas configurações do navegador.")
+                      : notif === "unsupported"
+                        ? tr("Este navegador não oferece notificações.")
+                        : tr("Os lembretes aparecem no topo do app.")}
+                </small>
+              </span>
+              {notif === "default" ? (
+                <button className="secondary small" onClick={async () => setNotif(await Notification.requestPermission())}>
+                  <Bell size={15} /> {tr("Permitir")}
+                </button>
+              ) : (
+                <span className={"settings-badge" + (notif === "granted" ? " is-ok" : "")}>{notif === "granted" ? tr("Ativas") : tr("Desligadas")}</span>
+              )}
+            </li>
+            <li>
+              <span>
+                <b>{tr("Cache do Explorar")}</b>
+                <small>{tr("Buscas guardadas por 24 horas. Suas viagens não são afetadas.")}</small>
+              </span>
+              <button
+                className="secondary small"
+                onClick={() => {
+                  try {
+                    ["gomes-explorar-cache-v2", "gomes-wikidata-classes-v2"].forEach((k) => localStorage.removeItem(k));
+                  } catch {
+                    // Storage blocked: nothing cached.
+                  }
+                  setMessage("Cache do Explorar limpo.");
+                }}
+              >
+                <Eraser size={15} /> {tr("Limpar")}
+              </button>
+            </li>
+          </ul>
         </section>
       </div>
 
