@@ -67,6 +67,7 @@ import "./theme-dark.css";
 import "./theme.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
+import { TourHost, TourSetting } from "./tour/TourHost";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
@@ -695,6 +696,7 @@ function App() {
           {nav.map((n) => (
             <button
               key={n.id}
+              data-tour={"nav-" + n.id}
               className={page === n.id && !selected ? "active" : ""}
               onClick={() => go(n.id)}
             >
@@ -775,6 +777,7 @@ function App() {
             </span>
             <button
               className="avatar avatar-button"
+              data-tour="nav-profile"
               aria-label={tr("Abrir perfil")}
               onClick={() => go("profile")}
             >
@@ -884,6 +887,7 @@ function App() {
                 <div className="detail-toolbar">
                   <button
                     id="travel-mode-entry"
+                    data-tour="modo-viagem"
                     className="primary travel-mode-entry"
                     onClick={() => setTravelMode(true)}
                   >
@@ -937,6 +941,7 @@ function App() {
                   ].map((v) => (
                     <button
                       key={v}
+                      data-tour={"aba-" + v}
                       role="tab"
                       aria-selected={tab === v}
                       className={tab === v ? "selected" : ""}
@@ -979,7 +984,7 @@ function App() {
                           {tr("Atividade")}
                         </button>
                       </div>
-                      <div className="days">
+                      <div className="days" data-tour="roteiro">
                         {Array.from(
                           {
                             length: Math.max(
@@ -1561,7 +1566,7 @@ function App() {
                   </p>
                 </div>
                 {page !== "profile" && (
-                  <button className="primary" onClick={() => setModal("trip")}>
+                  <button className="primary" data-tour="criar-viagem" onClick={() => setModal("trip")}>
                     <Plus size={18} />
                     {tr("Nova viagem")}
                   </button>
@@ -1901,7 +1906,12 @@ function App() {
                       setLocalChoice(false);
                     }}
                     onOpenTrip={openTrip}
-                    settings={<ThemeSetting />}
+                    settings={
+                      <>
+                        <ThemeSetting />
+                        <TourSetting />
+                      </>
+                    }
                   />
                 </>
               )}
@@ -1914,6 +1924,7 @@ function App() {
             .map((n) => (
               <button
                 key={n.id}
+                data-tour={"nav-" + n.id}
                 className={page === n.id ? "active" : ""}
                 onClick={() => go(n.id)}
               >
@@ -1922,6 +1933,7 @@ function App() {
               </button>
             ))}
           <button
+            data-tour="nav-profile"
             onClick={() => go("profile")}
             className={page === "profile" ? "active" : ""}
           >
@@ -1930,6 +1942,12 @@ function App() {
           </button>
         </nav>
       </div>
+      <TourHost
+        onHome={page === "home" && !selected}
+        onTrip={!!trip && !travelMode && tab === "Roteiro"}
+        blocked={!!modal}
+        goHome={() => go("home")}
+      />
       {notice && (
         <div className="toast" role="status">
           {tr(notice)}

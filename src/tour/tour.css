@@ -1,0 +1,150 @@
+/* Tour guiado: usa os tokens de theme.css, então segue claro e escuro. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.tour-block {
+  position: absolute;
+  inset: 0;
+}
+.tour-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+}
+.tour-spot {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px var(--overlay);
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+.tour-card {
+  position: fixed;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 16px 18px 18px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--shadow-lg);
+  transition: top 0.25s ease, left 0.25s ease;
+}
+.tour-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tour-progress {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.tour-x {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -12px -10px 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+}
+.tour-x:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.tour-bar {
+  height: 4px;
+  margin: 8px 0 14px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.tour-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+.tour-card h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--text);
+  outline: none;
+}
+.tour-card p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.tour-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tour-nav {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.tour-card footer .primary,
+.tour-card footer .secondary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tour-skip {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tour-welcome {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 28px 24px 22px;
+}
+.tour-welcome footer {
+  justify-content: center;
+}
+.tour-globe {
+  display: block;
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+.tour-welcome h2 {
+  font-size: 22px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot,
+  .tour-card,
+  .tour-bar span {
+    transition: none;
+  }
+}
+@media print {
+  .tour {
+    display: none;
+  }
+}
