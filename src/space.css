@@ -189,7 +189,8 @@
   .space-identity { grid-template-columns: auto 1fr; }
   .space-identity-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .space .settings-rows li:has(> select) { flex-wrap: wrap; }
-  main:has(.space.has-section) .page-heading { display: none; }
+  /* Título da página fica só para leitores de tela; a categoria já tem o seu. */
+  main:has(.space.has-section) .page-heading { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .space-select { min-width: 0; width: 100% !important; }
   .space-page-head h2 { font-size: 22px; }
 }
