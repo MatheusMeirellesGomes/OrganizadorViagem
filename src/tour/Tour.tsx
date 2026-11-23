@@ -110,14 +110,14 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (finished
         aria-describedby="tour-text"
         style={pos ? { top: pos.top, left: pos.left } : { top: 0, left: 0, opacity: 0 }}
       >
-        <header>
+        <div className="tour-head">
           <span className="tour-progress" aria-live="polite">
             {tf("Etapa {current} de {total}", { current: index + 1, total: visible.length })}
           </span>
           <button type="button" className="tour-x" aria-label={tr("Fechar tutorial")} onClick={() => close(false)}>
             <X size={18} />
           </button>
-        </header>
+        </div>
         <div className="tour-bar" aria-hidden="true">
           <span style={{ width: `${((index + 1) / visible.length) * 100}%` }} />
         </div>
@@ -125,7 +125,7 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (finished
           {tr(step.title)}
         </h2>
         <p id="tour-text">{tr(step.text)}</p>
-        <footer>
+        <div className="tour-foot">
           {!last && (
             <button type="button" className="tour-skip" onClick={() => close(false)}>
               {tr("Pular tutorial")}
@@ -141,7 +141,7 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (finished
               {last ? tr("Concluir") : tr("Próximo")} {!last && <ArrowRight size={16} />}
             </button>
           </span>
-        </footer>
+        </div>
       </div>
     </div>
   );
@@ -161,14 +161,14 @@ export function TourWelcome({ onStart, onLater }: { onStart: () => void; onLater
         </span>
         <h2 id="tour-welcome-title">{tr("Bem-vindo ao Gomes pelo Mundo!")}</h2>
         <p id="tour-welcome-text">{tr("Quer um passeio rápido pelas principais áreas? Leva menos de um minuto e não altera nada nas suas viagens.")}</p>
-        <footer>
+        <div className="tour-foot">
           <button type="button" className="secondary" onClick={onLater}>
             {tr("Agora não")}
           </button>
           <button type="button" className="primary" ref={start} onClick={onStart}>
             {tr("Iniciar tour")} <ArrowRight size={16} />
           </button>
-        </footer>
+        </div>
       </div>
     </div>
   );

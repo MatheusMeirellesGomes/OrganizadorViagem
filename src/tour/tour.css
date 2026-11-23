@@ -35,7 +35,7 @@
   box-shadow: var(--shadow-lg);
   transition: top 0.25s ease, left 0.25s ease;
 }
-.tour-card header {
+.tour-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -89,7 +89,7 @@
   line-height: 1.5;
   color: var(--text-muted);
 }
-.tour-card footer {
+.tour-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,8 +101,8 @@
   gap: 8px;
   margin-left: auto;
 }
-.tour-card footer .primary,
-.tour-card footer .secondary {
+.tour-foot .primary,
+.tour-foot .secondary {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -125,7 +125,7 @@
   text-align: center;
   padding: 28px 24px 22px;
 }
-.tour-welcome footer {
+.tour-welcome .tour-foot {
   justify-content: center;
 }
 .tour-globe {
