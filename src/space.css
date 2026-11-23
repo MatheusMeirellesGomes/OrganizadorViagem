@@ -45,16 +45,32 @@
 .space-next small { color: var(--text-muted); font-size: 12px; }
 
 /* Lista de categorias */
-.space-list ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line-soft); border-radius: 18px; background: var(--surface); overflow: hidden; }
-.space-list li + li { border-top: 1px solid var(--line-soft); }
+.space-hub { display: grid; gap: 20px; }
+.space-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.space-list li {
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(16 32 26 / 0.04), 0 4px 14px -8px rgb(16 32 26 / 0.18);
+  overflow: hidden;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.space-list li:hover { box-shadow: 0 2px 4px rgb(16 32 26 / 0.06), 0 10px 22px -10px rgb(16 32 26 / 0.28); transform: translateY(-1px); }
+:root[data-theme="dark"] .space-list li { box-shadow: 0 1px 2px rgb(0 0 0 / 0.35); }
+@media (min-width: 701px) {
+  .space-list ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .space-hub { gap: 24px; }
+  .space-list li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 .space-row {
+  height: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 14px;
   width: 100%;
-  min-height: 64px;
-  padding: 12px 16px;
+  min-height: 72px;
+  padding: 14px 18px;
   border: 0;
   background: transparent;
   text-align: left;
@@ -135,7 +151,7 @@
 .space-rail .active { background: var(--surface); color: var(--text); font-weight: 650; box-shadow: 0 1px 2px rgb(16 32 26 / 0.06), 0 4px 12px -6px rgb(16 32 26 / 0.2); }
 .space-rail .space-row-icon { width: 28px; height: 28px; border-radius: 8px; }
 .space-rail-home { margin-bottom: 8px; font-weight: 650; color: var(--text) !important; }
-.space-page { display: grid; gap: 18px; min-width: 0; }
+.space-page { display: grid; gap: 22px; min-width: 0; }
 .space-page-head { display: grid; gap: 4px; }
 .space-page-head h2 { margin: 0; font-size: 24px; letter-spacing: -0.3px; color: var(--text); outline: none; }
 .space-back {
@@ -155,7 +171,7 @@
 }
 :root[data-theme="dark"] .space-back { color: var(--accent); }
 .space-back:hover { background: var(--surface-3); }
-.space-group { display: grid; gap: 8px; }
+.space-group { display: grid; gap: 10px; }
 .space-group > h3 { margin: 0; padding-left: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
 .space-card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 16px; padding: 16px; }
 .space-identity { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; }
@@ -195,7 +211,8 @@
   .space-page-head h2 { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .space-row, .space-row-go { transition: none; }
+  .space-row, .space-row-go, .space-list li { transition: none; }
+  .space-list li:hover { transform: none; }
 }
 
 /* Escolha das viagens do modo visitante depois de entrar */
