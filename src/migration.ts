@@ -79,6 +79,26 @@ export function stableStringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/**
+ * Viagens deste navegador já confirmadas em OUTRA conta. Não são oferecidas
+ * para a conta atual, para não misturar dados de pessoas diferentes que
+ * usaram o mesmo aparelho.
+ */
+export function migratedElsewhere(userId: string, storage: Pick<Storage, "length" | "key" | "getItem"> = localStorage): Set<string> {
+  const ids = new Set<string>();
+  try {
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (!key?.startsWith("gomes-migrado-v1:") || key === migratedKey(userId)) continue;
+      const parsed = JSON.parse(storage.getItem(key) || "{}");
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) Object.keys(parsed).forEach((id) => ids.add(id));
+    }
+  } catch {
+    // Storage unavailable or damaged: nothing is excluded.
+  }
+  return ids;
+}
+
 export const sameTrip = (a: Trip, b: Trip) =>
   stableStringify(a) === stableStringify(b);
 

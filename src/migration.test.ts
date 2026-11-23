@@ -138,3 +138,24 @@ describe("local photos", () => {
     expect(() => dataUrlToBlob("https://example.com/a.png")).toThrow();
   });
 });
+
+describe("viagens enviadas para outra conta", () => {
+  it("não são oferecidas para a conta atual", async () => {
+    const { migratedElsewhere } = await import("./migration");
+    const data: Record<string, string> = {
+      "gomes-migrado-v1:ana": JSON.stringify({ t1: "t1" }),
+      "gomes-migrado-v1:bia": JSON.stringify({ t2: "t2" }),
+      "outra-coisa": "x",
+    };
+    const keys = Object.keys(data);
+    const storage = { length: keys.length, key: (i: number) => keys[i] ?? null, getItem: (k: string) => data[k] ?? null };
+    expect([...migratedElsewhere("ana", storage)]).toEqual(["t2"]);
+    expect([...migratedElsewhere("bia", storage)]).toEqual(["t1"]);
+    expect([...migratedElsewhere("caio", storage)].sort()).toEqual(["t1", "t2"]);
+  });
+  it("ignora dados danificados", async () => {
+    const { migratedElsewhere } = await import("./migration");
+    const storage = { length: 1, key: () => "gomes-migrado-v1:x", getItem: () => "{quebrado" };
+    expect(migratedElsewhere("ana", storage).size).toBe(0);
+  });
+});

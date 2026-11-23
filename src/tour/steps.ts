@@ -34,8 +34,8 @@ export const tours: Record<TourName, TourStep[]> = {
     },
     {
       target: "nav-profile",
-      title: "Seu espaço e aparência",
-      text: "No seu perfil ficam preferências, backup e o tema claro, escuro ou automático. O tutorial também pode ser reiniciado lá.",
+      title: "Meu espaço",
+      text: "No Meu espaço ficam sua conta, backups, privacidade e configurações como tema e idioma. Usando sem conta? É lá que você entra ou cria uma, sem perder suas viagens.",
     },
     {
       title: "Tudo pronto!",

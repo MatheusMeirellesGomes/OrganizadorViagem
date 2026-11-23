@@ -67,6 +67,7 @@ import "./mobile.css";
 import "./theme-dark.css";
 import "./theme.css";
 import "./nav.css";
+import "./space.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
 import { TourHost, TourSetting } from "./tour/TourHost";
@@ -116,7 +117,7 @@ import { TripMapPanel } from "./journey/TripMapPanel";
 import { PreparationPanel } from "./journey/PreparationPanel";
 import { ReminderBanner } from "./journey/ReminderBanner";
 import { isWalletCategory, walletCategories, type WalletCategory } from "./journey/wallet";
-import { prepareTripAssets } from "./migration";
+import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
@@ -151,6 +152,9 @@ function App() {
         return false;
       }
     }),
+    // Tela de login aberta a partir do modo visitante: entrar ou criar conta.
+    [authIntent, setAuthIntent] = useState<"signin" | "signup" | null>(null),
+    [migrationRound, setMigrationRound] = useState(0),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [mealRequest, setMealRequest] = useState<MealRequest>(),
@@ -283,7 +287,10 @@ function App() {
     }
   }, []);
   useEffect(() => {
-    if (session) loadAccount(session.user.id);
+    if (session) {
+      setAuthIntent(null);
+      loadAccount(session.user.id);
+    }
   }, [session?.user.id, loadAccount]);
   useEffect(() => {
     // Invite link (?convite=...): kept until the person signs in, then accepted.
@@ -326,6 +333,17 @@ function App() {
     el?.querySelector<HTMLInputElement>("input")?.focus();
     return () => before?.focus();
   }, [modal]);
+  // Visitante pede para entrar: as viagens locais ficam onde estão.
+  const openAuth = (intent: "signin" | "signup") => {
+    try {
+      localStorage.removeItem(localModeKey);
+    } catch {
+      // Nothing stored.
+    }
+    setAuthIntent(intent);
+    setLocalChoice(false);
+    window.scrollTo({ top: 0 });
+  };
   const go = (p: Page) => {
     setTravelMode(false);
     setPage(p);
@@ -806,7 +824,7 @@ function App() {
           )}
           {session && repository && !loadError && accountSource === "live" && (
             <MigrationPanel
-              key={session.user.id}
+              key={session.user.id + ":" + migrationRound}
               userId={session.user.id}
               repo={repository}
               online={online}
@@ -832,7 +850,11 @@ function App() {
           ) : supabase && !session && !localChoice ? (
             <Auth
               onNotice={setNotice}
+              initialSignup={authIntent === "signup"}
+              fromGuest={!!authIntent}
+              guestTrips={authIntent ? readLocal().length : 0}
               onContinueLocal={() => {
+                setAuthIntent(null);
                 try {
                   localStorage.setItem(localModeKey, "1");
                 } catch {
@@ -1902,13 +1924,19 @@ function App() {
                       const { error } = await supabase!.auth.signOut();
                       if (error) setNotice(friendlyError(error, "Não foi possível sair da conta."));
                     }}
-                    onSignIn={() => {
+                    onSignIn={() => openAuth("signin")}
+                    onSignUp={() => openAuth("signup")}
+                    localTrips={session ? pendingLocalTrips(readLocal(), readMigrated(session.user.id)).filter((t) => !migratedElsewhere(session.user.id).has(t.id)).length : trips.length}
+                    onReviewLocal={() => {
+                      if (!session) return;
                       try {
-                        localStorage.removeItem(localModeKey);
+                        sessionStorage.removeItem("gomes-migracao-adiada:" + session.user.id);
+                        localStorage.removeItem("gomes-migracao-separada:" + session.user.id);
                       } catch {
-                        // Nothing stored.
+                        // Storage blocked: the panel shows anyway.
                       }
-                      setLocalChoice(false);
+                      setMigrationRound((n) => n + 1);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     onOpenTrip={openTrip}
                     settings={
@@ -1956,7 +1984,7 @@ function App() {
       <TourHost
         onHome={page === "home" && !selected}
         onTrip={!!trip && !travelMode && tab === "Roteiro"}
-        blocked={!!modal}
+        blocked={!!modal || loading || (!!supabase && !session && !localChoice)}
         goHome={() => go("home")}
       />
       {notice && (
@@ -2191,11 +2219,18 @@ function routeUrl(t: Trip, day: number) {
 function Auth({
   onNotice,
   onContinueLocal,
+  initialSignup = false,
+  fromGuest = false,
+  guestTrips = 0,
 }: {
+  fromGuest?: boolean;
   onNotice: (s: string) => void;
   onContinueLocal: () => void;
+  initialSignup?: boolean;
+  /** Viagens do modo visitante: quem veio de lá pode voltar sem entrar. */
+  guestTrips?: number;
 }) {
-  const [signup, setSignup] = useState(false),
+  const [signup, setSignup] = useState(initialSignup),
     [busy, setBusy] = useState(false);
   return (
     <AuthScene>
@@ -2271,10 +2306,16 @@ function Auth({
           type="button"
           onClick={onContinueLocal}
         >
-          <HardDrive size={17} />
-          {tr("Continuar sem conta")}
+          {fromGuest ? <ArrowLeft size={17} /> : <HardDrive size={17} />}
+          {fromGuest ? tr("Voltar sem entrar") : tr("Continuar sem conta")}
         </button>
-        <p className="subtle">{tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Perfil, e enviar essas viagens para ela.")}</p>
+        <p className="subtle">
+          {fromGuest
+            ? guestTrips
+              ? tf("Suas {count} viagens deste navegador continuam aqui. Depois de entrar, você escolhe se quer enviá-las para a conta; nada é apagado.", { count: guestTrips })
+              : tr("Depois de entrar, suas viagens ficam na conta e aparecem em qualquer aparelho.")
+            : tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Meu espaço, e enviar essas viagens para ela.")}
+        </p>
       </div>
     </form>
     </AuthScene>
