@@ -10,6 +10,16 @@
     />
     <link rel="icon" type="image/png" href="/gomes-landscape-g.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Tema antes do primeiro desenho (mesma regra de src/theme.ts).
+      (function () {
+        var p = "auto";
+        try { p = localStorage.getItem("gomes-tema") || "auto"; } catch (e) {}
+        var dark = p === "dark" || (p !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
     <title>GOMES PELO MUNDO — viagens em família</title>
   </head>
   <body>

@@ -1816,5 +1816,11 @@
   "Roteiros, passagens, hospedagens e lembranças da família, organizados num só lugar.": ["Itineraries, tickets, stays and family memories, organized in one place.", "Itinerarios, billetes, alojamientos y recuerdos de la familia, organizados en un solo lugar."],
   "Capadócia, Turquia": ["Cappadocia, Türkiye", "Capadocia, Turquía"],
   "Acima das nuvens": ["Above the clouds", "Sobre las nubes"],
-  "Pôr do sol no mar": ["Sunset by the sea", "Atardecer en el mar"]
+  "Pôr do sol no mar": ["Sunset by the sea", "Atardecer en el mar"],
+  "Aparência": ["Appearance", "Apariencia"],
+  "Claro": ["Light", "Claro"],
+  "Escuro": ["Dark", "Oscuro"],
+  "Automático": ["Automatic", "Automático"],
+  "Segue o modo claro ou escuro do aparelho.": ["Follows your device's light or dark mode.", "Sigue el modo claro u oscuro del dispositivo."],
+  "Guardada neste aparelho.": ["Saved on this device.", "Guardada en este dispositivo."]
 }

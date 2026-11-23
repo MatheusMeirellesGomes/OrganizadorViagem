@@ -1,0 +1,1389 @@
+/*  Gerado por scripts/gerar-tema-escuro.mjs. Não edite à mão: ajustes finos vão em theme.css.  */
+:root[data-theme="dark"] {
+    color: hsl(162 16% 82%);
+    background: hsl(80 10% 13%)
+}
+:root[data-theme="dark"] button:focus-visible,
+:root[data-theme="dark"] a:focus-visible {
+    outline: 3px solid hsl(41 19% 35%)
+}
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] select:focus,
+:root[data-theme="dark"] textarea:focus {
+    outline: 2px solid hsl(144 6% 35%)
+}
+:root[data-theme="dark"] p {
+    color: hsl(140 3% 71%)
+}
+:root[data-theme="dark"] .sidebar {
+    background: hsl(0 0% 10%);
+    border-right: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .brand {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .nav-caption {
+    color: hsl(132 4% 71%)
+}
+:root[data-theme="dark"] .sidebar nav button {
+    color: hsl(147 4% 71%)
+}
+:root[data-theme="dark"] .sidebar nav button:hover {
+    background: hsl(90 11% 14%)
+}
+:root[data-theme="dark"] .sidebar nav button.active {
+    color: hsl(163 30% 81%);
+    background: hsl(105 12% 17%)
+}
+:root[data-theme="dark"] .sidebar nav small {
+    background: hsl(107 12% 21%)
+}
+:root[data-theme="dark"] .sidebar-note {
+    background: hsl(72 14% 13%);
+    border: 1px solid hsl(73 12% 23%)
+}
+:root[data-theme="dark"] .note-icon {
+    color: hsl(102 11% 72%)
+}
+:root[data-theme="dark"] .profile-link {
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .profile-link small {
+    color: hsl(120 3% 71%)
+}
+:root[data-theme="dark"] .avatar {
+    background: hsl(87 12% 19%);
+    color: hsl(92 12% 70%);
+    border: 1px solid hsl(92 11% 25%)
+}
+:root[data-theme="dark"] .topbar {
+    border-bottom: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10% / 0.6)
+}
+:root[data-theme="dark"] .breadcrumb {
+    color: hsl(120 3% 71%)
+}
+:root[data-theme="dark"] .breadcrumb b {
+    color: hsl(144 6% 72%)
+}
+:root[data-theme="dark"] .storage-badge {
+    color: hsl(126 4% 71%)
+}
+:root[data-theme="dark"] .storage-badge svg {
+    color: hsl(110 10% 72%)
+}
+:root[data-theme="dark"] .eyebrow {
+    color: hsl(107 7% 71%)
+}
+:root[data-theme="dark"] .secondary {
+    border: 1px solid hsl(102 8% 25%);
+    background: hsl(0 0% 10%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .secondary:hover {
+    background: hsl(94 14% 15%)
+}
+:root[data-theme="dark"] .cream-button {
+    background: hsl(48 31% 13%);
+    color: hsl(156 19% 80%)
+}
+:root[data-theme="dark"] .cream-button:hover {
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .hero-pill {
+    border: 1px solid hsl(0 0% 20% / 0.28);
+    background: hsl(0 0% 10% / 0.07)
+}
+:root[data-theme="dark"] .hero-pill > span {
+    background: hsl(41 34% 30%)
+}
+:root[data-theme="dark"] .stats {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .stat {
+    border-right: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .stat > span {
+    background: hsl(82 14% 16%);
+    color: hsl(92 11% 72%)
+}
+:root[data-theme="dark"] .text-button {
+    color: hsl(139 11% 72%)
+}
+:root[data-theme="dark"] .text-button:hover {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .create-card {
+    border: 1.5px dashed hsl(99 8% 26%);
+    background: hsl(80 18% 12%)
+}
+:root[data-theme="dark"] .create-card:hover {
+    background: hsl(87 17% 15%);
+    border-color: hsl(94 6% 35%)
+}
+:root[data-theme="dark"] .dashed-icon {
+    border: 1px solid hsl(92 11% 24%);
+    background: hsl(85 17% 17%);
+    color: hsl(95 11% 72%)
+}
+:root[data-theme="dark"] .green-link {
+    color: hsl(125 14% 73%)
+}
+:root[data-theme="dark"] .editorial-card {
+    border: 1px solid hsl(65 10% 24%);
+    background: hsl(60 14% 17%)
+}
+:root[data-theme="dark"] .editorial-card h3 em {
+    color: hsl(86 13% 70%)
+}
+:root[data-theme="dark"] .bottom-note {
+    border-top: 1px solid hsl(86 8% 23%);
+    color: hsl(109 4% 71%)
+}
+:root[data-theme="dark"] .trip-card {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .tag {
+    background: hsl(0 0% 10% / 0.93);
+    color: hsl(150 20% 77%)
+}
+:root[data-theme="dark"] .card-arrow {
+    background: hsl(0 0% 10% / 0.87)
+}
+:root[data-theme="dark"] .trip-info footer {
+    border-top: 1px solid hsl(90 6% 23%);
+    color: hsl(126 4% 71%)
+}
+:root[data-theme="dark"] .tabs button {
+    color: hsl(113 3% 71%)
+}
+:root[data-theme="dark"] .tabs button.selected {
+    background: hsl(90 14% 18%);
+    color: hsl(132 16% 77%)
+}
+:root[data-theme="dark"] .search {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .panel {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .empty-icon {
+    background: hsl(90 16% 16%);
+    color: hsl(95 11% 72%)
+}
+:root[data-theme="dark"] .back {
+    color: hsl(129 5% 71%)
+}
+:root[data-theme="dark"] .detail-tabs {
+    border-bottom: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .days button {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .activity {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .activity.done {
+    background: hsl(86 20% 13%)
+}
+:root[data-theme="dark"] .activity small {
+    color: hsl(104 6% 71%)
+}
+:root[data-theme="dark"] .activity a {
+    color: hsl(111 8% 71%)
+}
+:root[data-theme="dark"] .check {
+    background: hsl(83 18% 17%);
+    border: 1px solid hsl(90 12% 25%);
+    color: hsl(97 13% 73%)
+}
+:root[data-theme="dark"] .icon-button {
+    color: hsl(100 6% 71%)
+}
+:root[data-theme="dark"] .icon-button:hover {
+    background: hsl(87 13% 17%)
+}
+:root[data-theme="dark"] .map-art {
+    background-color: hsl(73 14% 16%);
+    background-image: linear-gradient(
+      35deg,
+      transparent 48%,
+      hsl(88 12% 23%) 49%,
+      hsl(88 12% 23%) 51%,
+      transparent 52%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 48%,
+      hsl(83 11% 21%) 49%,
+      hsl(83 11% 21%) 51%,
+      transparent 52%
+    )
+}
+:root[data-theme="dark"] .map-pin {
+    border: 4px solid hsl(0 0% 20%)
+}
+:root[data-theme="dark"] .tip {
+    background: hsl(75 17% 15%);
+    border: 1px solid hsl(78 13% 24%)
+}
+:root[data-theme="dark"] .tip p {
+    color: hsl(91 9% 72%)
+}
+:root[data-theme="dark"] label {
+    color: hsl(135 8% 72%)
+}
+:root[data-theme="dark"] label small {
+    color: hsl(95 7% 72%)
+}
+:root[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+    border: 1px solid hsl(95 10% 24%);
+    background: hsl(90 18% 11%);
+    color: hsl(141 17% 79%)
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+    color: hsl(101 6% 71%)
+}
+:root[data-theme="dark"] .danger {
+    color: hsl(9 27% 68%)
+}
+:root[data-theme="dark"] .list-row {
+    border-bottom: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .list-row a {
+    color: hsl(118 14% 71%)
+}
+:root[data-theme="dark"] .struck {
+    color: hsl(94 6% 71%)
+}
+:root[data-theme="dark"] .photo-grid figure {
+    background: hsl(77 18% 14%)
+}
+:root[data-theme="dark"] .expense-totals small {
+    color: hsl(92 8% 72%)
+}
+:root[data-theme="dark"] .explore-banner {
+    background: hsl(86 18% 18%);
+    color: hsl(95 17% 73%)
+}
+:root[data-theme="dark"] .explore-search {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .destination-list a {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .destination-list small {
+    color: hsl(91 9% 72%)
+}
+:root[data-theme="dark"] .subtle {
+    color: hsl(90 7% 72%) !important
+}
+:root[data-theme="dark"] .profile-avatar {
+    background: hsl(86 18% 18%);
+    color: hsl(90 13% 73%)
+}
+:root[data-theme="dark"] .toast {
+    border: 1px solid hsl(0 0% 20% / 0.25)
+}
+:root[data-theme="dark"] dialog {
+    border: 1px solid hsl(85 10% 24%);
+    color: hsl(144 22% 81%)
+}
+:root[data-theme="dark"] .modal-icon {
+    background: hsl(86 20% 17%);
+    color: hsl(92 17% 73%)
+}
+:root[data-theme="dark"] .form-footnote {
+    color: hsl(90 8% 72%)
+}
+@media (max-width: 700px) {
+    :root[data-theme="dark"] .mobile-nav {
+        background: hsl(0 0% 10% / 0.96);
+        border-top: 1px solid hsl(90 9% 24%)
+    }
+}
+@media (max-width: 700px) {
+    :root[data-theme="dark"] .mobile-nav button {
+        color: hsl(90 7% 72%)
+    }
+}
+@media (max-width: 700px) {
+    :root[data-theme="dark"] .mobile-nav .active {
+        color: hsl(157 28% 80%)
+    }
+}
+@media (max-width: 700px) {
+    :root[data-theme="dark"] .mobile-nav .active svg {
+        background: hsl(86 18% 18%);
+        box-shadow: 0 0 0 6px hsl(86 17% 23%)
+    }
+}
+@media print {
+    :root[data-theme="dark"] .detail-hero {
+        color: hsl(0 0% 93%)
+    }
+}
+@media print {
+    :root[data-theme="dark"] .detail-hero p {
+        color: hsl(0 0% 75%)
+    }
+}
+@media print {
+    :root[data-theme="dark"] .light {
+        color: hsl(0 0% 75%)
+    }
+}
+:root[data-theme="dark"] .travel-map {
+    background: hsl(90 11% 18%)
+}
+:root[data-theme="dark"] .map-caption {
+    color: hsl(88 8% 72%)
+}
+:root[data-theme="dark"] .map-caption i.past {
+    background: hsl(35 21% 30%)
+}
+:root[data-theme="dark"] .map-error {
+    color: hsl(21 26% 68%)
+}
+:root[data-theme="dark"] .destination-list button {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .brand-words > span {
+    color: hsl(96 11% 72%)
+}
+:root[data-theme="dark"] .scope-switch button {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%);
+    color: hsl(162 16% 82%)
+}
+:root[data-theme="dark"] .scope-switch button:hover {
+    border-color: hsl(92 10% 27%)
+}
+:root[data-theme="dark"] .scope-switch button.selected {
+    background: hsl(83 18% 17%)
+}
+:root[data-theme="dark"] .scope-mark {
+    background: hsl(90 14% 18%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .scope-mark.scope-national {
+    background: hsl(48 41% 30%);
+    color: hsl(87 24% 76%)
+}
+:root[data-theme="dark"] .scope-mark.scope-international {
+    background: hsl(191 17% 20%);
+    color: hsl(191 30% 77%)
+}
+:root[data-theme="dark"] .scope-text small {
+    color: hsl(90 10% 72%)
+}
+:root[data-theme="dark"] .scope-count {
+    color: hsl(127 7% 71%);
+    background: hsl(84 11% 14%)
+}
+:root[data-theme="dark"] .scope-switch button.selected .scope-count {
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .scope-picker legend small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .scope-picker label {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .scope-picker label:has(input:checked) {
+    background: hsl(83 18% 17%)
+}
+:root[data-theme="dark"] .tag.scope-tag-national {
+    background: hsl(49 41% 23% / 0.93);
+    color: hsl(87 24% 76%)
+}
+:root[data-theme="dark"] .tag.scope-tag-international {
+    background: hsl(189 18% 17% / 0.93);
+    color: hsl(191 30% 77%)
+}
+:root[data-theme="dark"] .auth-local {
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .stale-banner {
+    background: hsl(46 55% 15%);
+    border: 1px solid hsl(48 37% 28%);
+    color: hsl(59 26% 78%)
+}
+:root[data-theme="dark"] .migration-panel {
+    background: hsl(83 18% 17%);
+    border: 1px solid hsl(86 15% 25%)
+}
+:root[data-theme="dark"] .migration-icon {
+    background: hsl(0 0% 10%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .migration-icon.warn {
+    color: hsl(44 40% 75%);
+    background: hsl(46 55% 15%)
+}
+:root[data-theme="dark"] .migration-body p,
+:root[data-theme="dark"] .migration-body li {
+    color: hsl(131 9% 74%)
+}
+:root[data-theme="dark"] .migration-error {
+    color: hsl(8 40% 73%) !important
+}
+:root[data-theme="dark"] .lazy-loading {
+    color: hsl(134 5% 71%)
+}
+:root[data-theme="dark"] .lazy-loading.lazy-map {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .editorial-photo {
+    background: hsl(83 14% 21%)
+}
+:root[data-theme="dark"] .note-photo {
+    background: hsl(90 14% 18%)
+}
+:root[data-theme="dark"] .create-photo {
+    background: hsl(90 14% 18%)
+}
+:root[data-theme="dark"] .create-card .dashed-icon {
+    border: 3px solid hsl(80 17% 21%)
+}
+:root[data-theme="dark"] .empty-photo {
+    background: hsl(90 14% 18%)
+}
+:root[data-theme="dark"] .empty-badge {
+    background: hsl(0 0% 10%);
+    color: hsl(163 30% 81%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .head-photo {
+    background: hsl(85 12% 24%)
+}
+:root[data-theme="dark"] .activity-notes {
+    color: hsl(131 9% 74%)
+}
+:root[data-theme="dark"] .brand .brand-words > span {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .place-photo {
+    background: hsl(90 14% 18%)
+}
+:root[data-theme="dark"] .photo-credit {
+    color: hsl(134 5% 71%)
+}
+:root[data-theme="dark"] .place-description {
+    color: hsl(131 9% 74%)
+}
+:root[data-theme="dark"] .place-details dd {
+    color: hsl(140 6% 70%)
+}
+:root[data-theme="dark"] .route-pin {
+    border: 3px solid hsl(0 0% 20%)
+}
+:root[data-theme="dark"] .route-pin.group {
+    border: 3px solid hsl(104 17% 25%)
+}
+:root[data-theme="dark"] .alt-card {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .alt-badges span {
+    color: hsl(163 30% 81%);
+    background: hsl(83 18% 17%)
+}
+:root[data-theme="dark"] .alt-card dt {
+    color: hsl(127 7% 71%)
+}
+:root[data-theme="dark"] .smart-planner .section-head svg {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .planner-stop,
+:root[data-theme="dark"] .planner-busy {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .planner-busy.meal {
+    background: hsl(42 34% 14%)
+}
+:root[data-theme="dark"] .planner-busy.fixed {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .planner-stop-main time {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .planner-travel {
+    color: hsl(131 9% 74%)
+}
+:root[data-theme="dark"] .planner-alert {
+    color: hsl(10 40% 73%)
+}
+:root[data-theme="dark"] .planner-undo,
+:root[data-theme="dark"] .planner-confirm {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .activity-travel {
+    color: hsl(131 9% 74%)
+}
+:root[data-theme="dark"] .day-meals {
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .meal-card {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .meal-links a {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .budget-kpis > div {
+    background: hsl(94 14% 15%)
+}
+:root[data-theme="dark"] .budget-kpis small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .budget-kpis .negative strong,
+:root[data-theme="dark"] .budget-table .negative {
+    color: hsl(10 40% 73%)
+}
+:root[data-theme="dark"] .budget-table .positive {
+    color: hsl(142 31% 77%)
+}
+:root[data-theme="dark"] .budget-bar-track {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .budget-bar.planned {
+    background: hsl(94 12% 29%)
+}
+:root[data-theme="dark"] .budget-form {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(90 14% 11%)
+}
+:root[data-theme="dark"] .budget-item {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .budget-table th,
+:root[data-theme="dark"] .budget-table td {
+    border-bottom: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .share-list li {
+    border-bottom: 1px solid hsl(0 0% 24%)
+}
+:root[data-theme="dark"] .explore-combobox {
+    border: 1px solid hsl(105 7% 26%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .explore-suggestions {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .explore-suggestions li span {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .explore-suggestions li:hover,
+:root[data-theme="dark"] .explore-suggestions li[aria-selected="true"] {
+    background: hsl(94 14% 15%)
+}
+:root[data-theme="dark"] .explore-suggestion-address {
+    color: hsl(163 30% 81%);
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .chip-label {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .chip {
+    border: 1px solid hsl(104 7% 25%);
+    background: hsl(0 0% 10%);
+    color: hsl(156 19% 80%)
+}
+:root[data-theme="dark"] .chip:hover {
+    background: hsl(94 14% 15%)
+}
+:root[data-theme="dark"] .segmented {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .segmented button {
+    color: hsl(154 14% 77%)
+}
+:root[data-theme="dark"] .segmented button.is-on {
+    background: hsl(0 0% 10%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .explore-empty img,
+:root[data-theme="dark"] .explore-none img {
+    background: hsl(85 12% 24%)
+}
+:root[data-theme="dark"] .place-card {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .place-photo {
+    background: linear-gradient(110deg, hsl(90 12% 18%) 30%, hsl(90 14% 14%) 50%, hsl(90 12% 18%) 70%)
+}
+:root[data-theme="dark"] .place-photo-empty {
+    color: hsl(140 7% 71%);
+    background: linear-gradient(140deg, hsl(90 13% 16%), hsl(94 12% 21%))
+}
+:root[data-theme="dark"] .place-photo-empty span {
+    background: hsl(0 0% 10% / 0.8)
+}
+:root[data-theme="dark"] .place-card-meta {
+    color: hsl(140 7% 71%)
+}
+:root[data-theme="dark"] .place-card-official,
+:root[data-theme="dark"] .place-card-where {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .place-badges li {
+    background: hsl(94 14% 15%);
+    color: hsl(156 18% 80%)
+}
+:root[data-theme="dark"] .skeleton .place-card-body span {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .explore-map {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .explore-cluster {
+    border: 3px solid hsl(0 0% 20%)
+}
+:root[data-theme="dark"] .explore-popup p {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .explore-popup button,
+:root[data-theme="dark"] .explore-popup a {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .place-panel-close {
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .place-gallery-strip figure {
+    background: hsl(90 12% 18%)
+}
+:root[data-theme="dark"] .place-summary {
+    color: hsl(155 13% 80%)
+}
+:root[data-theme="dark"] .chip-choice span {
+    border: 1px solid hsl(104 7% 25%)
+}
+:root[data-theme="dark"] .chip-choice input:focus-visible + span {
+    outline: 3px solid hsl(41 19% 35%)
+}
+:root[data-theme="dark"] .place-panel .place-details dt {
+    color: hsl(155 13% 80%)
+}
+:root[data-theme="dark"] .explore .muted,
+:root[data-theme="dark"] .place-panel .muted {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .metric-card {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%);
+    color: hsl(162 16% 82%)
+}
+:root[data-theme="dark"] .metric-photo {
+    background: hsl(104 9% 26%)
+}
+:root[data-theme="dark"] .metric-body strong {
+    color: hsl(163 30% 81%);
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .metric-text {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .metric-go {
+    color: hsl(98 24% 76%)
+}
+:root[data-theme="dark"] .new-trip-close {
+    background: hsl(0 0% 10% / 0.9);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .new-trip-body label small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .new-trip-more {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(60 22% 12%)
+}
+:root[data-theme="dark"] .new-trip-more summary {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .new-trip-later {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .new-trip-later li {
+    background: hsl(48 19% 18%);
+    color: hsl(98 11% 76%)
+}
+:root[data-theme="dark"] .new-trip-footer {
+    border-top: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .profile-avatar-img {
+    background: hsl(87 12% 19%);
+    color: hsl(99 13% 72%)
+}
+:root[data-theme="dark"] .profile-nav a {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .profile-nav a:hover {
+    background: hsl(48 19% 18%)
+}
+:root[data-theme="dark"] .profile-hero {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .profile-hero-photo {
+    background: hsl(123 6% 30%)
+}
+:root[data-theme="dark"] .profile-hero-avatar .profile-avatar-img {
+    border: 4px solid hsl(0 0% 20%);
+    background: hsl(92 13% 20%)
+}
+:root[data-theme="dark"] .profile-photo-button {
+    border: 2px solid hsl(0 0% 20%)
+}
+:root[data-theme="dark"] .profile-hero-text p {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .profile-kicker {
+    color: hsl(98 24% 76%)
+}
+:root[data-theme="dark"] .profile-facts li {
+    background: hsl(48 19% 18%);
+    color: hsl(98 11% 76%)
+}
+:root[data-theme="dark"] .profile-stat {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .profile-stat strong {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .profile-stat > span {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .profile-prefs legend {
+    color: hsl(135 8% 72%)
+}
+:root[data-theme="dark"] .pref-chip span {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%);
+    color: hsl(145 10% 77%)
+}
+:root[data-theme="dark"] .pref-chip input:checked + span {
+    background: hsl(90 19% 19%);
+    border-color: hsl(93 12% 32%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .profile-line small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .profile-privacy svg {
+    color: hsl(95 18% 69%)
+}
+:root[data-theme="dark"] .profile-setting {
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .profile-setting small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .journey-add-button {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .journey-add-button:hover {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .journey-add-button svg {
+    background: hsl(90 17% 18%)
+}
+:root[data-theme="dark"] .tl-day {
+    border-top: 1px solid hsl(75 11% 23%)
+}
+:root[data-theme="dark"] .tl-date {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .tl-item small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .tl-icon {
+    background: hsl(90 13% 16%);
+    color: hsl(106 16% 74%)
+}
+:root[data-theme="dark"] .tl-time {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .tl-flight .tl-icon {
+    background: hsl(207 26% 17%);
+    color: hsl(206 37% 74%)
+}
+:root[data-theme="dark"] .tl-rental_car .tl-icon,
+:root[data-theme="dark"] .tl-own_car .tl-icon {
+    background: hsl(38 31% 18%);
+    color: hsl(34 40% 75%)
+}
+:root[data-theme="dark"] .tl-train .tl-icon,
+:root[data-theme="dark"] .tl-bus .tl-icon {
+    background: hsl(265 18% 16%);
+    color: hsl(259 25% 71%)
+}
+:root[data-theme="dark"] .tl-stay .tl-icon {
+    background: hsl(14 19% 17%);
+    color: hsl(12 32% 72%)
+}
+:root[data-theme="dark"] .transport-card {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .transport-badge {
+    background: hsl(90 13% 16%);
+    color: hsl(106 16% 74%)
+}
+:root[data-theme="dark"] .tb-flight {
+    background: hsl(207 26% 17%);
+    color: hsl(206 37% 74%)
+}
+:root[data-theme="dark"] .tb-rental_car,
+:root[data-theme="dark"] .tb-own_car {
+    background: hsl(38 31% 18%);
+    color: hsl(34 40% 75%)
+}
+:root[data-theme="dark"] .tb-train,
+:root[data-theme="dark"] .tb-bus {
+    background: hsl(265 18% 16%);
+    color: hsl(259 25% 71%)
+}
+:root[data-theme="dark"] .leg-list li {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .leg-ends small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .leg-arrow {
+    color: hsl(95 18% 69%)
+}
+:root[data-theme="dark"] .leg-meta {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .transport-facts span {
+    background: hsl(80 12% 15%);
+    color: hsl(142 8% 75%)
+}
+:root[data-theme="dark"] .transport-costs small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .transport-doc {
+    background: hsl(42 25% 17%)
+}
+:root[data-theme="dark"] .transport-notes {
+    color: hsl(142 8% 75%)
+}
+:root[data-theme="dark"] .secret-view code {
+    background: hsl(80 12% 15%)
+}
+:root[data-theme="dark"] .vehicle-item {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .vehicle-item small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .fuel-result {
+    background: hsl(93 18% 16%)
+}
+:root[data-theme="dark"] .fuel-result strong {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .compare-option {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .compare-option.is-best {
+    border-color: hsl(94 15% 33%);
+    box-shadow: 0 0 0 2px hsl(92 19% 25%)
+}
+:root[data-theme="dark"] .compare-car {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .compare-total {
+    border-top: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .compare-checks .ok::before {
+    color: hsl(115 28% 74%)
+}
+:root[data-theme="dark"] .compare-checks .bad {
+    color: hsl(9 40% 72%)
+}
+:root[data-theme="dark"] .compare-badge {
+    color: hsl(115 28% 74%)
+}
+:root[data-theme="dark"] .journey-dialog-head {
+    border-bottom: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .journey-dialog-foot {
+    border-top: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .journey-sub {
+    border-top: 1px solid hsl(75 11% 23%)
+}
+:root[data-theme="dark"] .kind-picker legend {
+    color: hsl(135 8% 72%)
+}
+:root[data-theme="dark"] .kind-option {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .leg-box {
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .leg-duration {
+    color: hsl(95 18% 69%)
+}
+:root[data-theme="dark"] .place-field-pin {
+    color: hsl(95 18% 69%)
+}
+:root[data-theme="dark"] .place-field-list {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .place-field-list li small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .place-field-list li[aria-selected="true"],
+:root[data-theme="dark"] .place-field-list li:hover {
+    background: hsl(48 19% 18%)
+}
+:root[data-theme="dark"] .form-error {
+    color: hsl(9 40% 72%)
+}
+:root[data-theme="dark"] .wallet-cat {
+    border: 1px solid hsl(90 6% 23%);
+    background: hsl(0 0% 10%);
+    color: hsl(145 10% 77%)
+}
+:root[data-theme="dark"] .wallet-cat b {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .wallet-search {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .wallet-item {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%);
+    border-left: 4px solid hsl(95 11% 27%)
+}
+:root[data-theme="dark"] .wallet-badge {
+    color: hsl(106 16% 74%);
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .wallet-date {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .wallet-doc {
+    background: hsl(42 25% 17%)
+}
+:root[data-theme="dark"] .wallet-organize {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .wc-tickets {
+    border-left-color: hsl(207 19% 31%)
+}
+:root[data-theme="dark"] .wc-hotels {
+    border-left-color: hsl(16 21% 30%)
+}
+:root[data-theme="dark"] .wc-rentals {
+    border-left-color: hsl(37 29% 32%)
+}
+:root[data-theme="dark"] .wc-entries {
+    border-left-color: hsl(258 15% 31%)
+}
+:root[data-theme="dark"] .wc-restaurants {
+    border-left-color: hsl(20 26% 33%)
+}
+:root[data-theme="dark"] .wc-insurance {
+    border-left-color: hsl(164 12% 34%)
+}
+:root[data-theme="dark"] .wc-receipts {
+    border-left-color: hsl(48 9% 32%)
+}
+:root[data-theme="dark"] .reminder-list li {
+    background: hsl(48 31% 13%)
+}
+:root[data-theme="dark"] .reminder-list small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .reminder-list li.is-due {
+    background: hsl(36 49% 16%);
+    box-shadow: inset 3px 0 0 hsl(36 33% 36%)
+}
+:root[data-theme="dark"] .reminder-list li.is-done {
+    color: hsl(135 5% 71%);
+    background: hsl(60 8% 15%)
+}
+:root[data-theme="dark"] .reminder-banner {
+    background: hsl(36 49% 16%);
+    border: 1px solid hsl(37 35% 27%);
+    color: hsl(37 40% 79%)
+}
+:root[data-theme="dark"] .pack-progress {
+    background: hsl(90 13% 16%)
+}
+:root[data-theme="dark"] .pack-progress > span {
+    background: hsl(95 18% 26%)
+}
+:root[data-theme="dark"] .pack-progress b {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .pack-group h3 {
+    color: hsl(135 8% 72%)
+}
+:root[data-theme="dark"] .pack-group li {
+    border-bottom: 1px solid hsl(80 9% 22%)
+}
+:root[data-theme="dark"] .pack-group li small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .pack-group li.is-packed span {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .chip-sep {
+    background: hsl(90 7% 18%)
+}
+:root[data-theme="dark"] .prep-item {
+    background: hsl(48 31% 13%);
+    border-left: 4px solid hsl(43 20% 29%)
+}
+:root[data-theme="dark"] .prep-item.is-ok {
+    border-left-color: hsl(101 14% 34%)
+}
+:root[data-theme="dark"] .prep-item.is-na {
+    border-left-color: hsl(87 4% 28%)
+}
+:root[data-theme="dark"] .prep-item small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .trip-map {
+    background: hsl(102 9% 21%)
+}
+:root[data-theme="dark"] .trip-map-legend {
+    color: hsl(142 8% 75%)
+}
+:root[data-theme="dark"] .lg-dot {
+    border: 2px solid hsl(0 0% 20%)
+}
+:root[data-theme="dark"] .trip-map-segments li.is-on .text-button {
+    background: hsl(48 19% 18%)
+}
+:root[data-theme="dark"] .trip-map-segments small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .cal-move {
+    color: hsl(33 40% 70%)
+}
+:root[data-theme="dark"] .prep-edit summary {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .prep-status {
+    background: hsl(44 32% 20%);
+    color: hsl(41 40% 77%)
+}
+:root[data-theme="dark"] .prep-status.is-ok {
+    background: hsl(95 22% 20%);
+    color: hsl(106 29% 76%)
+}
+:root[data-theme="dark"] .prep-status.is-na {
+    background: hsl(60 3% 17%);
+    color: hsl(103 3% 70%)
+}
+:root[data-theme="dark"] .budget-kpis > div {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 6% 23%)
+}
+:root[data-theme="dark"] .budget-kpis > div::before {
+    background: hsl(96 13% 28%)
+}
+:root[data-theme="dark"] .budget-kpis > div:nth-child(2)::before {
+    background: hsl(207 23% 30%)
+}
+:root[data-theme="dark"] .budget-kpis > div:nth-child(3)::before {
+    background: hsl(34 33% 30%)
+}
+:root[data-theme="dark"] .budget-kpis > div.negative strong {
+    color: hsl(9 40% 72%)
+}
+:root[data-theme="dark"] .budget-kpis strong {
+    color: hsl(162 16% 82%)
+}
+:root[data-theme="dark"] .settings-head p {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .settings-icon {
+    background: hsl(90 17% 18%);
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .pref-group {
+    border: 1px solid hsl(80 12% 23%) !important;
+    background: hsl(60 18% 12%)
+}
+:root[data-theme="dark"] .pref-group legend {
+    color: hsl(139 12% 77%)
+}
+:root[data-theme="dark"] .settings-foot {
+    border-top: 1px solid hsl(90 6% 23%);
+    background: hsl(60 18% 12%)
+}
+:root[data-theme="dark"] .settings-rows {
+    border: 1px solid hsl(80 12% 23%)
+}
+:root[data-theme="dark"] .settings-rows li {
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .settings-rows li + li {
+    border-top: 1px solid hsl(80 9% 22%)
+}
+:root[data-theme="dark"] .settings-rows b {
+    color: hsl(162 16% 82%)
+}
+:root[data-theme="dark"] .settings-rows small {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .settings-badge {
+    background: hsl(72 8% 16%);
+    color: hsl(147 5% 72%)
+}
+:root[data-theme="dark"] .settings-badge.is-ok {
+    background: hsl(95 20% 19%);
+    color: hsl(106 29% 77%)
+}
+:root[data-theme="dark"] .settings-note {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .auth-place {
+    background: hsl(0 0% 10% / 0.12);
+    border: 1px solid hsl(0 0% 20% / 0.2)
+}
+:root[data-theme="dark"] .auth-card {
+    background: hsl(50 24% 12% / 0.95);
+    color: hsl(162 16% 82%);
+    box-shadow: 0 30px 80px #0006, 0 0 0 1px hsl(0 0% 20% / 0.25)
+}
+:root[data-theme="dark"] .auth-card > p {
+    color: hsl(137 3% 71%)
+}
+:root[data-theme="dark"] .tm-back {
+    color: hsl(150 21% 77%)
+}
+:root[data-theme="dark"] .tm-badge {
+    background: hsl(86 18% 18%);
+    color: hsl(104 21% 76%);
+    border: 1px solid hsl(90 14% 25%)
+}
+:root[data-theme="dark"] .tm-title > p:last-child:not(.eyebrow) {
+    color: hsl(135 10% 73%)
+}
+:root[data-theme="dark"] .tm-days button {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(90 11% 25%)
+}
+:root[data-theme="dark"] .tm-days button span {
+    color: hsl(98 9% 71%)
+}
+:root[data-theme="dark"] .tm-day-heading p {
+    color: hsl(103 7% 71%)
+}
+:root[data-theme="dark"] .tm-day-heading > span {
+    color: hsl(104 14% 74%)
+}
+:root[data-theme="dark"] .tm-progress {
+    background: hsl(92 13% 20%)
+}
+:root[data-theme="dark"] .tm-progress::-webkit-progress-bar {
+    background: hsl(92 13% 20%)
+}
+:root[data-theme="dark"] .tm-next,
+:root[data-theme="dark"] .tm-complete {
+    background: hsl(84 18% 18%);
+    border: 1px solid hsl(89 15% 25%)
+}
+:root[data-theme="dark"] .tm-next small {
+    color: hsl(94 17% 73%)
+}
+:root[data-theme="dark"] .tm-next p,
+:root[data-theme="dark"] .tm-complete p {
+    color: hsl(97 14% 74%)
+}
+:root[data-theme="dark"] .tm-next-icon {
+    color: hsl(99 23% 73%);
+    background: hsl(84 20% 23%)
+}
+:root[data-theme="dark"] .tm-timeline > li::before {
+    background: hsl(92 13% 24%)
+}
+:root[data-theme="dark"] .tm-stop {
+    background: hsl(80 17% 19%);
+    border: 1px solid hsl(90 13% 27%);
+    color: hsl(93 18% 73%)
+}
+:root[data-theme="dark"] .tm-activity {
+    border: 1px solid hsl(88 10% 24%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .is-visited .tm-activity {
+    background: hsl(86 23% 13%);
+    border-color: hsl(93 13% 27%)
+}
+:root[data-theme="dark"] .tm-activity-meta {
+    color: hsl(98 10% 70%)
+}
+:root[data-theme="dark"] .tm-activity-meta > span:not(:first-child) {
+    border-left: 1px solid hsl(90 10% 25%)
+}
+:root[data-theme="dark"] .tm-activity-meta time {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .tm-address {
+    color: hsl(99 11% 72%)
+}
+:root[data-theme="dark"] .tm-activity-details {
+    border-top: 1px solid hsl(81 14% 23%)
+}
+:root[data-theme="dark"] .tm-activity-details summary {
+    color: hsl(98 18% 74%)
+}
+:root[data-theme="dark"] .tm-activity-details dt {
+    color: hsl(88 10% 70%)
+}
+:root[data-theme="dark"] .tm-copy {
+    color: hsl(137 21% 77%)
+}
+:root[data-theme="dark"] .tm-help {
+    color: hsl(95 10% 70%) !important
+}
+:root[data-theme="dark"] .tm-unavailable {
+    color: hsl(90 7% 71%)
+}
+:root[data-theme="dark"] .tm-information {
+    border: 1px solid hsl(86 12% 25%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .tm-information summary small {
+    color: hsl(95 10% 71%)
+}
+:root[data-theme="dark"] .tm-information-content > section {
+    border-top: 1px solid hsl(84 13% 24%)
+}
+:root[data-theme="dark"] .tm-information-content p {
+    color: hsl(101 13% 74%)
+}
+:root[data-theme="dark"] .tm-reservation {
+    border-bottom: 1px solid hsl(77 14% 23%)
+}
+:root[data-theme="dark"] .tm-checklist {
+    color: hsl(108 22% 79%)
+}
+:root[data-theme="dark"] .tm-empty {
+    border: 1px dashed hsl(87 12% 27%);
+    background: hsl(75 22% 12%)
+}
+:root[data-theme="dark"] .tm-empty > svg {
+    color: hsl(90 17% 73%)
+}
+:root[data-theme="dark"] .tm-empty p {
+    color: hsl(96 10% 70%)
+}
+:root[data-theme="dark"] .tm-offline {
+    color: hsl(37 19% 73%);
+    background: hsl(44 29% 17%);
+    border: 1px solid hsl(42 21% 25%)
+}
+:root[data-theme="dark"] .tm-footnote {
+    color: hsl(93 10% 73%)
+}
+:root[data-theme="dark"] .tm-bottom {
+    background: hsl(0 0% 10% / 0.95);
+    border-top: 1px solid hsl(88 12% 24%)
+}
+:root[data-theme="dark"] .tm-bottom button {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .tm-bottom > span {
+    color: hsl(90 10% 71%)
+}
+:root[data-theme="dark"] .travel-mode summary:focus-visible {
+    outline: 3px solid hsl(77 13% 35%)
+}
+:root[data-theme="dark"] .tm-empty-photo {
+    background: hsl(90 14% 18%)
+}
+:root[data-theme="dark"] .tm-panel {
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(93 10% 24%)
+}
+:root[data-theme="dark"] .tm-panel small {
+    color: hsl(97 14% 74%)
+}
+:root[data-theme="dark"] .tm-panel strong {
+    color: hsl(160 24% 83%)
+}
+:root[data-theme="dark"] .tm-panel span {
+    color: hsl(152 10% 78%)
+}
+:root[data-theme="dark"] .tm-panel-next {
+    background: hsl(94 14% 15%)
+}
+:root[data-theme="dark"] .tm-late-options > li {
+    border: 1px solid hsl(93 10% 24%)
+}
+:root[data-theme="dark"] .month-grid > small {
+    color: hsl(95 9% 71%)
+}
+:root[data-theme="dark"] .month-grid button {
+    border: 1px solid hsl(93 10% 24%);
+    background: hsl(84 21% 12%)
+}
+:root[data-theme="dark"] .month-grid button small {
+    color: hsl(92 11% 72%)
+}
+:root[data-theme="dark"] .period-list {
+    border-left: 3px solid hsl(87 14% 31%);
+    background: hsl(80 22% 14%)
+}
+:root[data-theme="dark"] .extension-grid [role="status"] {
+    color: hsl(105 21% 76%)
+}
+:root[data-theme="dark"] .stay-card {
+    border-top: 1px solid hsl(104 9% 24%)
+}
+:root[data-theme="dark"] .stay-form {
+    background: hsl(82 18% 14%)
+}
+:root[data-theme="dark"] .legacy-stay {
+    background: hsl(82 18% 14%)
+}
+:root[data-theme="dark"] .enhanced-gallery figure {
+    border: 1px solid hsl(92 11% 24%);
+    background: hsl(0 0% 10%)
+}
+:root[data-theme="dark"] .enhanced-gallery .photo-open {
+    background: hsl(87 16% 17%)
+}
+:root[data-theme="dark"] .photo-dialog,
+:root[data-theme="dark"] .photo-edit-dialog {
+    color: hsl(163 30% 81%)
+}
+:root[data-theme="dark"] .photo-empty {
+    background: hsl(82 18% 14%)
+}
+:root[data-theme="dark"] .photo-unavailable {
+    color: hsl(124 6% 70%)
+}

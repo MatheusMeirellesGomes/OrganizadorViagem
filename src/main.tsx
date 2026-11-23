@@ -63,6 +63,10 @@ import "./catalog.css";
 import "./explore/explore.css";
 import "./etapa16.css";
 import "./mobile.css";
+import "./theme-dark.css";
+import "./theme.css";
+import { applyTheme, watchSystemTheme } from "./theme";
+import { ThemeSetting } from "./ThemeSetting";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
@@ -1897,6 +1901,7 @@ function App() {
                       setLocalChoice(false);
                     }}
                     onOpenTrip={openTrip}
+                    settings={<ThemeSetting />}
                   />
                 </>
               )}
@@ -2254,6 +2259,8 @@ if (
     console.warn("Cache offline indisponível neste navegador:", error);
   });
 }
+applyTheme();
+watchSystemTheme();
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
