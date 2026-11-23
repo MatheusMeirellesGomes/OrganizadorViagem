@@ -12,6 +12,7 @@ import {
   CheckCheck,
   ChevronRight,
   Compass,
+  PlaneTakeoff,
   Download,
   ExternalLink,
   Globe2,
@@ -123,7 +124,7 @@ type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
-  { id: "trips", label: "Minhas viagens", icon: Compass },
+  { id: "trips", label: "Minhas viagens", icon: PlaneTakeoff },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
