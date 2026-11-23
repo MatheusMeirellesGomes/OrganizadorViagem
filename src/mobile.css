@@ -1,0 +1,171 @@
+/*
+ * Ajustes de celular (UI/UX, fase 2). Carregado por último para valer sobre
+ * as folhas antigas sem reescrevê-las. Só atua em telas estreitas ou toque.
+ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (max-width: 700px) {
+  /* Barra superior abaixo do notch e conteúdo acima da navegação inferior. */
+  .topbar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(65px + env(safe-area-inset-top));
+    padding-left: max(19px, env(safe-area-inset-left));
+    padding-right: max(19px, env(safe-area-inset-right));
+  }
+  main {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  .toast {
+    bottom: calc(85px + env(safe-area-inset-bottom));
+  }
+  .mobile-nav button {
+    min-height: 48px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .mobile-nav span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Campos com 16px: o iPhone não dá zoom ao tocar. */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  /* Faixas roláveis: sem barra visível, com encaixe e uma dica de continuação. */
+  .tabs,
+  .days,
+  .detail-tabs {
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    padding-right: 24px;
+  }
+  .tabs::-webkit-scrollbar,
+  .days::-webkit-scrollbar {
+    display: none;
+  }
+  .tabs > *,
+  .days > *,
+  .detail-tabs > * {
+    scroll-snap-align: start;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .filter-bar .tabs {
+    margin-right: -16px;
+  }
+
+  /* Cabeçalho da viagem mais enxuto. */
+  .page-heading h1 {
+    overflow-wrap: anywhere;
+  }
+  .detail-toolbar {
+    flex-wrap: wrap;
+  }
+
+  /* Diálogos ocupam a tela sem cortar o rodapé de ações. */
+  dialog[open] {
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Textos longos nunca empurram a largura da página. */
+  .activity,
+  .trip-card,
+  .panel,
+  .settings-row {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Alvos de toque de pelo menos 44px onde o dedo é o ponteiro. */
+@media (pointer: coarse), (max-width: 700px) {
+  .tabs button,
+  .days button,
+  .detail-tabs button,
+  .chip-row button,
+  .profile-nav a,
+  .text-button,
+  .back,
+  summary {
+    min-height: 44px;
+  }
+  .text-button,
+  .back {
+    display: inline-flex;
+    align-items: center;
+  }
+  .back {
+    padding: 0 8px 0 0;
+  }
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .profile-nav a {
+    display: inline-flex;
+    align-items: center;
+  }
+  .icon-button,
+  .wallet-doc .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .top-actions .avatar,
+  .avatar-button {
+    width: 40px !important;
+    height: 40px !important;
+    position: relative;
+  }
+  .avatar-button::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+  }
+  .primary,
+  .secondary,
+  .cream-button,
+  .danger {
+    min-height: 44px;
+  }
+  a[href^="https://www.google.com/maps"],
+  a[href^="https://maps.apple.com"],
+  main a[target="_blank"]:not(p a):not(small a):not(.leaflet-container a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .text-button.small,
+  .primary.small {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-nav span {
+    font-size: 10px;
+  }
+  .days button {
+    padding: 8px 10px;
+  }
+}

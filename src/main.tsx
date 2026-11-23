@@ -62,6 +62,7 @@ import "./catalog.css";
 // Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
 import "./explore/explore.css";
 import "./etapa16.css";
+import "./mobile.css";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
