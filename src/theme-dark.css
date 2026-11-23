@@ -351,7 +351,7 @@
     background: hsl(35 21% 30%)
 }
 :root[data-theme="dark"] .map-error {
-    color: hsl(21 26% 68%)
+    color: hsl(22 29% 72%)
 }
 :root[data-theme="dark"] .destination-list button {
     border: 1px solid hsl(90 6% 23%)

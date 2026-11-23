@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, LocateFixed, LayoutGrid, Map as MapIcon, Columns2, SlidersHorizontal, History, Loader2 } from "lucide-react";
+import { Search, LocateFixed, LayoutGrid, Map as MapIcon, Columns2, SlidersHorizontal, History, Loader2, MapPin, Navigation } from "lucide-react";
 import { t as tr, tf, getLocale } from "../i18n";
 import { decor, hideOnError } from "../decor";
 import type { Trip } from "../model";
@@ -182,13 +182,9 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
   return (
     <div className="explore">
       <section className="panel explore-hero">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">{tr("DESCUBRA O SEU PRÓXIMO CAMINHO")}</p>
-            <h2>{tr("Explore lugares do mundo inteiro")}</h2>
-            <p>{tr("Busque uma cidade, bairro, endereço, atração ou restaurante.")}</p>
-          </div>
-          <img className="head-photo" src={decor.roadWide} alt="" loading="lazy" onError={hideOnError} />
+        <div className="explore-head">
+          <h2>{tr("Explore lugares do mundo inteiro")}</h2>
+          <p>{tr("Busque uma cidade, bairro, endereço, atração ou restaurante.")}</p>
         </div>
 
         <form
@@ -249,9 +245,9 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
               </ul>
             )}
           </div>
-          <button className="primary">{tr("Buscar")}</button>
-          <button type="button" className="secondary" onClick={useMyLocation}>
-            <LocateFixed size={17} /> {tr("Minha localização")}
+          <button className="primary explore-go">{tr("Buscar")}</button>
+          <button type="button" className="secondary explore-here" onClick={useMyLocation} aria-label={tr("Minha localização")} title={tr("Minha localização")}>
+            <LocateFixed size={17} aria-hidden="true" /> <span>{tr("Minha localização")}</span>
           </button>
         </form>
         {recentSearches().length > 0 && !center && (
@@ -285,18 +281,23 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
               </button>
             ))}
           </div>
-          <div className="chip-row" role="group" aria-label={tr("Raio da busca")}>
-            <span className="chip-label">{tr("Raio")}</span>
-            {RADII.map((r) => (
-              <button key={r} className={"chip" + (r === radiusKm ? " is-on" : "")} aria-pressed={r === radiusKm} onClick={() => setRadiusKm(r)}>
-                {r} km
-              </button>
-            ))}
+          <div className="explore-params">
+          <div className="explore-param" role="group" aria-labelledby="explore-raio">
+            <span className="explore-param-label" id="explore-raio">{tr("Raio")}</span>
+            <div className="segmented explore-radius">
+              {RADII.map((r) => (
+                <button key={r} className={r === radiusKm ? "is-on" : ""} aria-pressed={r === radiusKm} aria-label={r + " km"} onClick={() => setRadiusKm(r)}>
+                  {r}
+                  <small aria-hidden="true">km</small>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="chip-row" role="group" aria-label={tr("Centro da busca")}>
-            <span className="chip-label">{tr("A partir de")}</span>
-            <span className="chip is-on center-chip">
-              {center ? `${tr({ destination: "Cidade pesquisada", hotel: "Hotel", place: "Atração selecionada", map: "Ponto no mapa", here: "Minha localização" }[centerKind])}: ${centerLabel}` : tr("Escolha um destino")}
+          <div className="explore-param" role="group" aria-labelledby="explore-centro">
+            <span className="explore-param-label" id="explore-centro">{tr("A partir de")}</span>
+            <span className="center-chip">
+              <MapPin size={15} aria-hidden="true" />
+              <span>{center ? `${tr({ destination: "Cidade pesquisada", hotel: "Hotel", place: "Atração selecionada", map: "Ponto no mapa", here: "Minha localização" }[centerKind])}: ${centerLabel}` : tr("Escolha um destino")}</span>
             </span>
             {hotels.length > 0 && (
               <select
@@ -319,6 +320,7 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
               </select>
             )}
           </div>
+          </div>
           {kind === "food" && (
             <div className="chip-row" role="group" aria-label={tr("Refeições e tipos")}>
               {(Object.keys(mealLabels) as Meal[]).map((m) => (
@@ -333,7 +335,9 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
 
       {!center && (
         <section className="explore-empty panel">
-          <img src={decor.map} alt="" loading="lazy" onError={hideOnError} />
+          <span className="explore-empty-icon" aria-hidden="true">
+            <Navigation size={22} />
+          </span>
           <div>
             <h3>{tr("Comece por um destino")}</h3>
             <p>{tr("Pesquise uma cidade, use sua localização ou toque no mapa. A busca considera o raio escolhido de verdade, de 1 a 20 km.")}</p>
@@ -343,7 +347,7 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
 
       {(center || view !== "cards") && (
         <section className="explore-results">
-          <div className="explore-toolbar">
+          {center && <div className="explore-toolbar">
             <div>
               <h2 aria-live="polite">
                 {loading && !result ? tr("Buscando lugares…") : tf("{count} lugares encontrados", { count: visible.length })}
@@ -386,7 +390,7 @@ export function Explore({ trips, onSave, saving }: { trips: Trip[]; onSave: (t: 
                 </button>
               )}
             </div>
-          </div>
+          </div>}
 
           {showFilters && (
             <div className="explore-filters panel">
