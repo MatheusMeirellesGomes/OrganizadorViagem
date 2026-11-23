@@ -65,6 +65,7 @@ import "./etapa16.css";
 import "./mobile.css";
 import "./theme-dark.css";
 import "./theme.css";
+import "./nav.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
 import { TourHost, TourSetting } from "./tour/TourHost";
@@ -697,10 +698,13 @@ function App() {
             <button
               key={n.id}
               data-tour={"nav-" + n.id}
-              className={page === n.id && !selected ? "active" : ""}
+              className={"nav-" + n.id + (page === n.id && !selected ? " active" : "")}
+              aria-current={page === n.id && !selected ? "page" : undefined}
               onClick={() => go(n.id)}
             >
-              <n.icon size={20} />
+              <span className="nav-ico" aria-hidden="true">
+                <n.icon size={18} strokeWidth={2.2} />
+              </span>
               {tr(n.label)}
               {n.id === "trips" &&
                 trips.filter((t) => t.status !== "past").length > 0 && (
@@ -1925,19 +1929,25 @@ function App() {
               <button
                 key={n.id}
                 data-tour={"nav-" + n.id}
-                className={page === n.id ? "active" : ""}
+                className={"nav-" + n.id + (page === n.id ? " active" : "")}
+                aria-current={page === n.id ? "page" : undefined}
                 onClick={() => go(n.id)}
               >
-                <n.icon size={21} />
-                <span>{tr(n.label)}</span>
+                <span className="nav-ico" aria-hidden="true">
+                  <n.icon size={19} strokeWidth={2.2} />
+                </span>
+                <span>{tr(n.id === "trips" ? "Viagens" : n.label)}</span>
               </button>
             ))}
           <button
             data-tour="nav-profile"
             onClick={() => go("profile")}
-            className={page === "profile" ? "active" : ""}
+            className={"nav-profile" + (page === "profile" ? " active" : "")}
+            aria-current={page === "profile" ? "page" : undefined}
           >
-            <User size={21} />
+            <span className="nav-ico" aria-hidden="true">
+              <User size={19} strokeWidth={2.2} />
+            </span>
             <span>{tr("Perfil")}</span>
           </button>
         </nav>

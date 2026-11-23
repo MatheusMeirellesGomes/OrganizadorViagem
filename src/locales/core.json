@@ -1849,5 +1849,6 @@
   "Iniciar tour": ["Start tour", "Iniciar recorrido"],
   "Tutorial": ["Tutorial", "Tutorial"],
   "Um passeio rápido pelas principais áreas do app.": ["A quick tour of the app's main areas.", "Un recorrido rápido por las áreas principales de la app."],
-  "Reiniciar tutorial": ["Restart tutorial", "Reiniciar tutorial"]
+  "Reiniciar tutorial": ["Restart tutorial", "Reiniciar tutorial"],
+  "Viagens": ["Trips", "Viajes"]
 }
