@@ -14,6 +14,7 @@ import {
   Globe2,
   LogIn,
   LogOut,
+  Luggage,
   MapPin,
   Pencil,
   Settings,
@@ -59,7 +60,7 @@ export const profileSections = [
 export type SectionId = (typeof profileSections)[number][0];
 const sectionIcons: Record<SectionId, typeof Cloud> = {
   conta: UserRound,
-  viajante: Compass,
+  viajante: Luggage,
   dados: Archive,
   privacidade: Shield,
   configuracoes: Settings,

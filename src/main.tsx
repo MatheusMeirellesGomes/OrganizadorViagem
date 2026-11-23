@@ -345,6 +345,8 @@ function App() {
     window.scrollTo({ top: 0 });
   };
   const go = (p: Page) => {
+    // Abrir o Meu Espaço pelo menu sempre começa na tela inicial dele.
+    if (location.hash.startsWith("#espaco/")) history.replaceState(null, "", location.pathname + location.search);
     setTravelMode(false);
     setPage(p);
     setSelected(null);
