@@ -16,6 +16,7 @@ import { reminderKinds, offsets } from "./journey/reminders";
 import { packingCategories, suggestions } from "./journey/packing";
 import { prepItems, prepStatuses } from "./journey/prep";
 import { newTrip } from "./model";
+import { authSlides } from "./home/AuthScene";
 
 // Every text passed to tr()/tf()/t()/tLabel() must exist in English and Spanish,
 // with the same {placeholders}. New untranslated UI text fails here.
@@ -103,6 +104,7 @@ describe("traduções", () => {
       ...profileSections.map(([, l]) => l),
       ...[transportKinds, checkInStatuses, fuelKinds, costKeys, walletCategories, reminderKinds, packingCategories, prepStatuses].flatMap((o) => Object.values(o)),
       ...offsets.map(([, l]) => l),
+      ...authSlides.map((s) => s.place),
       ...Object.values(prepItems).flatMap((i) => [i.title, i.hint]),
       ...suggestions(newTrip({ scope: "international", start: "2027-01-01", end: "2027-01-05", transports: [{ id: "x", kind: "flight", legs: [] }], vehicles: [{ id: "v", ownership: "rental" }] })).flatMap((s) => [s.title, s.reason ?? "confira a previsão do tempo antes de sair"]),
     ];

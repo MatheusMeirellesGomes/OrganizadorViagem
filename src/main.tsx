@@ -95,6 +95,7 @@ import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
 import { HomeMetrics } from "./home/HomeMetrics";
+import { AuthScene } from "./home/AuthScene";
 import { TransportPanel } from "./journey/TransportPanel";
 import { secretStore } from "./journey/secrets";
 import { ProfilePage } from "./profile/ProfilePage";
@@ -2162,8 +2163,9 @@ function Auth({
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false);
   return (
+    <AuthScene>
     <form
-      className="panel auth-form"
+      className="auth-card"
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
@@ -2198,10 +2200,7 @@ function Auth({
         }
       }}
     >
-      <span className="modal-icon">
-        <Compass />
-      </span>
-      <h1>{tr("Seu mundo começa aqui.")}</h1>
+      <h2>{signup ? tr("Criar conta") : tr("Entrar")}</h2>
       <p>
         {signup
           ? tr("Crie sua conta para organizar seus caminhos.")
@@ -2243,6 +2242,7 @@ function Auth({
         <p className="subtle">{tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Perfil, e enviar essas viagens para ela.")}</p>
       </div>
     </form>
+    </AuthScene>
   );
 }
 if (
