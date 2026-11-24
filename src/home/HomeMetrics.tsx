@@ -22,9 +22,8 @@ export function HomeMetrics({ trips, onOpen }: { trips: Trip[]; onOpen: (page: "
                 {m.page === "history" ? tr("Ver histórico") : tr("Ver viagens")} <ArrowRight size={14} aria-hidden="true" />
               </span>
             </span>
-            <span className="metric-source">
-              {m.photo.kind === "place" ? tf("Foto de {name} · Wikimedia Commons", { name: m.photo.place.name }) : tr("Imagem ilustrativa")}
-            </span>
+            {/* Fotos genéricas dispensam legenda; fotos de lugares reais mantêm o crédito do autor (Wikimedia Commons). */}
+            {m.photo.kind === "place" && <span className="metric-source">{tf("Foto de {name} · Wikimedia Commons", { name: m.photo.place.name })}</span>}
           </button>
         </li>
       ))}
