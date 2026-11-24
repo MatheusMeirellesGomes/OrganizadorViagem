@@ -12,6 +12,7 @@ import {
   CheckCheck,
   ChevronRight,
   Compass,
+  PlaneTakeoff,
   Download,
   ExternalLink,
   Globe2,
@@ -21,7 +22,6 @@ import {
   Map,
   MapPin,
   Menu,
-  Mountain,
   Plus,
   Search,
   Settings2,
@@ -63,6 +63,15 @@ import "./catalog.css";
 // Chips, labels and dialogs shared by Explorar, the planner and Travel Mode.
 import "./explore/explore.css";
 import "./etapa16.css";
+import "./mobile.css";
+import "./theme-dark.css";
+import "./theme.css";
+import "./nav.css";
+import "./space.css";
+import "./explore/explore-layout.css";
+import { applyTheme, watchSystemTheme } from "./theme";
+import { ThemeSetting } from "./ThemeSetting";
+import { TourHost, TourSetting } from "./tour/TourHost";
 import { downloadOffline, parseBackup } from "./offline";
 import { formatMoney, formatNumber } from "./i18n";
 import { decor, hideOnError } from "./decor";
@@ -96,6 +105,7 @@ import { SavedPlaces } from "./SavedPlaces";
 
 import { portableTrips } from "./backup";
 import { HomeMetrics } from "./home/HomeMetrics";
+import { AuthScene } from "./home/AuthScene";
 import { TransportPanel } from "./journey/TransportPanel";
 import { secretStore } from "./journey/secrets";
 import { ProfilePage } from "./profile/ProfilePage";
@@ -108,7 +118,7 @@ import { TripMapPanel } from "./journey/TripMapPanel";
 import { PreparationPanel } from "./journey/PreparationPanel";
 import { ReminderBanner } from "./journey/ReminderBanner";
 import { isWalletCategory, walletCategories, type WalletCategory } from "./journey/wallet";
-import { prepareTripAssets } from "./migration";
+import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated } from "./migration";
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
@@ -116,7 +126,7 @@ type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
-  { id: "trips", label: "Minhas viagens", icon: Compass },
+  { id: "trips", label: "Minhas viagens", icon: PlaneTakeoff },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
@@ -143,6 +153,9 @@ function App() {
         return false;
       }
     }),
+    // Tela de login aberta a partir do modo visitante: entrar ou criar conta.
+    [authIntent, setAuthIntent] = useState<"signin" | "signup" | null>(null),
+    [migrationRound, setMigrationRound] = useState(0),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [mealRequest, setMealRequest] = useState<MealRequest>(),
@@ -275,7 +288,10 @@ function App() {
     }
   }, []);
   useEffect(() => {
-    if (session) loadAccount(session.user.id);
+    if (session) {
+      setAuthIntent(null);
+      loadAccount(session.user.id);
+    }
   }, [session?.user.id, loadAccount]);
   useEffect(() => {
     // Invite link (?convite=...): kept until the person signs in, then accepted.
@@ -318,7 +334,20 @@ function App() {
     el?.querySelector<HTMLInputElement>("input")?.focus();
     return () => before?.focus();
   }, [modal]);
+  // Visitante pede para entrar: as viagens locais ficam onde estão.
+  const openAuth = (intent: "signin" | "signup") => {
+    try {
+      localStorage.removeItem(localModeKey);
+    } catch {
+      // Nothing stored.
+    }
+    setAuthIntent(intent);
+    setLocalChoice(false);
+    window.scrollTo({ top: 0 });
+  };
   const go = (p: Page) => {
+    // Abrir o Meu Espaço pelo menu sempre começa na tela inicial dele.
+    if (location.hash.startsWith("#espaco/")) history.replaceState(null, "", location.pathname + location.search);
     setTravelMode(false);
     setPage(p);
     setSelected(null);
@@ -671,7 +700,8 @@ function App() {
   }
   return (
     <div className={trip && travelMode ? "app travel-mode-active" : "app"}>
-      <aside className={"sidebar " + (menu ? "open" : "")}>
+      <a className="skip-content" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById("main-content")?.focus(); }}>{tr("Pular para o conteúdo")}</a>
+      <aside id="main-sidebar" className={"sidebar " + (menu ? "open" : "")}>
         <a
           className="brand"
           href="#"
@@ -680,11 +710,9 @@ function App() {
             go("home");
           }}
         >
-          <span className="brand-mark">
-            <Mountain size={25} />
-          </span>
+          <img className="brand-landscape" src="/gomes-landscape-g.png" alt="" width="60" height="60" />
           <span className="brand-words">
-            gomes<span>{tr("PELO MUNDO")}</span>
+            GOMES<span>PELO MUNDO</span>
           </span>
         </a>
         <p className="nav-caption">{tr("SEU ESPAÇO")}</p>
@@ -692,10 +720,14 @@ function App() {
           {nav.map((n) => (
             <button
               key={n.id}
-              className={page === n.id && !selected ? "active" : ""}
+              data-tour={"nav-" + n.id}
+              className={"nav-" + n.id + (page === n.id && !selected ? " active" : "")}
+              aria-current={page === n.id && !selected ? "page" : undefined}
               onClick={() => go(n.id)}
             >
-              <n.icon size={20} />
+              <span className="nav-ico" aria-hidden="true">
+                <n.icon size={18} strokeWidth={2.2} />
+              </span>
               {tr(n.label)}
               {n.id === "trips" &&
                 trips.filter((t) => t.status !== "past").length > 0 && (
@@ -743,7 +775,9 @@ function App() {
         <header className="topbar">
           <button
             className="mobile-menu icon-button"
-            aria-label={tr("Abrir menu")}
+            aria-label={menu ? tr("Fechar menu") : tr("Abrir menu")}
+            aria-expanded={menu}
+            aria-controls="main-sidebar"
             onClick={() => setMenu(!menu)}
           >
             <Menu />
@@ -772,6 +806,7 @@ function App() {
             </span>
             <button
               className="avatar avatar-button"
+              data-tour="nav-profile"
               aria-label={tr("Abrir perfil")}
               onClick={() => go("profile")}
             >
@@ -779,7 +814,7 @@ function App() {
             </button>
           </div>
         </header>
-        <main>
+        <main id="main-content" tabIndex={-1}>
           <ReminderBanner trips={trips} onOpen={openTrip} onSave={save} />
           {staleTrip && session && !loading && (
             <div className="stale-banner" role="status">
@@ -795,7 +830,7 @@ function App() {
           )}
           {session && repository && !loadError && accountSource === "live" && (
             <MigrationPanel
-              key={session.user.id}
+              key={session.user.id + ":" + migrationRound}
               userId={session.user.id}
               repo={repository}
               online={online}
@@ -821,7 +856,11 @@ function App() {
           ) : supabase && !session && !localChoice ? (
             <Auth
               onNotice={setNotice}
+              initialSignup={authIntent === "signup"}
+              fromGuest={!!authIntent}
+              guestTrips={authIntent ? readLocal().length : 0}
               onContinueLocal={() => {
+                setAuthIntent(null);
                 try {
                   localStorage.setItem(localModeKey, "1");
                 } catch {
@@ -881,6 +920,7 @@ function App() {
                 <div className="detail-toolbar">
                   <button
                     id="travel-mode-entry"
+                    data-tour="modo-viagem"
                     className="primary travel-mode-entry"
                     onClick={() => setTravelMode(true)}
                   >
@@ -934,6 +974,7 @@ function App() {
                   ].map((v) => (
                     <button
                       key={v}
+                      data-tour={"aba-" + v}
                       role="tab"
                       aria-selected={tab === v}
                       className={tab === v ? "selected" : ""}
@@ -976,7 +1017,7 @@ function App() {
                           {tr("Atividade")}
                         </button>
                       </div>
-                      <div className="days">
+                      <div className="days" data-tour="roteiro">
                         {Array.from(
                           {
                             length: Math.max(
@@ -1558,7 +1599,7 @@ function App() {
                   </p>
                 </div>
                 {page !== "profile" && (
-                  <button className="primary" onClick={() => setModal("trip")}>
+                  <button className="primary" data-tour="criar-viagem" onClick={() => setModal("trip")}>
                     <Plus size={18} />
                     {tr("Nova viagem")}
                   </button>
@@ -1713,6 +1754,7 @@ function App() {
                       ).map(([k, v]) => (
                         <button
                           key={k}
+                          aria-pressed={filter === k}
                           onClick={() => setFilter(k)}
                           className={filter === k ? "selected" : ""}
                         >
@@ -1889,15 +1931,27 @@ function App() {
                       const { error } = await supabase!.auth.signOut();
                       if (error) setNotice(friendlyError(error, "Não foi possível sair da conta."));
                     }}
-                    onSignIn={() => {
+                    onSignIn={() => openAuth("signin")}
+                    onSignUp={() => openAuth("signup")}
+                    localTrips={session ? pendingLocalTrips(readLocal(), readMigrated(session.user.id)).filter((t) => !migratedElsewhere(session.user.id).has(t.id)).length : trips.length}
+                    onReviewLocal={() => {
+                      if (!session) return;
                       try {
-                        localStorage.removeItem(localModeKey);
+                        sessionStorage.removeItem("gomes-migracao-adiada:" + session.user.id);
+                        localStorage.removeItem("gomes-migracao-separada:" + session.user.id);
                       } catch {
-                        // Nothing stored.
+                        // Storage blocked: the panel shows anyway.
                       }
-                      setLocalChoice(false);
+                      setMigrationRound((n) => n + 1);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     onOpenTrip={openTrip}
+                    settings={
+                      <>
+                        <ThemeSetting />
+                        <TourSetting />
+                      </>
+                    }
                   />
                 </>
               )}
@@ -1910,22 +1964,36 @@ function App() {
             .map((n) => (
               <button
                 key={n.id}
-                className={page === n.id ? "active" : ""}
+                data-tour={"nav-" + n.id}
+                className={"nav-" + n.id + (page === n.id ? " active" : "")}
+                aria-current={page === n.id ? "page" : undefined}
                 onClick={() => go(n.id)}
               >
-                <n.icon size={21} />
-                <span>{tr(n.label)}</span>
+                <span className="nav-ico" aria-hidden="true">
+                  <n.icon size={19} strokeWidth={2.2} />
+                </span>
+                <span>{tr(n.id === "trips" ? "Viagens" : n.label)}</span>
               </button>
             ))}
           <button
+            data-tour="nav-profile"
             onClick={() => go("profile")}
-            className={page === "profile" ? "active" : ""}
+            className={"nav-profile" + (page === "profile" ? " active" : "")}
+            aria-current={page === "profile" ? "page" : undefined}
           >
-            <User size={21} />
+            <span className="nav-ico" aria-hidden="true">
+              <User size={19} strokeWidth={2.2} />
+            </span>
             <span>{tr("Perfil")}</span>
           </button>
         </nav>
       </div>
+      <TourHost
+        onHome={page === "home" && !selected}
+        onTrip={!!trip && !travelMode && tab === "Roteiro"}
+        blocked={!!modal || loading || (!!supabase && !session && !localChoice)}
+        goHome={() => go("home")}
+      />
       {notice && (
         <div className="toast" role="status">
           {tr(notice)}
@@ -2158,15 +2226,23 @@ function routeUrl(t: Trip, day: number) {
 function Auth({
   onNotice,
   onContinueLocal,
+  initialSignup = false,
+  fromGuest = false,
+  guestTrips = 0,
 }: {
+  fromGuest?: boolean;
   onNotice: (s: string) => void;
   onContinueLocal: () => void;
+  initialSignup?: boolean;
+  /** Viagens do modo visitante: quem veio de lá pode voltar sem entrar. */
+  guestTrips?: number;
 }) {
-  const [signup, setSignup] = useState(false),
+  const [signup, setSignup] = useState(initialSignup),
     [busy, setBusy] = useState(false);
   return (
+    <AuthScene>
     <form
-      className="panel auth-form"
+      className="auth-card"
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
@@ -2201,10 +2277,7 @@ function Auth({
         }
       }}
     >
-      <span className="modal-icon">
-        <Compass />
-      </span>
-      <h1>{tr("Seu mundo começa aqui.")}</h1>
+      <h2>{signup ? tr("Criar conta") : tr("Entrar")}</h2>
       <p>
         {signup
           ? tr("Crie sua conta para organizar seus caminhos.")
@@ -2240,12 +2313,19 @@ function Auth({
           type="button"
           onClick={onContinueLocal}
         >
-          <HardDrive size={17} />
-          {tr("Continuar sem conta")}
+          {fromGuest ? <ArrowLeft size={17} /> : <HardDrive size={17} />}
+          {fromGuest ? tr("Voltar sem entrar") : tr("Continuar sem conta")}
         </button>
-        <p className="subtle">{tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Perfil, e enviar essas viagens para ela.")}</p>
+        <p className="subtle">
+          {fromGuest
+            ? guestTrips
+              ? tf("Suas {count} viagens deste navegador continuam aqui. Depois de entrar, você escolhe se quer enviá-las para a conta; nada é apagado.", { count: guestTrips })
+              : tr("Depois de entrar, suas viagens ficam na conta e aparecem em qualquer aparelho.")
+            : tr("Suas viagens ficam salvas só neste navegador. Você pode criar a conta depois, pelo Meu espaço, e enviar essas viagens para ela.")}
+        </p>
       </div>
     </form>
+    </AuthScene>
   );
 }
 if (
@@ -2256,6 +2336,8 @@ if (
     console.warn("Cache offline indisponível neste navegador:", error);
   });
 }
+applyTheme();
+watchSystemTheme();
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

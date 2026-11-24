@@ -11,6 +11,7 @@ import type { TripRepository } from "./remote";
 import { friendlyError } from "./errors";
 import { readLocal, saveLocal } from "./store";
 import {
+  migratedElsewhere,
   pendingLocalTrips,
   planMigration,
   readMigrated,
@@ -34,6 +35,8 @@ type Report = {
 };
 
 const postponedKey = (userId: string) => "gomes-migracao-adiada:" + userId;
+/** "Manter separadas": não pergunta de novo até a pessoa pedir em Meus dados. */
+const separateKey = (userId: string) => "gomes-migracao-separada:" + userId;
 /** Singular or plural sentence, translated, with {count} filled in. */
 const counted = (
   n: number,
@@ -50,12 +53,14 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
   const [report, setReport] = useState<Report | null>(null);
   const [hidden, setHidden] = useState(() => {
     try {
-      return sessionStorage.getItem(postponedKey(userId)) === "1";
+      return sessionStorage.getItem(postponedKey(userId)) === "1" || localStorage.getItem(separateKey(userId)) === "1";
     } catch {
       return false;
     }
   });
-  const pending = pendingLocalTrips(local, readMigrated(userId));
+  const elsewhere = migratedElsewhere(userId);
+  const pending = pendingLocalTrips(local, readMigrated(userId)).filter((t) => !elsewhere.has(t.id));
+  const otherAccount = local.filter((t) => elsewhere.has(t.id) && !readMigrated(userId)[t.id]).length;
   const confirmedLocal = local.filter((t) => readMigrated(userId)[t.id]);
 
   if (hidden || (!report && pending.length === 0)) return null;
@@ -144,6 +149,15 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function keepSeparate() {
+    try {
+      localStorage.setItem(separateKey(userId), "1");
+    } catch {
+      // Hidden only for this screen.
+    }
+    setHidden(true);
   }
 
   function postpone() {
@@ -261,17 +275,32 @@ export function MigrationPanel({ userId, repo, online, onSent }: Props) {
             "{count} viagens salvas só neste navegador",
           )}
         </h2>
-        <p>{tr("Envie para sua conta para acessar em outros aparelhos. Nada que já está na conta será substituído, e a cópia deste navegador só sai se você pedir.")}</p>
+        <p>{tr("Você criou estas viagens antes de entrar. O que prefere fazer com elas?")}</p>
+        <ul className="migration-names">
+          {pending.slice(0, 4).map((t) => (
+            <li key={t.id}>{tripName(t)}</li>
+          ))}
+          {pending.length > 4 && <li>{tf("e mais {count}", { count: pending.length - 4 })}</li>}
+        </ul>
         <div className="migration-actions">
           <button
             className="primary small"
             disabled={busy || !online}
             onClick={() => send(pending)}
           >
-            {busy ? tr("Enviando…") : tr("Enviar para minha conta")}
+            {busy ? tr("Enviando…") : tr("Importar para minha conta")}
           </button>
+          <button className="secondary small" disabled={busy} onClick={keepSeparate}>{tr("Manter separadas")}</button>
           <button className="text-button" disabled={busy} onClick={postpone}>{tr("Agora não")}</button>
         </div>
+        <p className="migration-hint">
+          {tr("Importar: as viagens vão para a conta e uma cópia continua aqui. Nada da conta é substituído; viagens repetidas são detectadas. Manter separadas: ficam só neste navegador e você continua usando as da conta. Dá para mudar depois em Meu espaço → Meus dados.")}
+        </p>
+        {otherAccount > 0 && (
+          <p className="migration-hint">
+            {counted(otherAccount, "{count} viagem deste navegador já foi enviada para outra conta e não é oferecida aqui.", "{count} viagens deste navegador já foram enviadas para outra conta e não são oferecidas aqui.")}
+          </p>
+        )}
         {!online && (
           <p className="migration-error">{tr("Conecte-se à internet para enviar.")}</p>
         )}

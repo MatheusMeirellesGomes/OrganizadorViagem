@@ -1,0 +1,145 @@
+/*
+ * Tokens de cor do app e ajustes finos do tema escuro.
+ * A conversão de cada regra antiga está em theme-dark.css (gerado). Aqui ficam
+ * os tokens semânticos, usados pelos componentes novos (tour, tema), e os
+ * casos que a conversão automática não resolve sozinha.
+ */
+:root {
+  --surface: #ffffff;
+  --surface-2: #f7f8f5;
+  --surface-3: #eef1ea;
+  --text: #273b35;
+  --text-muted: #636a65;
+  --line-soft: #e7eae4;
+  --brand: #244f43;
+  --brand-contrast: #ffffff;
+  --accent: #6a8755;
+  --focus: #b78a2c;
+  --overlay: rgb(12 24 19 / 0.62);
+  --shadow-lg: 0 18px 50px rgb(18 38 30 / 0.22);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #18201c;
+  --surface-2: #121814;
+  --surface-3: #212b26;
+  --text: #dde6e0;
+  --text-muted: #a9b5ad;
+  --line-soft: #2c3832;
+  --brand: #3d7a63;
+  --brand-contrast: #ffffff;
+  --accent: #9dbb86;
+  --focus: #e3b65a;
+  --overlay: rgb(0 0 0 / 0.7);
+  --shadow-lg: 0 18px 50px rgb(0 0 0 / 0.55);
+  /* Variáveis antigas usadas direto nos componentes. */
+  --cream: #1b2420;
+  --cream-deep: #232e29;
+  --ink: #dde6e0;
+  --border: #2c3832;
+  --muted: #a9b5ad;
+  --card-shadow: 0 1px 2px #0006, 0 8px 24px #0005;
+}
+
+/* Foco sempre visível nos dois temas. */
+:root[data-theme="dark"] button:focus-visible,
+:root[data-theme="dark"] a:focus-visible,
+:root[data-theme="dark"] summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] select:focus,
+:root[data-theme="dark"] textarea:focus {
+  outline: 2px solid var(--accent);
+}
+
+/* Botões principais: verde da marca um pouco mais claro no escuro. */
+:root[data-theme="dark"] .primary,
+:root[data-theme="dark"] .days button.selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-contrast);
+}
+
+/* Fotos e ilustrações não mudam de cor; mapas ficam escuros. */
+:root[data-theme="dark"] .leaflet-container {
+  background: #1c2420;
+}
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+}
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,
+:root[data-theme="dark"] .leaflet-popup-tip,
+:root[data-theme="dark"] .leaflet-bar a,
+:root[data-theme="dark"] .leaflet-control-attribution {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--line-soft);
+}
+:root[data-theme="dark"] .leaflet-control-attribution a {
+  color: var(--accent);
+}
+
+/* Diálogos, menus e listas do sistema. */
+:root[data-theme="dark"] dialog {
+  background: var(--surface);
+  color: var(--text);
+}
+:root[data-theme="dark"] dialog::backdrop {
+  background: var(--overlay);
+}
+:root[data-theme="dark"] option {
+  background: var(--surface);
+  color: var(--text);
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #85928a;
+}
+:root[data-theme="dark"] img {
+  color-scheme: light;
+}
+
+/* Seletor de aparência em Configurações. */
+.theme-setting {
+  flex-wrap: wrap;
+}
+.theme-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--line-soft);
+}
+.theme-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.theme-switch button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+@media (max-width: 480px) {
+  .theme-switch {
+    width: 100%;
+  }
+  .theme-switch button {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 6px;
+  }
+}

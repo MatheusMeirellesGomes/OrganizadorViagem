@@ -1962,7 +1962,7 @@ dialog .section-head {
   font-size: 11px;
 }
 .map-error {
-  color: #99684d;
+  color: #87593f;
   font-size: 11px !important;
 }
 .world-panel > .section-head {
@@ -2510,4 +2510,18 @@ input[type="date"]::-webkit-date-and-time-value {
   font-size: 13px;
   color: #4e6352;
   overflow-wrap: anywhere;
+}
+
+/* Identidade Gomes pelo Mundo: monograma de paisagens e nome legível. */
+.brand { padding-left: 0; padding-right: 0; gap: 8px; }
+.brand-landscape { width: 60px; height: 60px; object-fit: contain; flex: 0 0 60px; }
+.brand .brand-words { font-size: 25px; letter-spacing: -.8px; line-height: 1.1; }
+.brand .brand-words > span { font-size: 9px; letter-spacing: 2px; margin: 6px 0 0; color: var(--green); white-space: nowrap; }
+
+/* Keyboard access and hidden mobile navigation. */
+.skip-content { position: fixed; top: 8px; left: 8px; z-index: 1000; transform: translateY(-160%); padding: 12px 18px; background: #214e42; color: #fff; border-radius: 8px; }
+.skip-content:focus { transform: translateY(0); outline: 3px solid #d4ac67; }
+@media (max-width: 700px) {
+  .sidebar:not(.open) { visibility: hidden; pointer-events: none; }
+  .sidebar.open { visibility: visible; }
 }
