@@ -700,7 +700,8 @@ function App() {
   }
   return (
     <div className={trip && travelMode ? "app travel-mode-active" : "app"}>
-      <aside className={"sidebar " + (menu ? "open" : "")}>
+      <a className="skip-content" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById("main-content")?.focus(); }}>{tr("Pular para o conteúdo")}</a>
+      <aside id="main-sidebar" className={"sidebar " + (menu ? "open" : "")}>
         <a
           className="brand"
           href="#"
@@ -774,7 +775,9 @@ function App() {
         <header className="topbar">
           <button
             className="mobile-menu icon-button"
-            aria-label={tr("Abrir menu")}
+            aria-label={menu ? tr("Fechar menu") : tr("Abrir menu")}
+            aria-expanded={menu}
+            aria-controls="main-sidebar"
             onClick={() => setMenu(!menu)}
           >
             <Menu />
@@ -811,7 +814,7 @@ function App() {
             </button>
           </div>
         </header>
-        <main>
+        <main id="main-content" tabIndex={-1}>
           <ReminderBanner trips={trips} onOpen={openTrip} onSave={save} />
           {staleTrip && session && !loading && (
             <div className="stale-banner" role="status">
@@ -1751,6 +1754,7 @@ function App() {
                       ).map(([k, v]) => (
                         <button
                           key={k}
+                          aria-pressed={filter === k}
                           onClick={() => setFilter(k)}
                           className={filter === k ? "selected" : ""}
                         >
