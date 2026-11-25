@@ -1,0 +1,46 @@
+/* Fase 2: correções de layout encontradas na revisão do site. */
+
+/* Tela de entrada sem a barra superior e o menu do app atrás. */
+.auth-only .topbar,
+.auth-only .sidebar,
+.auth-only .mobile-nav,
+.auth-only .page-heading {
+  display: none !important;
+}
+.auth-only main {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.auth-only .workspace {
+  margin-left: 0;
+}
+
+/* Informações da viagem usa a largura da área de conteúdo. */
+.settings-form {
+  max-width: 980px;
+}
+
+.crumb-link {
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  min-height: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.crumb-link:hover {
+  text-decoration: underline;
+}
+.breadcrumb b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sem internet as fotos não carregam: fica um fundo de paisagem em gradiente. */
+.auth-scene {
+  background:
+    radial-gradient(120% 80% at 80% 10%, #3f7a63 0%, transparent 60%),
+    radial-gradient(90% 70% at 10% 100%, #c08a3e55 0%, transparent 60%),
+    linear-gradient(160deg, #1f4a3c, #10241d);
+}

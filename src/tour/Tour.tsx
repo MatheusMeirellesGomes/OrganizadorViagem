@@ -65,7 +65,10 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (finished
   const close = useCallback(
     (finished: boolean) => {
       onClose(finished);
-      (opener.current as HTMLElement | null)?.focus?.();
+      // Devolve o foco a quem abriu o tour; se era a página, vai para o conteúdo.
+      const back = opener.current as HTMLElement | null;
+      if (back && back !== document.body && back.isConnected && !back.classList.contains("skip-content")) back.focus();
+      else document.getElementById("main-content")?.focus({ preventScroll: true });
     },
     [onClose],
   );

@@ -69,6 +69,7 @@ import "./theme.css";
 import "./nav.css";
 import "./space.css";
 import "./explore/explore-layout.css";
+import "./fase2.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
 import { TourHost, TourSetting } from "./tour/TourHost";
@@ -692,14 +693,14 @@ function App() {
           <footer>
             <CalendarDays size={14} />
             {tr(dateLabel(t))}
-            <span>{tf("{count} lugares", { count: t.activities.length })}</span>
+            <span>{t.activities.length === 1 ? tr("1 lugar") : tf("{count} lugares", { count: t.activities.length })}</span>
           </footer>
         </div>
       </button>
     );
   }
   return (
-    <div className={trip && travelMode ? "app travel-mode-active" : "app"}>
+    <div className={(trip && travelMode ? "app travel-mode-active" : "app") + (supabase && !session && !localChoice && !loading ? " auth-only" : "")}>
       <a className="skip-content" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById("main-content")?.focus(); }}>{tr("Pular para o conteúdo")}</a>
       <aside id="main-sidebar" className={"sidebar " + (menu ? "open" : "")}>
         <a
@@ -782,15 +783,28 @@ function App() {
           >
             <Menu />
           </button>
-          <div className="breadcrumb">
-            {tr("Meu espaço")}
-            <ChevronRight size={13} />
-            <b>
-              {trip
-                ? trip.title
-                : tr(nav.find((n) => n.id === page)?.label || "Perfil")}
-            </b>
-          </div>
+          {/* Trilha: Início › seção › viagem. "Meu espaço" fica só para o perfil. */}
+          <nav className="breadcrumb" aria-label={tr("Você está em")}>
+            {trip ? (
+              <>
+                <button type="button" className="crumb-link" onClick={() => go("trips")}>
+                  {tr("Minhas viagens")}
+                </button>
+                <ChevronRight size={13} aria-hidden="true" />
+                <b>{trip.title}</b>
+              </>
+            ) : page === "home" ? (
+              <b>{tr("Visão geral")}</b>
+            ) : (
+              <>
+                <button type="button" className="crumb-link" onClick={() => go("home")}>
+                  {tr("Início")}
+                </button>
+                <ChevronRight size={13} aria-hidden="true" />
+                <b>{page === "profile" ? tr("Meu espaço") : tr(nav.find((n) => n.id === page)?.label || "Meu espaço")}</b>
+              </>
+            )}
+          </nav>
           <div className="top-actions">
             <span className="storage-badge">
               {session ? <Cloud size={14} /> : <HardDrive size={14} />}
@@ -1902,7 +1916,7 @@ function App() {
                     >
                       <Plus size={17} />{tr("Criar uma viagem")}</button>
                   )}
-                  <p className="subtle">{tr("Mapa online · Você escolhe os pontos manualmente. A busca automática de endereços será conectada depois.")}</p>
+                  <p className="subtle">{tr("Mapa online · Escolha a viagem e toque no mapa para marcar o destino.")}</p>
                 </section>
               )}
               {page === "profile" && (
