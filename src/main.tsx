@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  CalendarCheck,
   CalendarDays,
   Check,
   CheckCheck,
@@ -125,11 +126,13 @@ import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated }
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
-type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
+import { ReservationsCenter } from "./bookings/ReservationsCenter";
+type Page = "home" | "trips" | "bookings" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
   { id: "trips", label: "Minhas viagens", icon: PlaneTakeoff },
+  { id: "bookings", label: "Central de Reservas", icon: CalendarCheck },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
@@ -137,6 +140,7 @@ const nav = [
 const pageTitles = {
   home: "Seu próximo caminho começa aqui.",
   trips: "Todos os seus próximos capítulos.",
+  bookings: "Tudo o que você reservou, num lugar só.",
   explore: "Encontre o que faz a viagem valer.",
   map: "O mundo, do seu jeito.",
   history: "Cada viagem tem seu lugar.",
@@ -1610,7 +1614,9 @@ function App() {
                   <p>
                     {page === "home"
                       ? tr("Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho.")
-                      : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
+                      : page === "bookings"
+                        ? tr("Voos, hospedagens, carros e ingressos de todas as viagens, com situação, prazos e valores.")
+                        : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
                   </p>
                 </div>
                 {page !== "profile" && (
@@ -1828,6 +1834,17 @@ function App() {
                   )}
                 </>
               )}
+              {page === "bookings" && (
+                <ReservationsCenter
+                  trips={trips}
+                  onSave={save}
+                  busy={busy}
+                  onOpen={(t, tabName) => {
+                    openTrip(t);
+                    setTab(tabName);
+                  }}
+                />
+              )}
               {page === "explore" && (
                 <Catalog trips={trips} onSave={save} saving={busy} />
               )}
@@ -1975,7 +1992,7 @@ function App() {
         </main>
         <nav className="mobile-nav" aria-label={tr("Menu inferior")}>
           {nav
-            .filter((n) => n.id !== "history")
+            .filter((n) => n.id !== "history" && n.id !== "bookings")
             .map((n) => (
               <button
                 key={n.id}

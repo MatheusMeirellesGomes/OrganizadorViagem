@@ -59,7 +59,7 @@ export function tripEvents(trip: Trip): Ev[] {
     push("pick", r?.pickupDate, r?.pickupTime, r?.pickupPlace);
     push("drop", r?.dropoffDate, r?.dropoffTime, r?.dropoffPlace);
   }
-  for (const a of trip.activities) {
+  for (const a of trip.activities ?? []) {
     const date = dateOfDay(trip, a.day);
     if (!date || !/^\d{2}:\d{2}$/.test(a.time)) continue;
     const at = toInstant(date, a.time, zone);

@@ -5,6 +5,7 @@
  */
 .nav-home { --tile: #2f6b55; --tile-2: #1f4c3d; }
 .nav-trips { --tile: #2b7a8a; --tile-2: #1c5562; }
+.nav-bookings { --tile: #b5573f; --tile-2: #873b28; }
 .nav-explore { --tile: #c7862f; --tile-2: #9a611a; }
 .nav-map { --tile: #3e6fb0; --tile-2: #2a4f85; }
 .nav-history { --tile: #8a5a86; --tile-2: #643f61; }

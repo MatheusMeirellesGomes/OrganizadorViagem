@@ -61,7 +61,7 @@ export type CentralItem = WalletItem & {
 /** Despesas ligadas ao item da carteira. */
 function linkedExpenses(trip: Trip, item: WalletItem): Expense[] {
   const id = item.id.slice(2);
-  return trip.expenses.filter((e) =>
+  return (trip.expenses ?? []).filter((e) =>
     item.source === "transport" ? e.transportId === id : item.source === "stay" ? e.stayId === id : item.source === "vehicle" ? e.vehicleId === id : item.source === "reservation" ? e.reservationId === id : false,
   );
 }
