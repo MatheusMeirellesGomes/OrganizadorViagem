@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, BedDouble, CalendarClock, CalendarPlus, Car, CircleAlert, FileText, Info, Plane, ShieldCheck, Ticket, TriangleAlert, Utensils } from "lucide-react";
+import { ArrowRight, BedDouble, ClipboardPaste, CalendarClock, CalendarPlus, Car, CircleAlert, FileText, Info, Plane, ShieldCheck, Ticket, TriangleAlert, Utensils } from "lucide-react";
 import type { Trip } from "../model";
 import { formatMoney, t as tr, tf, getLocale } from "../i18n";
 import { walletCategories, type WalletCategory } from "../journey/wallet";
 import { bookingStatuses, cancelSoon, centralItems, filterCentral, moneySummary, nextBooking, setBooking, type BookingStatus, type CentralFilter, type CentralItem } from "./central";
 import { tripAlerts, type TripAlert } from "./alerts";
 import { downloadIcs } from "./ics";
+import { ImportDialog } from "./ImportDialog";
 import "./bookings.css";
 
 /*
@@ -40,6 +41,13 @@ function countdown(at: number, now: number) {
 
 export function ReservationsCenter({ trips, onSave, onOpen, busy }: { trips: Trip[]; onSave: (t: Trip) => Promise<boolean | void> | void; onOpen: (t: Trip, tab: string) => void; busy?: boolean }) {
   const [filter, setFilter] = useState<CentralFilter>({ when: "upcoming" });
+  const [importing, setImporting] = useState(false);
+  const importButton = (
+    <button type="button" className="secondary booking-import" onClick={() => setImporting(true)}>
+      <ClipboardPaste size={16} aria-hidden="true" /> {tr("Importar confirmação")}
+    </button>
+  );
+  const importDialog = importing && <ImportDialog trips={trips} onSave={onSave} busy={busy} onClose={() => setImporting(false)} />;
   const now = Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
   const items = useMemo(() => centralItems(trips), [trips]);
@@ -68,11 +76,18 @@ export function ReservationsCenter({ trips, onSave, onOpen, busy }: { trips: Tri
         <CalendarClock size={34} aria-hidden="true" />
         <h2>{tr("Nenhuma reserva ainda")}</h2>
         <p>{tr("Quando você cadastrar voos, hospedagens, carros ou reservas numa viagem, eles aparecem aqui, com situação, prazos e valores.")}</p>
+        {trips.some((t) => t.status !== "past") && importButton}
+        {importDialog}
       </section>
     );
 
   return (
     <div className="bookings-page">
+      {importDialog}
+      <div className="booking-toolbar">
+        <p>{tr("Recebeu um e-mail de confirmação? Cole o texto e a reserva entra na viagem.")}</p>
+        {importButton}
+      </div>
       <section className="bookings-top">
         {next ? (
           <article className="booking-next">

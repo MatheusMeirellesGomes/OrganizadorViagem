@@ -533,3 +533,112 @@
 :root[data-theme="dark"] .lv-warning > svg { color: #e9b55a; }
 :root[data-theme="dark"] .lv-info > svg { color: #8cbbe3; }
 :root[data-theme="dark"] .booking-next { background: linear-gradient(135deg, #173a30 0%, #245746 55%, #346b52 100%); }
+
+/* Importar confirmação */
+.booking-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--line-soft);
+  background: var(--surface);
+}
+.booking-toolbar p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.booking-import {
+  min-height: 42px;
+}
+dialog.import-dialog {
+  overflow-y: auto;
+  text-align: left;
+  width: 640px;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--line-soft);
+}
+.import-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.import-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 20px;
+}
+.import-hint {
+  margin: 10px 0 0;
+  font-size: 13px !important;
+  color: var(--text-muted);
+}
+.import-secret {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12.5px !important;
+  background: var(--surface-2);
+}
+.import-secret svg {
+  flex-shrink: 0;
+  color: var(--brand);
+}
+.import-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+.import-grid .wide {
+  grid-column: 1 / -1;
+}
+.import-grid label {
+  min-width: 0;
+}
+.import-leg {
+  margin: 14px 0 0;
+  padding: 4px 14px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.import-leg legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.import-price {
+  margin-top: 8px;
+}
+.import-price .checkbox-label {
+  margin-top: 14px;
+  font-size: 13px;
+}
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+@media (max-width: 360px) {
+  .import-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  dialog.import-dialog {
+    padding: 20px 16px;
+  }
+  .import-actions > * {
+    flex: 1;
+  }
+}
