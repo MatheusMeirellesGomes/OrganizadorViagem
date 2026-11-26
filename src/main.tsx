@@ -1,5 +1,5 @@
 import { tf } from "./i18n";
-import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
+import { t as tr, translate as tLabel, useLanguage, getLocale, i18nReady } from "./i18n";
 import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -113,7 +113,6 @@ import { HomeMetrics } from "./home/HomeMetrics";
 import { AuthScene } from "./home/AuthScene";
 import { TransportPanel } from "./journey/TransportPanel";
 import { secretStore } from "./journey/secrets";
-import { ProfilePage } from "./profile/ProfilePage";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
 import { readAccountProfile, saveAccountProfile } from "./profile/account";
@@ -127,11 +126,8 @@ import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated }
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
-import { ReservationsCenter } from "./bookings/ReservationsCenter";
-import { SearchPage } from "./search/SearchPage";
 import { HomeToday } from "./home/HomeToday";
-import { DiaryPanel } from "./diary/DiaryPanel";
-import { GuidePanel } from "./guide/GuidePanel";
+import { DiaryPanel, GuidePanel, ProfilePage, ReservationsCenter, SearchPage } from "./LazyMaps";
 import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
@@ -2434,10 +2430,13 @@ if (
 }
 applyTheme();
 watchSystemTheme();
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+// Em inglês ou espanhol, espera as traduções (arquivo à parte) antes de desenhar.
+void i18nReady.then(() =>
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  ),
 );
 // Download maps and the catalog in the background while there is a connection,
 // so they still open later without internet.

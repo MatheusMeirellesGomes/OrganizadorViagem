@@ -1,7 +1,24 @@
 import { useSyncExternalStore } from "react";
-import core from "./locales/core.json";
 export type Language = "pt-BR" | "en" | "es";
-const dictionary: Record<string, string[]> = core;
+/*
+ * As traduções (inglês e espanhol) ficam num arquivo separado, baixado só
+ * quando o idioma não é português. Quem usa em português abre o app sem esse
+ * peso; o service worker guarda o arquivo para funcionar sem internet.
+ */
+let dictionary: Record<string, string[]> = {};
+let loading: Promise<void> | undefined;
+export function loadDictionary(): Promise<void> {
+  loading ??= import("./locales/core.json").then(
+    (m) => {
+      dictionary = (m.default ?? m) as Record<string, string[]>;
+    },
+    (e) => {
+      loading = undefined;
+      throw e;
+    },
+  );
+  return loading;
+}
 const listeners = new Set<() => void>();
 let language: Language = "pt-BR";
 try {
@@ -11,6 +28,8 @@ try {
   /* storage is optional */
 }
 if (typeof document !== "undefined") document.documentElement.lang = language;
+/** Resolve quando as traduções do idioma salvo estão prontas (na hora, em português). */
+export const i18nReady: Promise<void> = language === "pt-BR" ? Promise.resolve() : loadDictionary().catch(() => {});
 export function getLocale(): Language {
   return language;
 }
@@ -23,16 +42,25 @@ export function setLanguage(next: Language) {
   }
   if (typeof document !== "undefined") document.documentElement.lang = next;
   listeners.forEach((fn) => fn());
+  // Primeira troca para inglês ou espanhol: baixa as traduções e redesenha.
+  if (next !== "pt-BR" && !Object.keys(dictionary).length)
+    loadDictionary()
+      .then(() => listeners.forEach((fn) => fn()))
+      .catch(() => {});
 }
-export function useLanguage() {
-  return useSyncExternalStore(
+// Muda a cada troca de idioma e quando as traduções chegam, para redesenhar.
+let version = 0;
+listeners.add(() => version++);
+export function useLanguage(): Language {
+  useSyncExternalStore(
     (fn) => {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
-    getLocale,
-    () => "pt-BR" as Language,
+    () => version,
+    () => 0,
   );
+  return language;
 }
 export function translate(
   key: string,

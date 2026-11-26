@@ -1,4 +1,9 @@
 /* Visão geral: viagem em destaque, Modo Viajante e atalhos */
+/* Cores dos tipos de busca (também usadas em Pesquisar e comparar). */
+.k-flights { --k1: #3d7a63; --k2: #244f43; }
+.k-hotels { --k1: #b9834a; --k2: #8a5a2b; }
+.k-cars { --k1: #4f7fa8; --k2: #2f5677; }
+.k-experiences { --k1: #a35a8c; --k2: #763f66; }
 .home-today {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);

@@ -31,10 +31,6 @@
   color: #fff;
   background: linear-gradient(135deg, var(--k1), var(--k2));
 }
-.k-flights { --k1: #3d7a63; --k2: #244f43; }
-.k-hotels { --k1: #b9834a; --k2: #8a5a2b; }
-.k-cars { --k1: #4f7fa8; --k2: #2f5677; }
-.k-experiences { --k1: #a35a8c; --k2: #763f66; }
 .search-kind:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgb(20 40 30 / 0.08);
