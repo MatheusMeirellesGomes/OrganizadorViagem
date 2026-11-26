@@ -108,6 +108,8 @@ export type Trip = {
   prep?: Record<string, import("./journey/prep").PrepState>;
   /** Central de Reservas: situação e prazo de cancelamento por item da carteira ("t:", "s:", "v:", "r:"). */
   bookings?: Record<string, import("./bookings/central").BookingInfo>;
+  /** Diário de viagem: registros por dia. */
+  journal?: import("./diary/diary").JournalEntry[];
 };
 export const uid = () => crypto.randomUUID();
 export function newTrip(input: Partial<Trip> = {}): Trip {

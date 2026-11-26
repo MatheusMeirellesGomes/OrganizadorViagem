@@ -130,6 +130,7 @@ import { MigrationPanel } from "./MigrationPanel";
 import { ReservationsCenter } from "./bookings/ReservationsCenter";
 import { SearchPage } from "./search/SearchPage";
 import { HomeToday } from "./home/HomeToday";
+import { DiaryPanel } from "./diary/DiaryPanel";
 import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
@@ -1022,6 +1023,7 @@ function App() {
                     "Carteira",
                     "Preparação",
                     "Fotos",
+                    "Diário",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
                     <button
@@ -1616,6 +1618,7 @@ function App() {
                     ))}
                   </section>
                 )}
+                {tab === "Diário" && <DiaryPanel trip={trip} onSave={save} busy={busy} />}
                 {tab === "Fotos" && (
                   <PhotoGallery
                     trip={trip}
