@@ -37,6 +37,7 @@ import {
   LogOut,
   Cloud,
   HardDrive,
+  Navigation,
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -86,7 +87,7 @@ import {
   writeAccountCache,
   type RemoteRow,
 } from "./remote";
-import { TravelMap, Catalog, preloadHeavyParts } from "./LazyMaps";
+import { TravelMap, Catalog, TravelerMode, preloadHeavyParts } from "./LazyMaps";
 import type { Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
 import { PhotoGallery } from "./PhotoGallery";
@@ -158,6 +159,8 @@ function App() {
     // Tela de login aberta a partir do modo visitante: entrar ou criar conta.
     [authIntent, setAuthIntent] = useState<"signin" | "signup" | null>(null),
     [migrationRound, setMigrationRound] = useState(0),
+    // Modo Viajante: mapa com a posição ao vivo, aberto por cima do app.
+    [traveler, setTraveler] = useState(false),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [mealRequest, setMealRequest] = useState<MealRequest>(),
@@ -740,18 +743,15 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <img
-            className="note-photo"
-            src={decor.wing}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            onError={hideOnError}
-          />
-          <h4>{tr("Menos abas abertas.")}<br />{tr("Mais mundo lá fora.")}</h4>
-          <p>{tr("Um lugar para todos os seus caminhos.")}</p>
-        </div>
+        <button type="button" className="sidebar-traveler" data-tour="modo-viajante" onClick={() => { setMenu(false); setTraveler(true); }}>
+          <span className="nav-ico nav-traveler" aria-hidden="true">
+            <Navigation size={18} strokeWidth={2.2} />
+          </span>
+          <span>
+            <b>{tr("Modo Viajante")}</b>
+            <small>{tr("Explore o mundo ao seu redor")}</small>
+          </span>
+        </button>
         <button
           className={"profile-link " + (page === "profile" ? "active" : "")}
           onClick={() => go("profile")}
@@ -2003,6 +2003,14 @@ function App() {
           </button>
         </nav>
       </div>
+      {traveler && (
+        <TravelerMode
+          trips={trips}
+          activeTrip={trips.find((t) => t.status === "active") ?? trips.find((t) => t.status !== "past")}
+          onSaveTrip={save}
+          onClose={() => setTraveler(false)}
+        />
+      )}
       <TourHost
         onHome={page === "home" && !selected}
         onTrip={!!trip && !travelMode && tab === "Roteiro"}

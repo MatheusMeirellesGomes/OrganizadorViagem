@@ -138,3 +138,25 @@
   white-space: nowrap;
   font-size: 13.5px;
 }
+
+/* Atalho do Modo Viajante no menu lateral (no lugar do cartão decorativo). */
+.nav-traveler { --tile: #2f80ed; --tile-2: #1d5fbf; }
+.sidebar-traveler {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: auto 0 16px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  box-shadow: 0 1px 2px rgb(16 32 26 / 0.06), 0 6px 16px -8px rgb(16 32 26 / 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sidebar-traveler:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgb(16 32 26 / 0.08), 0 10px 22px -10px rgb(16 32 26 / 0.3); }
+.sidebar-traveler > span:last-child { display: grid; gap: 2px; }
+.sidebar-traveler b { font-size: 14px; }
+.sidebar-traveler small { font-size: 12px; color: var(--text-muted); }
