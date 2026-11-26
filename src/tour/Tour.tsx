@@ -43,8 +43,15 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (finished
     el?.scrollIntoView({ block: "center", inline: "center", behavior: reduced() ? "auto" : "smooth" });
     measure();
     const timer = window.setTimeout(measure, reduced() ? 0 : 380);
+    // Rolagens longas (do fim da página até o topo) passam de 380 ms: mede de novo.
+    const late = window.setTimeout(measure, reduced() ? 0 : 900);
+    addEventListener("scrollend", measure);
     title.current?.focus();
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(late);
+      removeEventListener("scrollend", measure);
+    };
   }, [step, measure]);
 
   useEffect(() => {

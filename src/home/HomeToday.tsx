@@ -115,7 +115,7 @@ export function HomeToday({
         </article>
       )}
       <div className="today-side">
-        <button type="button" className="today-traveler" onClick={onTraveler}>
+        <button type="button" className="today-traveler" data-tour="modo-viajante" onClick={onTraveler}>
           <span className="today-traveler-ico" aria-hidden="true">
             <Navigation size={22} />
           </span>
@@ -127,7 +127,7 @@ export function HomeToday({
         </button>
         <section className="today-plan" aria-labelledby="today-plan-title">
           <h2 id="today-plan-title">{tr("Planejar")}</h2>
-          <div className="today-shortcuts">
+          <div className="today-shortcuts" data-tour="nav-search">
             {shortcuts.map(({ k, label, icon: Icon }) => (
               <button key={k} type="button" className={"k-" + k} onClick={() => onSearch(k)}>
                 <span aria-hidden="true">
@@ -138,7 +138,7 @@ export function HomeToday({
             ))}
           </div>
           <div className="today-links">
-            <button type="button" onClick={() => onGo("bookings")}>
+            <button type="button" data-tour="nav-bookings" onClick={() => onGo("bookings")}>
               <CalendarCheck size={17} aria-hidden="true" /> {tr("Central de Reservas")} <ArrowRight size={15} aria-hidden="true" />
             </button>
             <button type="button" onClick={() => onGo("explore")}>

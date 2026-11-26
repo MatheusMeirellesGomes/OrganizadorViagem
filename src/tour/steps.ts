@@ -18,6 +18,21 @@ export const tours: Record<TourName, TourStep[]> = {
       text: "Aqui ficam todas as suas viagens: as que estão em planejamento, as próximas e as que já aconteceram.",
     },
     {
+      target: "modo-viajante",
+      title: "Modo Viajante",
+      text: "Abra quando estiver no destino: mostra onde você está, o que tem perto, o que fazer agora e como chegar a pé, de bicicleta ou de carro.",
+    },
+    {
+      target: "nav-bookings",
+      title: "Central de Reservas",
+      text: "Voos, hotéis, carros e ingressos de todas as viagens num lugar só, com prazos de cancelamento e alertas de conflito. Dá para importar colando o e-mail de confirmação.",
+    },
+    {
+      target: "nav-search",
+      title: "Pesquisar e comparar",
+      text: "Abra Google Voos, Booking e outros sites já preenchidos com a sua viagem e salve as opções que achar para comparar.",
+    },
+    {
       target: "criar-viagem",
       title: "Criar uma viagem",
       text: "Comece por aqui. Só o destino é obrigatório; datas e detalhes podem vir depois.",
@@ -35,7 +50,7 @@ export const tours: Record<TourName, TourStep[]> = {
     {
       target: "nav-profile",
       title: "Meu espaço",
-      text: "No Meu espaço ficam sua conta, backups, privacidade e configurações como tema e idioma. Usando sem conta? É lá que você entra ou cria uma, sem perder suas viagens.",
+      text: "No Meu espaço ficam seu passaporte de viagens, os lugares que você quer conhecer, sua conta, backups, privacidade e configurações como tema e idioma. Usando sem conta? É lá que você entra ou cria uma, sem perder suas viagens.",
     },
     {
       title: "Tudo pronto!",
@@ -47,6 +62,11 @@ export const tours: Record<TourName, TourStep[]> = {
       target: "roteiro",
       title: "Roteiro",
       text: "Organize as atividades dia a dia. O botão + acrescenta mais um dia.",
+    },
+    {
+      target: "aba-Guia",
+      title: "Guia do destino",
+      text: "Clima dos próximos dias, câmbio, hora local, tomadas, números de emergência e frases úteis. O que for carregado fica salvo para usar sem internet.",
     },
     {
       target: "aba-Transportes",
@@ -62,6 +82,11 @@ export const tours: Record<TourName, TourStep[]> = {
       target: "aba-Despesas",
       title: "Despesas",
       text: "Orçamento da viagem e divisão de gastos entre as pessoas.",
+    },
+    {
+      target: "aba-Diário",
+      title: "Diário",
+      text: "Escreva sobre cada dia, com fotos e como você se sentiu. No fim, a viagem ganha uma retrospectiva.",
     },
     {
       target: "modo-viagem",
