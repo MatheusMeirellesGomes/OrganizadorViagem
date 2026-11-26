@@ -109,3 +109,13 @@ describe("backup", () => {
     expect(copy.bookings).toEqual({ ["t:" + id]: { status: "confirmed" } });
   });
 });
+
+describe("lembretes", () => {
+  it("oferece lembrete para o prazo de cancelamento grátis", async () => {
+    const { candidates } = await import("../journey/reminders");
+    const a = trip({ transports: [flight("f1", [leg({})])], bookings: { "t:f1": { status: "reserved", cancelBy: "2027-03-01" }, "t:sumiu": { cancelBy: "2027-03-02" } } });
+    const c = candidates(a).filter((x) => x.kind === "cancel_deadline");
+    expect(c).toHaveLength(1);
+    expect(c[0]).toMatchObject({ refId: "t:f1", eventAt: Date.parse("2027-03-01T09:00:00Z") });
+  });
+});
