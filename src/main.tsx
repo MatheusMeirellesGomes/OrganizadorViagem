@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowUp,
   CalendarCheck,
+  TicketsPlane,
   CalendarDays,
   Check,
   CheckCheck,
@@ -127,12 +128,16 @@ import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
 import { ReservationsCenter } from "./bookings/ReservationsCenter";
-type Page = "home" | "trips" | "bookings" | "explore" | "map" | "history" | "profile";
+import { SearchPage } from "./search/SearchPage";
+import { HomeToday } from "./home/HomeToday";
+import type { SearchKind } from "./search/links";
+type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
   { id: "trips", label: "Minhas viagens", icon: PlaneTakeoff },
   { id: "bookings", label: "Central de Reservas", icon: CalendarCheck },
+  { id: "search", label: "Pesquisar e comparar", icon: TicketsPlane },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
@@ -141,6 +146,7 @@ const pageTitles = {
   home: "Seu próximo caminho começa aqui.",
   trips: "Todos os seus próximos capítulos.",
   bookings: "Tudo o que você reservou, num lugar só.",
+  search: "Ache voos, hotéis, carros e passeios.",
   explore: "Encontre o que faz a viagem valer.",
   map: "O mundo, do seu jeito.",
   history: "Cada viagem tem seu lugar.",
@@ -151,6 +157,7 @@ function App() {
   const [travelMode, setTravelMode] = useState(false);
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
+  const [searchKind, setSearchKind] = useState<SearchKind>("flights");
   const [page, setPage] = useState<Page>("home"),
     [trips, setTrips] = useState<Trip[]>(readLocal),
     [localChoice, setLocalChoice] = useState(() => {
@@ -666,6 +673,23 @@ function App() {
       setBusy(false);
     }
   }
+  const homeHasTrips = trips.some((t) => t.status !== "past");
+  const homeToday = (
+    <HomeToday
+      trips={trips}
+      cover={(t) => pictures[t.cover as keyof typeof pictures] || pictures.coast}
+      onOpenTrip={(t, tabName) => {
+        openTrip(t);
+        if (tabName) setTab(tabName);
+      }}
+      onTraveler={() => setTraveler(true)}
+      onSearch={(k) => {
+        setSearchKind(k);
+        go("search");
+      }}
+      onGo={go}
+    />
+  );
   function card(t: Trip) {
     return (
       <button className="trip-card" key={t.id} onClick={() => openTrip(t)}>
@@ -1616,6 +1640,8 @@ function App() {
                       ? tr("Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho.")
                       : page === "bookings"
                         ? tr("Voos, hospedagens, carros e ingressos de todas as viagens, com situação, prazos e valores.")
+                        : page === "search"
+                          ? tr("Pesquise nos sites que você já usa, já preenchidos com a sua viagem, e compare as opções aqui.")
                         : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
                   </p>
                 </div>
@@ -1628,7 +1654,8 @@ function App() {
               </div>
               {page === "home" && (
                 <>
-                  <section className="hero">
+                  {homeHasTrips && homeToday}
+                  <section className={"hero" + (homeHasTrips ? " compact" : "")}>
                     <div className="hero-shade" />
                     <div className="hero-content">
                       <span className="hero-pill">
@@ -1649,6 +1676,7 @@ function App() {
                       </span>
                     </div>
                   </section>
+                  {!homeHasTrips && homeToday}
                   <HomeMetrics trips={trips} onOpen={go} />
                   <div className="section-head">
                     <div>
@@ -1834,6 +1862,18 @@ function App() {
                   )}
                 </>
               )}
+              {page === "search" && (
+                <SearchPage
+                  trips={trips}
+                  onSave={save}
+                  busy={busy}
+                  initialKind={searchKind}
+                  onOpen={(t, tabName) => {
+                    openTrip(t);
+                    setTab(tabName);
+                  }}
+                />
+              )}
               {page === "bookings" && (
                 <ReservationsCenter
                   trips={trips}
@@ -1992,7 +2032,7 @@ function App() {
         </main>
         <nav className="mobile-nav" aria-label={tr("Menu inferior")}>
           {nav
-            .filter((n) => n.id !== "history" && n.id !== "bookings")
+            .filter((n) => n.id !== "history" && n.id !== "bookings" && n.id !== "search")
             .map((n) => (
               <button
                 key={n.id}
