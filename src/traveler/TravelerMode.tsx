@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowUp,
   Bike,
+  CalendarClock,
   BookmarkPlus,
   Car,
   Check,
@@ -28,6 +29,7 @@ import {
   Route as RouteIcon,
   Search,
   Sparkles,
+  Ticket,
   Train,
   X,
 } from "lucide-react";
@@ -43,6 +45,8 @@ import { accessibilityOf, addressOf, filterNearby, openNow, searchServices, serv
 import { planWalk, presets, removeStop, reorder, suggestNow, type Preset, type WalkPlan } from "./suggest";
 import { externalRoutes, travelRoute, type Mode, type TravelRoute } from "./routes";
 import { addWish, collections, defaultCollection, loadWishes, markVisited, removeWish, saveWishes, toSaved, visitedIds, type WishItem } from "./wishlist";
+import { nextActivity } from "../home/today";
+import { centralItems, nextBooking } from "../bookings/central";
 import "./traveler.css";
 
 /*
@@ -303,6 +307,16 @@ export function TravelerMode({ trips, activeTrip, onSaveTrip, onClose }: { trips
   }, [query, lang]);
 
   const stay = activeTrip?.stays?.find((s) => s.coordinates && validPoint(s.coordinates));
+  // Hoje na viagem: a próxima atividade do roteiro e a próxima reserva.
+  const todayInfo = useMemo(() => {
+    if (!activeTrip) return undefined;
+    const d = new Date();
+    const today = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const activity = nextActivity(activeTrip, today, d.toTimeString().slice(0, 5));
+    const booking = nextBooking(centralItems([activeTrip]));
+    return activity || booking ? { activity, booking } : undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrip, tab]);
   const nowSuggestions = useMemo(() => {
     if (!origin || !preset) return [];
     const pool = [...places.tourism, ...places.nature, ...places.food];
@@ -357,6 +371,40 @@ export function TravelerMode({ trips, activeTrip, onSaveTrip, onClose }: { trips
 
       {tab === "near" && (
         <div className="traveler-pane">
+          {todayInfo && (
+            <div className="traveler-today" aria-label={tr("Hoje na viagem")}>
+              {todayInfo.activity && (
+                <div>
+                  <CalendarClock size={16} aria-hidden="true" />
+                  <span>
+                    <small>{tr("Próxima atividade")}</small>
+                    <b>
+                      {todayInfo.activity.title}
+                      {/^\d{2}:\d{2}$/.test(todayInfo.activity.time) ? ` · ${todayInfo.activity.time}` : ""}
+                    </b>
+                  </span>
+                  {todayInfo.activity.coordinates && validPoint(todayInfo.activity.coordinates) && (
+                    <button className="secondary small" onClick={() => openPlace(activityPlace(todayInfo.activity!))}>
+                      {tr("Como chegar")}
+                    </button>
+                  )}
+                </div>
+              )}
+              {todayInfo.booking && (
+                <div>
+                  <Ticket size={16} aria-hidden="true" />
+                  <span>
+                    <small>{tr("Próxima reserva")}</small>
+                    <b>
+                      {todayInfo.booking.title}
+                      {todayInfo.booking.date ? ` · ${new Date(todayInfo.booking.date + "T12:00:00Z").toLocaleDateString(getLocale(), { day: "numeric", month: "short", timeZone: "UTC" })}` : ""}
+                      {todayInfo.booking.time ? ` ${todayInfo.booking.time}` : ""}
+                    </b>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
           {(stay || activeTrip) && origin && (
             <div className="traveler-context">
               {stay?.coordinates && (
@@ -670,6 +718,9 @@ function groupOf(p: Place): Group {
 }
 const categoryText = (p: Place) => serviceLabel(p.category) ?? categories[p.category] ?? "Lugar";
 const distanceText = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${formatNumber(km, 1)} km`);
+const activityPlace = (a: Trip["activities"][number]): Place => ({
+  id: a.placeId || "activity:" + a.id, name: a.title, coordinates: a.coordinates!, category: "other", address: a.address, city: "", country: "", source: "", retrievedAt: "", tags: {},
+});
 const stayPlace = (s: NonNullable<Trip["stays"]>[number]): Place => ({
   id: "stay:" + s.id, name: s.name, coordinates: s.coordinates!, category: "other", address: s.address, city: s.city, country: "", source: "", retrievedAt: "", tags: { stay: "yes" },
 });

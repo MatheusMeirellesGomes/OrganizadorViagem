@@ -1,5 +1,5 @@
 import { tf } from "./i18n";
-import { t as tr, translate as tLabel, useLanguage, getLocale } from "./i18n";
+import { t as tr, translate as tLabel, useLanguage, getLocale, i18nReady } from "./i18n";
 import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -113,7 +113,6 @@ import { HomeMetrics } from "./home/HomeMetrics";
 import { AuthScene } from "./home/AuthScene";
 import { TransportPanel } from "./journey/TransportPanel";
 import { secretStore } from "./journey/secrets";
-import { ProfilePage } from "./profile/ProfilePage";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { firstName as profileFirstName, loadProfile, saveProfile, type Profile } from "./profile/profile";
 import { readAccountProfile, saveAccountProfile } from "./profile/account";
@@ -127,12 +126,10 @@ import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated }
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
-import { ReservationsCenter } from "./bookings/ReservationsCenter";
-import { SearchPage } from "./search/SearchPage";
 import { HomeToday } from "./home/HomeToday";
-import { DiaryPanel } from "./diary/DiaryPanel";
-import { GuidePanel } from "./guide/GuidePanel";
+import { DiaryPanel, GuidePanel, ProfilePage, ReservationsCenter, SearchPage } from "./LazyMaps";
 import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
+import { startWishSync } from "./traveler/wishSync";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
@@ -312,6 +309,11 @@ function App() {
       loadAccount(session.user.id);
     }
   }, [session?.user.id, loadAccount]);
+  // Quero Conhecer na conta (só depois da migração 005; sem ela, fica no aparelho).
+  useEffect(() => {
+    if (!supabase || !session?.user.id) return;
+    return startWishSync(supabase, session.user.id);
+  }, [session?.user.id]);
   useEffect(() => {
     // Invite link (?convite=...): kept until the person signs in, then accepted.
     const fromUrl = takeInviteFromUrl();
@@ -2434,10 +2436,13 @@ if (
 }
 applyTheme();
 watchSystemTheme();
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+// Em inglês ou espanhol, espera as traduções (arquivo à parte) antes de desenhar.
+void i18nReady.then(() =>
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  ),
 );
 // Download maps and the catalog in the background while there is a connection,
 // so they still open later without internet.

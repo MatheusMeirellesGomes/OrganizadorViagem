@@ -32,8 +32,8 @@ self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys
 self.addEventListener('fetch',event=>{
  const url=new URL(event.request.url);
  if(event.request.method!=='GET'||url.origin!==self.location.origin||url.pathname==='/sw.js')return;
- if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.match('/index.html')));return;}
- if(ASSETS.includes(url.pathname))event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request)));
+ if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.match('/index.html',{ignoreVary:true})));return;}
+ if(ASSETS.includes(url.pathname))event.respondWith(caches.match(url.pathname,{ignoreVary:true}).then(cached=>cached||fetch(event.request)));
 });`,
       });
     },

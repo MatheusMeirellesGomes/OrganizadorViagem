@@ -3,6 +3,7 @@ import { dateOfDay } from "../planner";
 import { toInstant } from "./time";
 import { transportTitle } from "./transport";
 import { vehicleName } from "./vehicles";
+import { walletItems } from "./wallet";
 
 /*
  * Reminders (Etapa 16, Fase 8). Only created when the person chooses one.
@@ -21,6 +22,7 @@ export const reminderKinds = {
   payment: "Pagamento pendente",
   documents: "Documentos necessários",
   booking: "Reserva importante",
+  cancel_deadline: "Prazo de cancelamento grátis",
   custom: "Lembrete",
 } as const;
 export type ReminderKind = keyof typeof reminderKinds;
@@ -74,6 +76,10 @@ export function candidates(trip: Trip): Candidate[] {
     if (a.time && booked.has(a.id)) push({ kind: "timed_ticket", refId: a.id, title: a.title, eventAt: at(trip, dateOfDay(trip, a.day), a.time) });
   for (const x of trip.expenses)
     if ((x.status === "planned" || x.status === "reserved" || x.status === "partial") && x.date) push({ kind: "payment", refId: x.id, title: x.title, eventAt: at(trip, x.date, "09:00") });
+  // Central de Reservas: prazo de cancelamento grátis marcado pela pessoa.
+  const titles = new Map(walletItems(trip).map((w) => [w.id, w.title]));
+  for (const [key, b] of Object.entries(trip.bookings ?? {}))
+    if (b.cancelBy && b.status !== "cancelled" && titles.has(key)) push({ kind: "cancel_deadline", refId: key, title: titles.get(key)!, eventAt: at(trip, b.cancelBy, "09:00") });
   return out.sort((a, b) => a.eventAt - b.eventAt);
 }
 

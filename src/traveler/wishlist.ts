@@ -43,9 +43,12 @@ export function loadWishes(storage: Store | undefined = store()): WishItem[] {
     return [];
   }
 }
+/** Evento disparado quando a lista muda (a sincronização com a conta escuta). */
+export const wishEvent = "gomes-quero-conhecer";
 export function saveWishes(list: WishItem[], storage: Store | undefined = store()): boolean {
   try {
     storage?.setItem(wishKey, JSON.stringify(list.slice(0, 2000)));
+    if (typeof window !== "undefined" && storage === store()) window.dispatchEvent(new Event(wishEvent));
     return Boolean(storage);
   } catch {
     return false;

@@ -1,8 +1,9 @@
-import { afterEach, it, expect } from "vitest";
+import { afterEach, beforeAll, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { setLanguage, translate, formatNumber } from "./i18n";
+import { setLanguage, translate, formatNumber, loadDictionary } from "./i18n";
 import { TravelMode } from "./TravelMode";
 import { newTrip } from "./model";
+beforeAll(() => loadDictionary());
 afterEach(() => setLanguage("pt-BR"));
 it("traduz chaves conhecidas, mantém fallback e interpola texto sem HTML", () => {
   expect(translate("Nova viagem", "en")).toBe("New trip");
