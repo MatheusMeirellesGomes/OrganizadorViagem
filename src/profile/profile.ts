@@ -1,4 +1,5 @@
 import { parseCharacter, type Character } from "./character";
+import { cleanCountries } from "./passport";
 import type { Trip } from "../model";
 import { isCurrency } from "../budget";
 
@@ -66,6 +67,8 @@ export type Profile = {
   /** Avatar desenhado (escolhas guardadas) e qual imagem mostrar. */
   character?: Character;
   look?: "photo" | "avatar";
+  /** Meu Passaporte: países que a pessoa marcou como visitados (códigos ISO). */
+  visitedCountries?: string[];
 };
 
 export const emptyProfile: Profile = { name: "", pace: "own" };
@@ -112,6 +115,7 @@ export function parseProfile(raw: unknown): Profile {
           : undefined,
     character: parseCharacter(v.character),
     look: v.look === "avatar" ? "avatar" : v.look === "photo" ? "photo" : undefined,
+    visitedCountries: cleanCountries(v.visitedCountries),
   };
 }
 

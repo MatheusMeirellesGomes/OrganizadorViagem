@@ -110,6 +110,8 @@
 }
 .space-conta { --tile: #2b7a8a; --tile-2: #1c5562; }
 .space-viajante { --tile: #c7862f; --tile-2: #9a611a; }
+.space-passaporte { --tile: #2c4a7a; --tile-2: #1b2f52; }
+.space-quero { --tile: #c0506a; --tile-2: #8f3349; }
 .space-dados { --tile: #3e6fb0; --tile-2: #2a4f85; }
 .space-privacidade { --tile: #2f6b55; --tile-2: #1f4c3d; }
 .space-configuracoes { --tile: #5d6b64; --tile-2: #414c46; }

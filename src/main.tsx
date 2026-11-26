@@ -130,6 +130,7 @@ import { MigrationPanel } from "./MigrationPanel";
 import { ReservationsCenter } from "./bookings/ReservationsCenter";
 import { SearchPage } from "./search/SearchPage";
 import { HomeToday } from "./home/HomeToday";
+import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
@@ -453,7 +454,15 @@ function App() {
     try {
       if (file.size > 20 * 1024 * 1024)
         throw new Error(tr("O limite de importação é 20 MB."));
-      const imported = parseBackup(await file.text());
+      const text = await file.text();
+      const imported = parseBackup(text);
+      // Quero Conhecer: entra junto, sem duplicar o que já está neste aparelho.
+      try {
+        const merged = mergeWishes(loadWishes(), (JSON.parse(text) as { wishes?: unknown }).wishes);
+        if (merged.added) saveWishes(merged.list);
+      } catch {
+        // Sem lista no arquivo.
+      }
       if (session && repository) {
         if (accountSource === "cache" || !online)
           throw { message: "Failed to fetch" };
@@ -532,7 +541,7 @@ function App() {
         return data;
       });
       const blob = new Blob(
-        [JSON.stringify({ version: 1, trips: portable }, null, 2)],
+        [JSON.stringify({ version: 1, trips: portable, ...(loadWishes().length ? { wishes: loadWishes() } : {}) }, null, 2)],
         { type: "application/json" },
       );
       if (blob.size > 20 * 1024 * 1024)
@@ -2018,6 +2027,7 @@ function App() {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     onOpenTrip={openTrip}
+                    onTraveler={() => setTraveler(true)}
                     settings={
                       <>
                         <ThemeSetting />

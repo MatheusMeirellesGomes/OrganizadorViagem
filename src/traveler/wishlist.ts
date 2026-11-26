@@ -82,3 +82,20 @@ export function collections(list: WishItem[]): { name: string; count: number }[]
   return [...m].map(([name, count]) => ({ name, count })).sort((a, b) => (a.name === defaultCollection ? -1 : b.name === defaultCollection ? 1 : a.name.localeCompare(b.name)));
 }
 export const visitedIds = (list: WishItem[]) => new Set(list.filter((w) => w.visitedAt).map((w) => w.place.id));
+
+/** Backup: junta os lugares do arquivo aos daqui, sem duplicar. Devolve quantos entraram. */
+export function mergeWishes(current: WishItem[], raw: unknown): { list: WishItem[]; added: number } {
+  if (!Array.isArray(raw)) return { list: current, added: 0 };
+  let list = current;
+  let added = 0;
+  for (const w of raw.filter(valid).slice(0, 2000)) {
+    const coords = w.place.coordinates;
+    const place = { ...w.place, coordinates: coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng) ? coords : undefined, tags: w.place.tags && typeof w.place.tags === "object" ? w.place.tags : {} };
+    const r = addWish(list, place, w.collection, new Date(Date.parse(w.addedAt) || Date.now()));
+    if (r.added) {
+      list = w.visitedAt && !Number.isNaN(Date.parse(w.visitedAt)) ? markVisited(r.list, place.id, true, new Date(w.visitedAt)) : r.list;
+      added++;
+    }
+  }
+  return { list, added };
+}

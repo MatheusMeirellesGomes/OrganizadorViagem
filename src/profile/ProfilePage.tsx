@@ -12,6 +12,8 @@ import {
   Download,
   Eraser,
   Globe2,
+  Heart,
+  Stamp,
   LogIn,
   LogOut,
   Luggage,
@@ -33,6 +35,10 @@ import { checkAvatarFile, blobToDataUrl } from "./avatar";
 import { AvatarEditor } from "./AvatarEditor";
 import { CharacterEditor } from "./CharacterEditor";
 import { ProfileAvatar } from "./ProfileAvatar";
+import { PassportSection } from "./PassportSection";
+import { WishSection } from "./WishSection";
+import { buildPassport } from "./passport";
+import { loadWishes } from "../traveler/wishlist";
 import { removeAvatar, uploadAvatar } from "./account";
 import {
   accessibilityPrefs,
@@ -55,6 +61,8 @@ import {
 export const profileSections = [
   ["conta", "Minha conta"],
   ["viajante", "Meu perfil de viajante"],
+  ["passaporte", "Meu Passaporte"],
+  ["quero", "Quero Conhecer"],
   ["dados", "Meus dados"],
   ["privacidade", "Privacidade e segurança"],
   ["configuracoes", "Configurações"],
@@ -63,6 +71,8 @@ export type SectionId = (typeof profileSections)[number][0];
 const sectionIcons: Record<SectionId, typeof Cloud> = {
   conta: UserRound,
   viajante: Luggage,
+  passaporte: Stamp,
+  quero: Heart,
   dados: Archive,
   privacidade: Shield,
   configuracoes: Settings,
@@ -130,8 +140,10 @@ export function ProfilePage({
   onSignUp,
   onReviewLocal,
   onOpenTrip,
+  onTraveler,
   settings,
 }: {
+  onTraveler?: () => void;
   profile: Profile;
   onSave: (p: Profile) => Promise<boolean>;
   trips: Trip[];
@@ -267,10 +279,18 @@ export function ProfilePage({
     [stats.places, "Lugares conhecidos"],
   ] as const;
   const languageName = language === "en" ? "English" : language === "es" ? "Español" : "Português";
+  const passportData = buildPassport(trips, profile.visitedCountries ?? [], loadWishes());
+  const passportSummary = passportData.countries.length
+    ? [passportData.countries.length === 1 ? tr("1 país") : tf("{n} países", { n: passportData.countries.length }), passportData.stamps.length === 1 ? tr("1 carimbo") : tf("{n} carimbos", { n: passportData.stamps.length })].join(" · ")
+    : tr("Países, continentes e carimbos das suas viagens");
+  const wishCount = loadWishes().length;
+  const wishSummary = wishCount ? (wishCount === 1 ? tr("1 lugar salvo") : tf("{n} lugares salvos", { n: wishCount })) : tr("Lugares que você quer visitar um dia");
   const summaries: Record<SectionId, string> = {
     conta: userId ? email || tr("Conta conectada") : tr("Visitante · salvo neste navegador"),
     viajante: [tr(paces[profile.pace]), ...(profile.styles || []).slice(0, 2).map((s) => tr(travelStyles[s]))].join(" · "),
     dados: localTrips && userId ? tf("{count} viagens só neste navegador", { count: localTrips }) : tr("Backup, importação e armazenamento"),
+    passaporte: passportSummary,
+    quero: wishSummary,
     privacidade: tr("Localizadores e documentos só seus"),
     configuracoes: [tr("Aparência"), languageName, tr("Tutorial")].join(" · "),
   };
@@ -361,6 +381,8 @@ export function ProfilePage({
 
   // ---------- Páginas de cada categoria ----------
   const pages: Record<SectionId, ReactNode> = {
+    passaporte: <PassportSection trips={trips} profile={profile} onSave={onSave} onOpenTrip={onOpenTrip} busy={busy || pending} />,
+    quero: <WishSection onTraveler={onTraveler} />,
     conta: (
       <>
         {hasSupabase && !userId && <GuestInvite onSignIn={onSignIn} onSignUp={signUp} compact />}

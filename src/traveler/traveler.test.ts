@@ -122,3 +122,16 @@ describe("quero conhecer", () => {
     expect(visitedIds(markVisited(list, p.id)).has(p.id)).toBe(true);
   });
 });
+
+describe("quero conhecer no backup", () => {
+  it("junta sem duplicar e mantém visitados", async () => {
+    const { mergeWishes, addWish } = await import("./wishlist");
+    const p = (id: string, name: string) => ({ id, name, coordinates: { lat: 1, lng: 1 }, category: "", address: "", city: "", country: "", source: "x", retrievedAt: "", tags: {} });
+    const here = addWish([], p("a", "Torre")).list;
+    const file = [...addWish([], p("a", "Torre")).list, { place: p("b", "Museu"), collection: "Museus", addedAt: "2024-01-01T00:00:00Z", visitedAt: "2024-02-01T00:00:00Z" }, { nada: 1 }];
+    const r = mergeWishes(here, file);
+    expect(r.added).toBe(1);
+    expect(r.list.find((w) => w.place.id === "b")?.visitedAt).toBe("2024-02-01T00:00:00.000Z");
+    expect(mergeWishes(here, "x").added).toBe(0);
+  });
+});
