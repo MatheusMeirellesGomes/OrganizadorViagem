@@ -19,6 +19,7 @@ const loaders = {
   catalog: () => import("./Catalog"),
   meals: () => import("./explore/MealFinder"),
   tripMap: () => import("./journey/TripMapView"),
+  traveler: () => import("./traveler/TravelerMode"),
 };
 
 export function preloadHeavyParts() {
@@ -34,6 +35,7 @@ const RouteMapLazy = lazy(() =>
 const MealFinderLazy = lazy(() =>
   loaders.meals().then((m) => ({ default: m.MealFinder })),
 );
+const TravelerLazy = lazy(() => loaders.traveler().then((m) => ({ default: m.TravelerMode })));
 const TripMapLazy = lazy(() =>
   loaders.tripMap().then((m) => ({ default: m.TripMapView })),
 );
@@ -134,6 +136,18 @@ export function TripMapView(
     <LoadBoundary map>
       <Suspense fallback={<Loading map />}>
         <TripMapLazy {...props} />
+      </Suspense>
+    </LoadBoundary>
+  );
+}
+
+export function TravelerMode(
+  props: ComponentProps<typeof import("./traveler/TravelerMode").TravelerMode>,
+) {
+  return (
+    <LoadBoundary map>
+      <Suspense fallback={<Loading map />}>
+        <TravelerLazy {...props} />
       </Suspense>
     </LoadBoundary>
   );

@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  CalendarCheck,
+  TicketsPlane,
   CalendarDays,
   Check,
   CheckCheck,
@@ -37,6 +39,7 @@ import {
   LogOut,
   Cloud,
   HardDrive,
+  Navigation,
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -69,6 +72,8 @@ import "./theme.css";
 import "./nav.css";
 import "./space.css";
 import "./explore/explore-layout.css";
+import "./fase2.css";
+import "./profile/character.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
 import { TourHost, TourSetting } from "./tour/TourHost";
@@ -84,7 +89,7 @@ import {
   writeAccountCache,
   type RemoteRow,
 } from "./remote";
-import { TravelMap, Catalog, preloadHeavyParts } from "./LazyMaps";
+import { TravelMap, Catalog, TravelerMode, preloadHeavyParts } from "./LazyMaps";
 import type { Coordinates } from "./TravelMap";
 import { TravelMode } from "./TravelMode";
 import { PhotoGallery } from "./PhotoGallery";
@@ -122,11 +127,20 @@ import { migratedElsewhere, pendingLocalTrips, prepareTripAssets, readMigrated }
 import { StaysPanel, ReservationLinks } from "./StaysPanel";
 import { TripCalendar } from "./TripCalendar";
 import { MigrationPanel } from "./MigrationPanel";
-type Page = "home" | "trips" | "explore" | "map" | "history" | "profile";
+import { ReservationsCenter } from "./bookings/ReservationsCenter";
+import { SearchPage } from "./search/SearchPage";
+import { HomeToday } from "./home/HomeToday";
+import { DiaryPanel } from "./diary/DiaryPanel";
+import { GuidePanel } from "./guide/GuidePanel";
+import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
+import type { SearchKind } from "./search/links";
+type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
 const nav = [
   { id: "home", label: "Visão geral", icon: LayoutDashboard },
   { id: "trips", label: "Minhas viagens", icon: PlaneTakeoff },
+  { id: "bookings", label: "Central de Reservas", icon: CalendarCheck },
+  { id: "search", label: "Pesquisar e comparar", icon: TicketsPlane },
   { id: "explore", label: "Explorar", icon: Search },
   { id: "map", label: "Meu mapa", icon: Globe2 },
   { id: "history", label: "Histórico", icon: BookOpen },
@@ -134,6 +148,8 @@ const nav = [
 const pageTitles = {
   home: "Seu próximo caminho começa aqui.",
   trips: "Todos os seus próximos capítulos.",
+  bookings: "Tudo o que você reservou, num lugar só.",
+  search: "Ache voos, hotéis, carros e passeios.",
   explore: "Encontre o que faz a viagem valer.",
   map: "O mundo, do seu jeito.",
   history: "Cada viagem tem seu lugar.",
@@ -144,6 +160,7 @@ function App() {
   const [travelMode, setTravelMode] = useState(false);
   const [mapTrip, setMapTrip] = useState(""),
     [mapPoint, setMapPoint] = useState<Coordinates | undefined>();
+  const [searchKind, setSearchKind] = useState<SearchKind>("flights");
   const [page, setPage] = useState<Page>("home"),
     [trips, setTrips] = useState<Trip[]>(readLocal),
     [localChoice, setLocalChoice] = useState(() => {
@@ -156,6 +173,8 @@ function App() {
     // Tela de login aberta a partir do modo visitante: entrar ou criar conta.
     [authIntent, setAuthIntent] = useState<"signin" | "signup" | null>(null),
     [migrationRound, setMigrationRound] = useState(0),
+    // Modo Viajante: mapa com a posição ao vivo, aberto por cima do app.
+    [traveler, setTraveler] = useState(false),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("Roteiro"),
     [mealRequest, setMealRequest] = useState<MealRequest>(),
@@ -437,7 +456,15 @@ function App() {
     try {
       if (file.size > 20 * 1024 * 1024)
         throw new Error(tr("O limite de importação é 20 MB."));
-      const imported = parseBackup(await file.text());
+      const text = await file.text();
+      const imported = parseBackup(text);
+      // Quero Conhecer: entra junto, sem duplicar o que já está neste aparelho.
+      try {
+        const merged = mergeWishes(loadWishes(), (JSON.parse(text) as { wishes?: unknown }).wishes);
+        if (merged.added) saveWishes(merged.list);
+      } catch {
+        // Sem lista no arquivo.
+      }
       if (session && repository) {
         if (accountSource === "cache" || !online)
           throw { message: "Failed to fetch" };
@@ -516,7 +543,7 @@ function App() {
         return data;
       });
       const blob = new Blob(
-        [JSON.stringify({ version: 1, trips: portable }, null, 2)],
+        [JSON.stringify({ version: 1, trips: portable, ...(loadWishes().length ? { wishes: loadWishes() } : {}) }, null, 2)],
         { type: "application/json" },
       );
       if (blob.size > 20 * 1024 * 1024)
@@ -657,6 +684,23 @@ function App() {
       setBusy(false);
     }
   }
+  const homeHasTrips = trips.some((t) => t.status !== "past");
+  const homeToday = (
+    <HomeToday
+      trips={trips}
+      cover={(t) => pictures[t.cover as keyof typeof pictures] || pictures.coast}
+      onOpenTrip={(t, tabName) => {
+        openTrip(t);
+        if (tabName) setTab(tabName);
+      }}
+      onTraveler={() => setTraveler(true)}
+      onSearch={(k) => {
+        setSearchKind(k);
+        go("search");
+      }}
+      onGo={go}
+    />
+  );
   function card(t: Trip) {
     return (
       <button className="trip-card" key={t.id} onClick={() => openTrip(t)}>
@@ -692,14 +736,14 @@ function App() {
           <footer>
             <CalendarDays size={14} />
             {tr(dateLabel(t))}
-            <span>{tf("{count} lugares", { count: t.activities.length })}</span>
+            <span>{t.activities.length === 1 ? tr("1 lugar") : tf("{count} lugares", { count: t.activities.length })}</span>
           </footer>
         </div>
       </button>
     );
   }
   return (
-    <div className={trip && travelMode ? "app travel-mode-active" : "app"}>
+    <div className={(trip && travelMode ? "app travel-mode-active" : "app") + (supabase && !session && !localChoice && !loading ? " auth-only" : "")}>
       <a className="skip-content" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById("main-content")?.focus(); }}>{tr("Pular para o conteúdo")}</a>
       <aside id="main-sidebar" className={"sidebar " + (menu ? "open" : "")}>
         <a
@@ -738,18 +782,15 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <img
-            className="note-photo"
-            src={decor.wing}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            onError={hideOnError}
-          />
-          <h4>{tr("Menos abas abertas.")}<br />{tr("Mais mundo lá fora.")}</h4>
-          <p>{tr("Um lugar para todos os seus caminhos.")}</p>
-        </div>
+        <button type="button" className="sidebar-traveler" data-tour="modo-viajante" onClick={() => { setMenu(false); setTraveler(true); }}>
+          <span className="nav-ico nav-traveler" aria-hidden="true">
+            <Navigation size={18} strokeWidth={2.2} />
+          </span>
+          <span>
+            <b>{tr("Modo Viajante")}</b>
+            <small>{tr("Explore o mundo ao seu redor")}</small>
+          </span>
+        </button>
         <button
           className={"profile-link " + (page === "profile" ? "active" : "")}
           onClick={() => go("profile")}
@@ -782,15 +823,28 @@ function App() {
           >
             <Menu />
           </button>
-          <div className="breadcrumb">
-            {tr("Meu espaço")}
-            <ChevronRight size={13} />
-            <b>
-              {trip
-                ? trip.title
-                : tr(nav.find((n) => n.id === page)?.label || "Perfil")}
-            </b>
-          </div>
+          {/* Trilha: Início › seção › viagem. "Meu espaço" fica só para o perfil. */}
+          <nav className="breadcrumb" aria-label={tr("Você está em")}>
+            {trip ? (
+              <>
+                <button type="button" className="crumb-link" onClick={() => go("trips")}>
+                  {tr("Minhas viagens")}
+                </button>
+                <ChevronRight size={13} aria-hidden="true" />
+                <b>{trip.title}</b>
+              </>
+            ) : page === "home" ? (
+              <b>{tr("Visão geral")}</b>
+            ) : (
+              <>
+                <button type="button" className="crumb-link" onClick={() => go("home")}>
+                  {tr("Início")}
+                </button>
+                <ChevronRight size={13} aria-hidden="true" />
+                <b>{page === "profile" ? tr("Meu espaço") : tr(nav.find((n) => n.id === page)?.label || "Meu espaço")}</b>
+              </>
+            )}
+          </nav>
           <div className="top-actions">
             <span className="storage-badge">
               {session ? <Cloud size={14} /> : <HardDrive size={14} />}
@@ -964,12 +1018,14 @@ function App() {
                     "Lugares",
                     "Mapa",
                     "Informações",
+                    "Guia",
                     "Transportes",
                     "Hospedagens",
                     "Reservas",
                     "Carteira",
                     "Preparação",
                     "Fotos",
+                    "Diário",
                     ...(trip.budgetEnabled ? ["Despesas"] : []),
                   ].map((v) => (
                     <button
@@ -1564,6 +1620,8 @@ function App() {
                     ))}
                   </section>
                 )}
+                {tab === "Diário" && <DiaryPanel trip={trip} onSave={save} busy={busy} />}
+                {tab === "Guia" && <GuidePanel trip={trip} />}
                 {tab === "Fotos" && (
                   <PhotoGallery
                     trip={trip}
@@ -1595,7 +1653,11 @@ function App() {
                   <p>
                     {page === "home"
                       ? tr("Planos soltos, destinos dos sonhos e tudo o que vem pelo caminho.")
-                      : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
+                      : page === "bookings"
+                        ? tr("Voos, hospedagens, carros e ingressos de todas as viagens, com situação, prazos e valores.")
+                        : page === "search"
+                          ? tr("Pesquise nos sites que você já usa, já preenchidos com a sua viagem, e compare as opções aqui.")
+                        : tr("Cada viagem começa com uma possibilidade. Organize do seu jeito.")}
                   </p>
                 </div>
                 {page !== "profile" && (
@@ -1607,7 +1669,8 @@ function App() {
               </div>
               {page === "home" && (
                 <>
-                  <section className="hero">
+                  {homeHasTrips && homeToday}
+                  <section className={"hero" + (homeHasTrips ? " compact" : "")}>
                     <div className="hero-shade" />
                     <div className="hero-content">
                       <span className="hero-pill">
@@ -1628,6 +1691,7 @@ function App() {
                       </span>
                     </div>
                   </section>
+                  {!homeHasTrips && homeToday}
                   <HomeMetrics trips={trips} onOpen={go} />
                   <div className="section-head">
                     <div>
@@ -1813,6 +1877,29 @@ function App() {
                   )}
                 </>
               )}
+              {page === "search" && (
+                <SearchPage
+                  trips={trips}
+                  onSave={save}
+                  busy={busy}
+                  initialKind={searchKind}
+                  onOpen={(t, tabName) => {
+                    openTrip(t);
+                    setTab(tabName);
+                  }}
+                />
+              )}
+              {page === "bookings" && (
+                <ReservationsCenter
+                  trips={trips}
+                  onSave={save}
+                  busy={busy}
+                  onOpen={(t, tabName) => {
+                    openTrip(t);
+                    setTab(tabName);
+                  }}
+                />
+              )}
               {page === "explore" && (
                 <Catalog trips={trips} onSave={save} saving={busy} />
               )}
@@ -1902,7 +1989,7 @@ function App() {
                     >
                       <Plus size={17} />{tr("Criar uma viagem")}</button>
                   )}
-                  <p className="subtle">{tr("Mapa online · Você escolhe os pontos manualmente. A busca automática de endereços será conectada depois.")}</p>
+                  <p className="subtle">{tr("Mapa online · Escolha a viagem e toque no mapa para marcar o destino.")}</p>
                 </section>
               )}
               {page === "profile" && (
@@ -1946,6 +2033,7 @@ function App() {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     onOpenTrip={openTrip}
+                    onTraveler={() => setTraveler(true)}
                     settings={
                       <>
                         <ThemeSetting />
@@ -1960,7 +2048,7 @@ function App() {
         </main>
         <nav className="mobile-nav" aria-label={tr("Menu inferior")}>
           {nav
-            .filter((n) => n.id !== "history")
+            .filter((n) => n.id !== "history" && n.id !== "bookings" && n.id !== "search")
             .map((n) => (
               <button
                 key={n.id}
@@ -1988,6 +2076,14 @@ function App() {
           </button>
         </nav>
       </div>
+      {traveler && (
+        <TravelerMode
+          trips={trips}
+          activeTrip={trips.find((t) => t.status === "active") ?? trips.find((t) => t.status !== "past")}
+          onSaveTrip={save}
+          onClose={() => setTraveler(false)}
+        />
+      )}
       <TourHost
         onHome={page === "home" && !selected}
         onTrip={!!trip && !travelMode && tab === "Roteiro"}

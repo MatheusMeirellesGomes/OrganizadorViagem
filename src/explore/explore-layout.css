@@ -219,3 +219,12 @@
     padding: 8px 6px;
   }
 }
+
+/* Cards + mapa: duas colunas de cards mais baixos ao lado do mapa. */
+.explore-layout.view-both .explore-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+.explore-layout.view-both .place-card .place-photo {
+  aspect-ratio: 16 / 9;
+}

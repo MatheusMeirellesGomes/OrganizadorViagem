@@ -4,6 +4,7 @@ import { cleanTransport } from "./transport";
 import { cleanVehicle } from "./vehicles";
 import { cleanPacking } from "./packing";
 import { cleanReminders } from "./reminders";
+import { cleanBookings } from "../bookings/central";
 import { cleanPrep } from "./prep";
 import { isWalletCategory } from "./wallet";
 import type { Comparison } from "./vehicles";
@@ -127,5 +128,12 @@ export function parseJourney(v: Record<string, unknown>, trip: Trip, maps: Maps)
   const refs = new Map([...transportIds, ...vehicleIds, ...maps.stayIds, ...maps.activityIds]);
   trip.reminders = cleanReminders(v.reminders).map((r) => ({ ...r, id: uid(), refId: r.refId ? refs.get(r.refId) : undefined }));
   trip.prep = cleanPrep(v.prep);
+  // Central de Reservas: as chaves apontam para os ids novos.
+  const bookingRefs: Record<string, Map<string, string>> = { t: transportIds, v: vehicleIds, s: maps.stayIds, r: maps.reservationIds };
+  const bookings = Object.entries(cleanBookings(v.bookings) ?? {}).flatMap(([k, info]) => {
+    const id = bookingRefs[k[0]]?.get(k.slice(2));
+    return id ? [[k[0] + ":" + id, info] as const] : [];
+  });
+  trip.bookings = bookings.length ? Object.fromEntries(bookings) : undefined;
   trip.carComparison = cleanComparison(v.carComparison);
 }

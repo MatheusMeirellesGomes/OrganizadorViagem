@@ -1,3 +1,4 @@
+import { cleanJournal } from "./diary/diary";
 import { parseJourney } from "./journey/backup";
 import { transportTitle } from "./journey/transport";
 import { costKeys, transportKinds } from "./journey/types";
@@ -283,6 +284,7 @@ export function parseBackup(raw: string): Trip[] {
         };
       });
     trip.coverPhotoId = photoIds.get(text(v.coverPhotoId));
+    trip.journal = cleanJournal(v.journal, (id) => photoIds.get(id));
     const people = parseMoney(v, trip, { activityIds, stayIds, reservationIds, documentIds });
     parseJourney(v, trip, { activityIds, stayIds, reservationIds, documentIds, people });
     return trip;

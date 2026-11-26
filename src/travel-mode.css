@@ -103,7 +103,9 @@
 }
 .tm-day-heading h2 {
   font-size: 18px;
-  text-transform: capitalize;
+}
+.tm-day-heading h2::first-letter {
+  text-transform: uppercase;
 }
 .tm-day-heading p {
   font-size: 11px;
