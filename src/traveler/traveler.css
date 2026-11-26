@@ -583,3 +583,34 @@
     order: 2;
   }
 }
+
+/* Hoje na viagem (próxima atividade e próxima reserva) */
+.traveler-today {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.traveler-today > div {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.traveler-today > div > svg {
+  color: var(--brand);
+}
+.traveler-today span {
+  display: grid;
+  min-width: 0;
+}
+.traveler-today small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.traveler-today b {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
