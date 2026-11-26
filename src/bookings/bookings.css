@@ -1,7 +1,12 @@
 /* Central de Reservas */
 .bookings-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+}
+.bookings-page > *,
+.bookings-top > * {
+  min-width: 0;
 }
 .bookings-top {
   display: grid;
@@ -471,7 +476,7 @@
 @media (max-width: 900px) {
   .bookings-top,
   .booking-ics {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .booking-ics-list {
     justify-content: start;
