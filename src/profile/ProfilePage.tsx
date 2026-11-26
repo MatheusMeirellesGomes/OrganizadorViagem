@@ -18,6 +18,7 @@ import {
   MapPin,
   Pencil,
   Settings,
+  Smile,
   Shield,
   Trash2,
   Upload,
@@ -30,6 +31,7 @@ import { t as tr, tf, formatNumber, useLanguage, setLanguage, type Language } fr
 import type { Trip } from "../model";
 import { checkAvatarFile, blobToDataUrl } from "./avatar";
 import { AvatarEditor } from "./AvatarEditor";
+import { CharacterEditor } from "./CharacterEditor";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { removeAvatar, uploadAvatar } from "./account";
 import {
@@ -155,6 +157,7 @@ export function ProfilePage({
   const [section, setSection] = useState<SectionId | null>(() => sectionFromHash(location.hash));
   const [editing, setEditing] = useState(false);
   const [file, setFile] = useState<Blob>();
+  const [drawing, setDrawing] = useState(false);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [notif, setNotif] = useState<NotificationPermission | "unsupported">(() => (typeof Notification === "undefined" ? "unsupported" : Notification.permission));
@@ -215,7 +218,7 @@ export function ProfilePage({
   async function usePhoto(photo: Blob) {
     const old = profile.avatar;
     const avatar: Profile["avatar"] = cloud ? { kind: "cloud", path: await uploadAvatar(client!, userId!, photo) } : { kind: "local", data: await blobToDataUrl(photo) };
-    if (!(await onSave({ ...profile, avatar }))) {
+    if (!(await onSave({ ...profile, avatar, look: "photo" }))) {
       if (avatar.kind === "cloud") await removeAvatar(client!, avatar.path).catch(() => undefined);
       throw new Error("Não foi possível salvar a foto.");
     }
@@ -383,6 +386,36 @@ export function ProfilePage({
               )}
             </span>
           </div>
+          <ul className="settings-rows">
+            <li className="look-setting">
+              <span>
+                <b id="look-titulo">{tr("Foto ou avatar")}</b>
+                <small>{profile.character ? tr("Escolha o que aparece no app.") : tr("Crie um avatar se preferir não usar foto.")}</small>
+              </span>
+              <span className="look-actions">
+                {profile.character && (
+                  <span className="theme-switch" role="radiogroup" aria-labelledby="look-titulo">
+                    {(["photo", "avatar"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={(profile.look ?? "photo") === v}
+                        className={(profile.look ?? "photo") === v ? "is-on" : ""}
+                        disabled={busy || pending}
+                        onClick={() => onSave({ ...profile, look: v })}
+                      >
+                        {v === "photo" ? tr("Foto") : tr("Avatar")}
+                      </button>
+                    ))}
+                  </span>
+                )}
+                <button type="button" className="secondary small" onClick={() => setDrawing(true)}>
+                  <Smile size={15} /> {profile.character ? tr("Editar avatar") : tr("Criar avatar")}
+                </button>
+              </span>
+            </li>
+          </ul>
           {editing && (
             <form
               className="profile-edit space-card"
@@ -766,6 +799,18 @@ export function ProfilePage({
         hub
       )}
       {file && <AvatarEditor file={file} onDone={usePhoto} onCancel={() => setFile(undefined)} />}
+      {drawing && (
+        <CharacterEditor
+          initial={profile.character}
+          onCancel={() => setDrawing(false)}
+          onSave={async (character) => {
+            if (await onSave({ ...profile, character, look: "avatar" })) {
+              setDrawing(false);
+              setMessage("Avatar salvo.");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

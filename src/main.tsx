@@ -70,6 +70,7 @@ import "./nav.css";
 import "./space.css";
 import "./explore/explore-layout.css";
 import "./fase2.css";
+import "./profile/character.css";
 import { applyTheme, watchSystemTheme } from "./theme";
 import { ThemeSetting } from "./ThemeSetting";
 import { TourHost, TourSetting } from "./tour/TourHost";

@@ -1,3 +1,4 @@
+import { parseCharacter, type Character } from "./character";
 import type { Trip } from "../model";
 import { isCurrency } from "../budget";
 
@@ -62,6 +63,9 @@ export type Profile = {
   food?: string[];
   accessibility?: string[];
   avatar?: Avatar;
+  /** Avatar desenhado (escolhas guardadas) e qual imagem mostrar. */
+  character?: Character;
+  look?: "photo" | "avatar";
 };
 
 export const emptyProfile: Profile = { name: "", pace: "own" };
@@ -106,6 +110,8 @@ export function parseProfile(raw: unknown): Profile {
         : avatar.kind === "cloud" && typeof avatar.path === "string" && /^[0-9a-f-]{36}\/perfil\/[\w.-]+$/.test(avatar.path)
           ? { kind: "cloud", path: avatar.path }
           : undefined,
+    character: parseCharacter(v.character),
+    look: v.look === "avatar" ? "avatar" : v.look === "photo" ? "photo" : undefined,
   };
 }
 

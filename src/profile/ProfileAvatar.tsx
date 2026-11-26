@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { t as tr, tf } from "../i18n";
 import { initials, type Profile } from "./profile";
 import { avatarUrl } from "./account";
+import { CharacterSvg } from "./character";
 
 const signed = new Map<string, Promise<string | undefined>>();
 
@@ -25,6 +26,12 @@ export function ProfileAvatar({ profile, client, size = 40, className = "" }: { 
     };
   }, [avatar?.kind === "local" ? avatar.data : avatar?.path, client]);
   const letters = initials(profile);
+  if (profile.look === "avatar" && profile.character)
+    return (
+      <span className={"profile-avatar-img is-character " + className} style={{ width: size, height: size }}>
+        <CharacterSvg c={profile.character} size={size} title={profile.name ? tf("Avatar de {name}", { name: profile.name }) : tr("Seu avatar")} />
+      </span>
+    );
   return (
     <span className={"profile-avatar-img " + className} style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>
       {url && !failed ? (
