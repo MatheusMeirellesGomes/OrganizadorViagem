@@ -18,7 +18,8 @@ export const bookingStatuses = {
   done: "Concluída",
 } as const;
 export type BookingStatus = keyof typeof bookingStatuses;
-export type BookingInfo = { status?: BookingStatus; cancelBy?: string; note?: string };
+/** price/currency: valor visto no site ao salvar uma opção para comparar (não é despesa). */
+export type BookingInfo = { status?: BookingStatus; cancelBy?: string; note?: string; price?: number; currency?: string };
 
 const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
@@ -33,6 +34,10 @@ export function cleanBookings(v: unknown): Record<string, BookingInfo> | undefin
     if (typeof r.status === "string" && r.status in bookingStatuses) info.status = r.status as BookingStatus;
     if (isDate(r.cancelBy)) info.cancelBy = r.cancelBy;
     if (typeof r.note === "string" && r.note.trim()) info.note = r.note.trim().slice(0, 280);
+    if (typeof r.price === "number" && Number.isFinite(r.price) && r.price >= 0 && r.price < 1e9 && typeof r.currency === "string" && /^[A-Z]{3}$/.test(r.currency)) {
+      info.price = Math.round(r.price * 100) / 100;
+      info.currency = r.currency;
+    }
     if (Object.keys(info).length) out[k] = info;
   }
   return Object.keys(out).length ? out : undefined;
@@ -53,6 +58,8 @@ export type CentralItem = WalletItem & {
   at?: number;
   status?: BookingStatus;
   cancelBy?: string;
+  price?: number;
+  currency?: string;
   expenses: Expense[];
   /** Voos: códigos dos aeroportos e horários de cada trecho. */
   legs?: { from: string; to: string; depart: string; arrive: string; carrier?: string; number?: string }[];
@@ -89,7 +96,7 @@ export function centralItems(trips: Trip[]): CentralItem[] {
       } else if (item.source === "stay") time = (trip.stays ?? []).find((s) => "s:" + s.id === item.id)?.checkInTime || undefined;
       else if (item.source === "vehicle") time = (trip.vehicles ?? []).find((v) => "v:" + v.id === item.id)?.rental?.pickupTime || undefined;
       const at = item.date ? toInstant(item.date, time || "12:00", trip.timeZone) : undefined;
-      out.push({ ...item, trip, time, at, status: info.status, cancelBy: info.cancelBy, expenses: linkedExpenses(trip, item), legs });
+      out.push({ ...item, trip, time, at, status: info.status, cancelBy: info.cancelBy, price: info.price, currency: info.currency, expenses: linkedExpenses(trip, item), legs });
     }
   }
   return out.sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity));
