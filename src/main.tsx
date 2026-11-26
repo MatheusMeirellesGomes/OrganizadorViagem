@@ -129,6 +129,7 @@ import { MigrationPanel } from "./MigrationPanel";
 import { HomeToday } from "./home/HomeToday";
 import { DiaryPanel, GuidePanel, ProfilePage, ReservationsCenter, SearchPage } from "./LazyMaps";
 import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
+import { startWishSync } from "./traveler/wishSync";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
 type Modal = "trip" | "activity" | "reservation" | null;
@@ -308,6 +309,11 @@ function App() {
       loadAccount(session.user.id);
     }
   }, [session?.user.id, loadAccount]);
+  // Quero Conhecer na conta (só depois da migração 005; sem ela, fica no aparelho).
+  useEffect(() => {
+    if (!supabase || !session?.user.id) return;
+    return startWishSync(supabase, session.user.id);
+  }, [session?.user.id]);
   useEffect(() => {
     // Invite link (?convite=...): kept until the person signs in, then accepted.
     const fromUrl = takeInviteFromUrl();
