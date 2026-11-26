@@ -131,6 +131,7 @@ import { ReservationsCenter } from "./bookings/ReservationsCenter";
 import { SearchPage } from "./search/SearchPage";
 import { HomeToday } from "./home/HomeToday";
 import { DiaryPanel } from "./diary/DiaryPanel";
+import { GuidePanel } from "./guide/GuidePanel";
 import { loadWishes, mergeWishes, saveWishes } from "./traveler/wishlist";
 import type { SearchKind } from "./search/links";
 type Page = "home" | "trips" | "bookings" | "search" | "explore" | "map" | "history" | "profile";
@@ -1017,6 +1018,7 @@ function App() {
                     "Lugares",
                     "Mapa",
                     "Informações",
+                    "Guia",
                     "Transportes",
                     "Hospedagens",
                     "Reservas",
@@ -1619,6 +1621,7 @@ function App() {
                   </section>
                 )}
                 {tab === "Diário" && <DiaryPanel trip={trip} onSave={save} busy={busy} />}
+                {tab === "Guia" && <GuidePanel trip={trip} />}
                 {tab === "Fotos" && (
                   <PhotoGallery
                     trip={trip}
